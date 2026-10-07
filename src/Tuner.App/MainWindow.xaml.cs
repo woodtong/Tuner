@@ -283,9 +283,14 @@ public partial class MainWindow : Window
             row.GroupName = e?.GroupName ?? "—";
             row.GroupBrush = GroupBrush(e?.GroupId ?? "");
             row.PeakPercent = Math.Round(s.Peak * 100);
-            // 意图静音：把 0 钉住（引擎/驱动回写非零时立即压回，显示与实际保持稳定）
-            if (row.MuteIntent && s.Volume > 0.005f)
-                App.Monitor.SetSessionVolume(row.InstanceId, 0f);
+            // 意图静音：音量钉零 + 显示完全冻结（驱动在静音时回读的可能是静音前旧值，绝不能上屏）
+            if (row.MuteIntent)
+            {
+                if (s.Volume > 0.005f)
+                    App.Monitor.SetSessionVolume(row.InstanceId, 0f);
+                row.Suppress = false;
+                continue;
+            }
             // 注意：不被动跟踪音量——动画滑落/闪避渐变的中间值会污染恢复值；
             // 恢复值只在用户主动动作（拖动松手、滚轮）时捕获
             if (DateTime.UtcNow >= row.HoldUntil) // 动画期间不回写推子，避免拉扯卡顿
@@ -493,24 +498,14 @@ public partial class MainWindow : Window
         return Math.Clamp((1.0 - pos.Y / track.ActualHeight) * 100.0, 0, 100);
     }
 
-    /// <summary>拖动追赶：45ms 线性短动效滑向光标（近乎跟手且保留动效），实时写会话音量。</summary>
+    /// <summary>拖动：推子直接跟随光标（零动画零延迟），会话音量由 ValueChanged 统一写入。</summary>
     private void OnChannelFaderDragDelta(VolumeChannel ch, Slider slider, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
     {
         if (ch.Suppress)
             return;
         var target = ValueAtMouse(slider);
         ch.FaderTarget = target;
-        var v = (float)(target / 100.0);
-        var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
-        if (sess is { Mute: true } && v > 0.005f)
-        {
-            App.Monitor.SetSessionMute(ch.InstanceId, false);
-            ch.MuteIntent = false;
-        }
-        App.Monitor.SetSessionVolume(ch.InstanceId, v);
-        App.Engine.SetUserVolume(ch.InstanceId, v);
-        slider.BeginAnimation(Slider.ValueProperty,
-            new System.Windows.Media.Animation.DoubleAnimation(target, TimeSpan.FromMilliseconds(45)));
+        slider.Value = target;
     }
 
     /// <summary>松手才记录恢复值；松手位置为 0 则不记录。</summary>
@@ -554,7 +549,11 @@ public partial class MainWindow : Window
         if ((sender as FrameworkElement)?.DataContext is not VolumeChannel ch)
             return;
         if (ch.Suppress)
-            return; // 滑块到位前处于保护期，忽略点击
+        {
+            if (DateTime.UtcNow < ch.HoldUntil)
+                return; // 滑块到位前处于保护期
+            ch.Suppress = false; // 安全阀：超时未解锁（完成回调丢失）则强制解锁
+        }
         // 严格按用户意图交替，不读滞后的实际状态；恢复值寄存器此处绝不写入
         ch.MuteIntent = !ch.MuteIntent;
         if (ch.MuteIntent)
