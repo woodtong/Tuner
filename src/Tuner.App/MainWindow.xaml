@@ -408,19 +408,25 @@
                                     <TextBlock Grid.Column="2" Text="低于进入阈值构成迟滞带，防止临界抖动"
                                                Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
                                 </Grid>
-                                <Grid Margin="0,10,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="230" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="低电平保持 ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" x:Name="SetHold" Style="{StaticResource Tb}" Width="80" />
-                                    <TextBlock Grid.Column="2" Text="峰值持续低于退出阈值此时长才判定停止，防止断续声音导致音量抽搐"
-                                               Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
-                                </Grid>
+                            <CheckBox x:Name="SetUseSmtc" Content="优先使用系统媒体播放状态判定（推荐：歌间静音不误判，停止/暂停立即恢复）"
+                                      Margin="0,14,0,0" />
+
+                            <Grid Grid.Row="6" Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="230" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="低电平保持 ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                <TextBox Grid.Column="1" x:Name="SetHold" Style="{StaticResource Tb}" Width="80" />
+                                <TextBlock Grid.Column="2" Text="峰值持续低于退出阈值此时长才判定停止，防止断续声音导致音量抽搐"
+                                           Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <TextBlock Text="宽限仅对未接入系统媒体会话的应用生效" Style="{StaticResource Hint}" />
                             </StackPanel>
-                        </Border>
+                        </StackPanel>
+                    </Border>
 
                         <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,12">
                             <StackPanel>

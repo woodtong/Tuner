@@ -1,5 +1,6 @@
 using Tuner.Core.Audio;
 using Tuner.Core.Config;
+using Tuner.Core.Media;
 
 namespace Tuner.Core.Ducking;
 
@@ -53,6 +54,7 @@ public sealed class DuckingEngine : IDisposable
     private readonly object _gate = new();
     private readonly Dictionary<string, Tracked> _tracked = new();
     private readonly Dictionary<string, DateTime> _lastSounding = new(); // 分组最近一次真实出声时刻
+    private readonly MediaSessionTracker _mediaTracker = new();
     private TunerConfig _config;
     private Thread? _thread;
     private CancellationTokenSource? _cts;
@@ -80,6 +82,7 @@ public sealed class DuckingEngine : IDisposable
             if (_thread is not null)
                 throw new InvalidOperationException("引擎已启动");
             _cts = new CancellationTokenSource();
+            _mediaTracker.Start();
             _thread = new Thread(Loop) { IsBackground = true, Name = "Tuner.DuckingEngine" };
             _thread.Start();
         }
@@ -121,6 +124,8 @@ public sealed class DuckingEngine : IDisposable
             }
             LastRestoreCount = restored;
             _tracked.Clear();
+            _lastSounding.Clear();
+            _mediaTracker.Dispose();
             _cts?.Dispose();
             _cts = null;
             _thread = null;
@@ -288,9 +293,10 @@ public sealed class DuckingEngine : IDisposable
     }
 
     /// <summary>
-    /// 组级"出声"判定（用于规则触发）：任一成员出声 → 出声。
-    /// 静音后进入宽限期：音频流仍打开（歌曲间隙、极弱段落）用长宽限，
-    /// 流已关闭（真正停止/退出）用短宽限——"没有声音"不等于"没在播放"。
+    /// 组级"出声/在播"判定（用于规则触发），三层信号：
+    /// 1. 峰值出声（即时、任何应用可用）；
+    /// 2. SMTC 播放状态（应用自报"还在播放"，覆盖歌间静音/极弱段落；报告"已暂停/已停止"则立即解除，不进宽限）；
+    /// 3. 静音宽限（仅对没有 SMTC 信号的应用兜底，避免短暂静音误判为停止）。
     /// </summary>
     private Dictionary<string, bool> GroupSoundingMap(EngineSettings settings, DateTime now)
     {
@@ -303,9 +309,38 @@ public sealed class DuckingEngine : IDisposable
                 map[g.Key] = true;
                 continue;
             }
-            if (!_lastSounding.TryGetValue(g.Key, out var lastSounding))
-                continue; // 从未出声过，无宽限可言
 
+            if (settings.UseMediaSessionStatus)
+            {
+                bool smtcPlaying = false;
+                bool smtcKnown = false;
+                foreach (var t in g)
+                {
+                    var playing = _mediaTracker.IsPlaying(t.Session.ProcessName);
+                    if (playing is null)
+                        continue;
+                    smtcKnown = true;
+                    if (playing == true)
+                    {
+                        smtcPlaying = true;
+                        break;
+                    }
+                }
+                if (smtcKnown)
+                {
+                    // 应用自己声明了播放状态：播放中→保持；已暂停/已停止→立即解除
+                    if (smtcPlaying)
+                    {
+                        _lastSounding[g.Key] = now;
+                        map[g.Key] = true;
+                    }
+                    continue;
+                }
+            }
+
+            // 宽限兜底：无 SMTC 信号的应用，按音频流是否仍打开取宽限时长
+            if (!_lastSounding.TryGetValue(g.Key, out var lastSounding))
+                continue;
             double silenceMs = (now - lastSounding).TotalMilliseconds;
             int graceMs = g.Any(t => t.Session.State == Audio.SessionState.Active)
                 ? Math.Max(0, settings.StreamOpenSilenceGraceMs)

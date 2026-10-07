@@ -108,6 +108,21 @@ catch (Exception ex)
     return 1;
 }
 
+if (args.Contains("--smtc-status"))
+{
+    // 诊断：列出系统媒体会话（SMTC）及其播放状态（MediaSessionTracker 的实际视角）
+    using var tracker = new Tuner.Core.Media.MediaSessionTracker();
+    tracker.Start();
+    Thread.Sleep(1200); // 等首轮轮询
+    var snap = tracker.Snapshot();
+    Console.WriteLine($"系统媒体会话 {snap.Count} 个：");
+    foreach (var (aumid, status) in snap)
+        Console.WriteLine($"- {aumid} → {status}");
+    if (snap.Count == 0)
+        Console.WriteLine("（无 —— 播放器需集成 SMTC 才会出现）");
+    return 0;
+}
+
 if (setvolProcess is not null)
 {
     Thread.Sleep(800); // 等首轮会话枚举完成

@@ -462,6 +462,7 @@ public partial class MainWindow : Window
     private void LoadSettingsTab()
     {
         var s = App.Config.Settings;
+        SetUseSmtc.IsChecked = s.UseMediaSessionStatus;
         SetActive.Text = $"{s.ActivePeakThreshold * 100:F0}";
         SetInactive.Text = $"{s.InactivePeakThreshold * 100:F0}";
         SetHold.Text = s.InactiveHoldMs.ToString();
@@ -486,6 +487,7 @@ public partial class MainWindow : Window
         if (!ok)
             return false;
         var s = App.Config.Settings;
+        s.UseMediaSessionStatus = SetUseSmtc.IsChecked == true;
         s.ActivePeakThreshold = Math.Clamp(active, 0.1f, 100f) / 100f;
         s.InactivePeakThreshold = Math.Clamp(inactive, 0f, s.ActivePeakThreshold * 100f) / 100f;
         s.InactiveHoldMs = Math.Clamp(hold, 0, 10_000);

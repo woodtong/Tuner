@@ -10,6 +10,9 @@ public sealed class TunerConfig
 
 public sealed class EngineSettings
 {
+    /// <summary>优先使用系统媒体会话（SMTC）的播放状态判定：应用自报"播放中"即保持闪避（歌间静音不误判），"已暂停/已停止"立即恢复。</summary>
+    public bool UseMediaSessionStatus { get; set; } = true;
+
     /// <summary>进入"出声"的峰值阈值（0..1）。</summary>
     public float ActivePeakThreshold { get; set; } = 0.05f;
 
