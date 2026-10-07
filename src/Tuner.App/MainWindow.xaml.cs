@@ -224,6 +224,8 @@ public partial class MainWindow : Window
         public double RestoreVolume { get; set; } = 50;
         /// <summary>用户意图的静音状态（快速点击时按意图严格交替，不依赖滞后的实际状态）。</summary>
         public bool MuteIntent;
+        /// <summary>滚轮 delta 累计（满 120 记 1% 步进）。</summary>
+        public double WheelAccum;
 
         public string Name { get => _name; set { _name = value; Pc(); } }
         public string PidText { get => _pidText; set { _pidText = value; Pc(); } }
@@ -278,13 +280,15 @@ public partial class MainWindow : Window
             row.GroupName = e?.GroupName ?? "—";
             row.GroupBrush = GroupBrush(e?.GroupId ?? "");
             row.PeakPercent = Math.Round(s.Peak * 100);
-            var zero = s.Mute || s.Volume <= 0.005;
+            // 意图静音：把 0 钉住（引擎/驱动回写非零时立即压回，显示与实际保持稳定）
+            if (row.MuteIntent && s.Volume > 0.005f)
+                App.Monitor.SetSessionVolume(row.InstanceId, 0f);
             // 注意：不被动跟踪音量——动画滑落/闪避渐变的中间值会污染恢复值；
-            // 恢复值只在用户主动动作（拖推子、点静音前）时捕获
+            // 恢复值只在用户主动动作（拖动松手、滚轮）时捕获
             if (DateTime.UtcNow >= row.HoldUntil) // 动画期间不回写推子，避免拉扯卡顿
                 row.VolumePercent = Math.Round(s.Volume * 100);
-            row.ZeroState = zero;
-            row.MuteText = zero ? "取消静音" : "静音";
+            // 显示规则唯一判断：音量为 0 → 取消静音
+            row.MuteText = row.VolumePercent <= 0 ? "取消静音" : "静音";
             row.Suppress = false;
         }
 
@@ -372,6 +376,7 @@ public partial class MainWindow : Window
             if (thumb is not null)
             {
                 thumb.DragStarted += (_, _) => OnChannelFaderDragStarted(ch, s);
+                thumb.DragDelta += (_, e) => OnChannelFaderDragDelta(ch, s, e);
                 thumb.DragCompleted += (_, _) => OnChannelFaderDragCompleted(ch, s);
             }
         }
@@ -423,11 +428,15 @@ public partial class MainWindow : Window
             e.Handled = true;
             return;
         }
-        var step = e.Delta > 0 ? 1 : -1;
-        var target = Math.Clamp(s.Value + step, 0, 100);
+        // 累计滚轮 delta：每 120（一格）= 1% 精度
+        ch.WheelAccum += e.Delta;
         e.Handled = true;
-        if (Math.Abs(target - s.Value) < 0.001)
+        int steps = 0;
+        while (ch.WheelAccum >= 120) { ch.WheelAccum -= 120; steps++; }
+        while (ch.WheelAccum <= -120) { ch.WheelAccum += 120; steps--; }
+        if (steps == 0)
             return;
+        var target = Math.Clamp(s.Value + steps, 0, 100);
         // 实际值立即落（一次写入），视觉动效 357ms（静音 500ms 的 140% 速度）
         var v = (float)(target / 100.0);
         var sessLive = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
@@ -436,7 +445,6 @@ public partial class MainWindow : Window
             App.Monitor.SetSessionMute(ch.InstanceId, false);
             ch.MuteIntent = false;
         }
-        s.BeginAnimation(Slider.ValueProperty, null); // 终止进行中的动画
         App.Monitor.SetSessionVolume(ch.InstanceId, v);
         App.Engine.SetUserVolume(ch.InstanceId, v);
         ch.RestoreVolume = target; // 每一次滚轮微调都记录
@@ -463,6 +471,27 @@ public partial class MainWindow : Window
         slider.Value = current; // 基值钉在当前位置，避免回弹
         ch.Suppress = false;
         ch.HoldUntil = DateTime.UtcNow + TimeSpan.FromSeconds(10); // 拖动期间刷新不回写
+    }
+
+    /// <summary>拖动追赶：推子以 90ms 短动效滑向鼠标位置（与滚轮/静音同一动效语言），实时写会话音量。</summary>
+    private void OnChannelFaderDragDelta(VolumeChannel ch, Slider slider, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        var track = FindDescendant<System.Windows.Controls.Primitives.Track>(slider);
+        if (track is null || track.ActualHeight < 1)
+            return;
+        var pos = System.Windows.Input.Mouse.GetPosition(track);
+        var target = Math.Clamp((1.0 - pos.Y / track.ActualHeight) * 100.0, 0, 100);
+        var v = (float)(target / 100.0);
+        var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
+        if (sess is { Mute: true } && v > 0.005f)
+        {
+            App.Monitor.SetSessionMute(ch.InstanceId, false);
+            ch.MuteIntent = false;
+        }
+        App.Monitor.SetSessionVolume(ch.InstanceId, v);
+        App.Engine.SetUserVolume(ch.InstanceId, v);
+        slider.BeginAnimation(Slider.ValueProperty,
+            new System.Windows.Media.Animation.DoubleAnimation(target, TimeSpan.FromMilliseconds(90)));
     }
 
     /// <summary>松手才记录恢复值；松手位置为 0 则不记录。</summary>

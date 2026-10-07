@@ -298,16 +298,9 @@
                                                                    Height="18" Foreground="{StaticResource TextSecondary}"
                                                                    Margin="0,6,0,0" TextAlignment="Center" />
                                                         <Button x:Name="MuteBtn" Content="{Binding MuteText}" Width="76" Margin="0,8,0,0"
-                                                                Style="{StaticResource Btn}" Click="OnChannelMuteClick" />
+                                                                Style="{StaticResource BtnFlat}" Click="OnChannelMuteClick" />
                                                     </StackPanel>
                                                 </Border>
-                                                <DataTemplate.Triggers>
-                                                    <DataTrigger Binding="{Binding ZeroState}" Value="True">
-                                                        <Setter TargetName="MuteBtn" Property="Background" Value="#3A1B1B" />
-                                                        <Setter TargetName="MuteBtn" Property="BorderBrush" Value="#7A2E2E" />
-                                                        <Setter TargetName="MuteBtn" Property="Foreground" Value="#F8A0A0" />
-                                                    </DataTrigger>
-                                                </DataTemplate.Triggers>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
