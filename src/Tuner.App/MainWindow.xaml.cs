@@ -368,13 +368,15 @@ public partial class MainWindow : Window
             ch.VolumePercent = target;
             return;
         }
+        // 动画全程抑制：动画帧触发的 ValueChanged 不是用户拖动，
+        // 不得写入会话音量、不得捕获恢复值（否则恢复值被渐变中间值污染）
+        ch.Suppress = true;
         var anim = new System.Windows.Media.Animation.DoubleAnimation(target, TimeSpan.FromMilliseconds(300))
         {
             EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
         };
         anim.Completed += (_, _) =>
         {
-            ch.Suppress = true;
             slider.BeginAnimation(Slider.ValueProperty, null);
             slider.Value = target;
             ch.Suppress = false;
