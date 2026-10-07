@@ -286,15 +286,14 @@
                                                                     Background="#0C0F14" BorderBrush="#04060A"
                                                                     BorderThickness="1" Opacity="0" />
                                                             <Slider Style="{StaticResource FaderV}" Height="130" Orientation="Vertical"
-                                                                    Minimum="0" Maximum="100" Value="{Binding VolumePercent}"
-                                                                    ValueChanged="OnChannelVolumeChanged"
+                                                                    Minimum="0" Maximum="100" Value="{Binding VolumeDisplay, Mode=OneWay}"
                                                                     Loaded="OnChannelFaderLoaded"
                                                                     MouseEnter="OnChannelFaderMouseEnter"
                                                                     MouseLeave="OnChannelFaderMouseLeave"
                                                                     PreviewMouseWheel="OnChannelFaderMouseWheel"
                                                                     HorizontalAlignment="Center" />
                                                         </Grid>
-                                                        <TextBlock Text="{Binding VolumeText}" FontFamily="Consolas" FontSize="12"
+                                                        <TextBlock Text="{Binding VolumeDisplay, StringFormat={}{0:F0}%}" FontFamily="Consolas" FontSize="12"
                                                                    Height="18" Foreground="{StaticResource TextSecondary}"
                                                                    Margin="0,6,0,0" TextAlignment="Center" />
                                                         <Button x:Name="MuteBtn" Content="{Binding MuteText}" Width="76" Margin="0,8,0,0"
