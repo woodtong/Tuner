@@ -51,6 +51,25 @@ internal static class ProcessIconService
             }
         });
 
+    private static readonly ConcurrentDictionary<string, BitmapImage?> ImgCache = new();
+
+    /// <summary>按 pid 取缓存的图标位图（引用稳定：相同进程返回同一实例，绑定不触发重渲染）。</summary>
+    public static BitmapImage? GetImageByPid(uint pid)
+    {
+        try
+        {
+            using var process = System.Diagnostics.Process.GetProcessById((int)pid);
+            var exe = process.MainModule?.FileName;
+            if (string.IsNullOrEmpty(exe))
+                exe = process.ProcessName + ".exe";
+            return ImgCache.GetOrAdd(exe.ToLowerInvariant(), _ => ToBitmap(GetPngByExe(exe)));
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     /// <summary>PNG 字节 → WPF BitmapImage（UI 线程用）。</summary>
     public static BitmapImage? ToBitmap(byte[]? png)
     {

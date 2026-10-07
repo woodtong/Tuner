@@ -304,10 +304,14 @@ public partial class MainWindow : Window
             var e = states.GetValueOrDefault(s.InstanceId);
             row.Name = s.ProcessName;
             row.PidText = s.Pid.ToString();
-            row.Icon = ProcessIconService.ToBitmap(s.IconPng);
+            var img = ProcessIconService.GetImageByPid(s.Pid);
+            if (!ReferenceEquals(row.Icon, img))
+                row.Icon = img; // 引用稳定，避免每拍重渲染图标（拖动时表现为闪烁）
             row.GroupName = e?.GroupName ?? "—";
             row.GroupBrush = GroupBrush(e?.GroupId ?? "");
-            row.PeakPercent = Math.Round(s.Peak * 100);
+            var peak = Math.Round(s.Peak * 100);
+            if (row.PeakPercent != peak)
+                row.PeakPercent = peak; // 无变化不触发 LED 重绘
 
             if (row.MuteIntent)
             {
