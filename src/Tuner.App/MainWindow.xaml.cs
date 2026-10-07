@@ -450,10 +450,13 @@ public partial class MainWindow : Window
         App.Monitor.SetMasterVolume((float)target / 100f);
     }
 
+    private readonly Dictionary<string, System.Windows.Controls.Primitives.Track> _trackByInstance = new();
+
     private void OnChannelFaderLoaded(object sender, RoutedEventArgs e)
     {
         if (sender is Slider s && s.DataContext is VolumeChannel ch)
         {
+            _trackByInstance[ch.InstanceId] = FindDescendant<System.Windows.Controls.Primitives.Track>(s);
             var thumb = FindDescendant<System.Windows.Controls.Primitives.Thumb>(s);
             if (thumb is not null)
             {
@@ -466,15 +469,18 @@ public partial class MainWindow : Window
 
     private void OnChannelFaderMouseEnter(object sender, MouseEventArgs e)
     {
-        if (sender is Slider s)
+        if (sender is Slider s && !_faderBusy(s))
             SetGrooveVisible(s, true);
     }
 
     private void OnChannelFaderMouseLeave(object sender, MouseEventArgs e)
     {
-        if (sender is Slider s)
+        if (sender is Slider s && !_faderBusy(s))
             SetGrooveVisible(s, false);
     }
+
+    private bool _faderBusy(Slider s) =>
+        s.DataContext is VolumeChannel ch && (ch.IsDragging || ch.IsAnimating);
 
     private static void SetGrooveVisible(Slider s, bool on)
     {
@@ -519,6 +525,7 @@ public partial class MainWindow : Window
         ch.IsAnimating = false; // 安全阀：超时强制解锁
         slider.BeginAnimation(Slider.ValueProperty, null); // 终止动画
         ch.IsDragging = true;
+        SetGrooveVisible(slider, true); // 拖动期间凹槽常亮，不随光标进出闪烁
     }
 
     /// <summary>拖动：显示值直接跟随光标（零动画零延迟），会话音量同步写入。</summary>
@@ -526,7 +533,7 @@ public partial class MainWindow : Window
     {
         if (!ch.IsDragging)
             return;
-        var target = ValueAtMouse(slider);
+        var target = ValueAtMouse(ch, slider);
         ch.FaderTarget = target;
         ch.VolumeDisplay = target;
         var v = (float)(target / 100.0);
@@ -550,10 +557,9 @@ public partial class MainWindow : Window
             ch.RestoreVolume = ch.FaderTarget; // 松手才记录；为 0 不记录
     }
 
-    private static double ValueAtMouse(Slider slider)
+    private double ValueAtMouse(VolumeChannel ch, Slider slider)
     {
-        var track = FindDescendant<System.Windows.Controls.Primitives.Track>(slider);
-        if (track is null || track.ActualHeight < 1)
+        if (!_trackByInstance.TryGetValue(ch.InstanceId, out var track) || track.ActualHeight < 1)
             return slider.Value;
         var pos = System.Windows.Input.Mouse.GetPosition(track);
         return Math.Clamp((1.0 - pos.Y / track.ActualHeight) * 100.0, 0, 100);
