@@ -389,10 +389,14 @@
                                 </RepeatButton>
                             </Track.IncreaseRepeatButton>
                             <Track.Thumb>
-                                <Thumb Width="12" Height="16" Cursor="Hand">
+                                <Thumb Width="24" Height="26" Cursor="Hand">
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
-                                            <Border Background="{StaticResource TextPrimary}" CornerRadius="3" />
+                                            <Grid Background="Transparent">
+                                                <Border Width="12" Height="16" Background="{StaticResource TextPrimary}"
+                                                        CornerRadius="3" HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center" />
+                                            </Grid>
                                         </ControlTemplate>
                                     </Thumb.Template>
                                 </Thumb>
@@ -433,10 +437,15 @@
                                 </RepeatButton>
                             </Track.IncreaseRepeatButton>
                             <Track.Thumb>
-                                <Thumb Width="20" Height="10" Cursor="Hand">
+                                <Thumb Width="30" Height="26" Cursor="Hand">
+                                    <!-- 命中区大于可见推帽，解决抓取困难 -->
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
-                                            <Border Background="{StaticResource TextPrimary}" CornerRadius="3" />
+                                            <Grid Background="Transparent">
+                                                <Border Width="20" Height="10" Background="{StaticResource TextPrimary}"
+                                                        CornerRadius="3" HorizontalAlignment="Center"
+                                                        VerticalAlignment="Center" />
+                                            </Grid>
                                         </ControlTemplate>
                                     </Thumb.Template>
                                 </Thumb>
