@@ -426,7 +426,7 @@ public partial class MainWindow : Window
         if (ch.Suppress)
         {
             e.Handled = true;
-            return;
+            return; // 滑块到位前处于保护期
         }
         // 累计滚轮 delta：每 120（一格）= 1% 精度
         ch.WheelAccum += e.Delta;
@@ -463,19 +463,22 @@ public partial class MainWindow : Window
         App.Monitor.SetMasterVolume((float)target / 100f);
     }
 
-    /// <summary>拖动开始：冻结刷新回写（推子完全跟手），并终止进行中的动画。</summary>
+    /// <summary>拖动开始：冻结刷新回写（推子完全跟手）；保护期内拖动不接管。</summary>
     private void OnChannelFaderDragStarted(VolumeChannel ch, Slider slider)
     {
-        var current = slider.Value; // 动画值
-        slider.BeginAnimation(Slider.ValueProperty, null); // 终止动画
-        slider.Value = current; // 基值钉在当前位置，避免回弹
-        ch.Suppress = false;
+        if (ch.Suppress)
+            return; // 滑块到位前处于保护期
+        var current = slider.Value;
+        slider.BeginAnimation(Slider.ValueProperty, null);
+        slider.Value = current;
         ch.HoldUntil = DateTime.UtcNow + TimeSpan.FromSeconds(10); // 拖动期间刷新不回写
     }
 
     /// <summary>拖动追赶：推子以 90ms 短动效滑向鼠标位置（与滚轮/静音同一动效语言），实时写会话音量。</summary>
     private void OnChannelFaderDragDelta(VolumeChannel ch, Slider slider, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
     {
+        if (ch.Suppress)
+            return;
         var track = FindDescendant<System.Windows.Controls.Primitives.Track>(slider);
         if (track is null || track.ActualHeight < 1)
             return;
@@ -511,10 +514,9 @@ public partial class MainWindow : Window
             ch.VolumePercent = target;
             return;
         }
-        // 动画全程抑制：动画帧触发的 ValueChanged 不是用户拖动，
-        // 不得写入会话音量、不得捕获恢复值（否则恢复值被渐变中间值污染）
+        // 保护期＝动画期：到位之前滚轮/拖动/再次点击静音一律不响应
         ch.Suppress = true;
-        ch.HoldUntil = DateTime.UtcNow + TimeSpan.FromMilliseconds(durationMs + 250); // 动画期+余量，刷新不回写推子
+        ch.HoldUntil = DateTime.UtcNow + TimeSpan.FromMilliseconds(durationMs + 400); // 动画期+余量，刷新不回写推子
         // 从当前动画位置出发（中途重定向不跳变）
         var anim = new System.Windows.Media.Animation.DoubleAnimation(slider.Value, target, TimeSpan.FromMilliseconds(durationMs))
         {
@@ -524,7 +526,8 @@ public partial class MainWindow : Window
         {
             slider.BeginAnimation(Slider.ValueProperty, null);
             slider.Value = target;
-            ch.Suppress = false;
+            ch.Suppress = false; // 到位，解除保护
+            ch.HoldUntil = DateTime.UtcNow;
         };
         slider.BeginAnimation(Slider.ValueProperty, anim);
     }
@@ -533,6 +536,8 @@ public partial class MainWindow : Window
     {
         if ((sender as FrameworkElement)?.DataContext is not VolumeChannel ch)
             return;
+        if (ch.Suppress)
+            return; // 滑块到位前处于保护期，忽略点击
         // 严格按用户意图交替，不读滞后的实际状态；恢复值寄存器此处绝不写入
         ch.MuteIntent = !ch.MuteIntent;
         if (ch.MuteIntent)
