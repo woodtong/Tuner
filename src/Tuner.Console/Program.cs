@@ -62,8 +62,9 @@ if (selftest)
     config.Groups.Add(new AppGroupConfig { Id = "music", Name = "音乐", ProcessNames = { "qqmusic" } });
     config.Groups.Add(new AppGroupConfig { Id = "aux", Name = "测试目标", ProcessNames = { selfName } });
     config.Groups.Add(new AppGroupConfig { Id = "default", Name = "其他", IsDefault = true });
-    config.Rules.Add(new DuckingRuleConfig { Id = "r1", TriggerGroupId = "aux", TargetGroupId = "music", TargetVolumePercent = 20, Priority = 10 });
-    config.Rules.Add(new DuckingRuleConfig { Id = "r2", TriggerGroupId = "music", TargetGroupId = "aux", TargetVolumePercent = 50, Priority = 5 });
+    config.Rules.Add(new DuckingRuleConfig { Id = "r1", TriggerGroupId = "aux", TargetGroupId = "music", TargetVolumePercent = 20, Priority = 10, DetectionMode = "state" });
+    config.Rules.Add(new DuckingRuleConfig { Id = "r2", TriggerGroupId = "music", TargetGroupId = "aux", TargetVolumePercent = 50, Priority = 5, DetectionMode = "state" });
+    config.Rules.Add(new DuckingRuleConfig { Id = "r3", TriggerGroupId = "aux", TargetGroupId = "aux", TargetVolumePercent = 30, Priority = 1, DetectionMode = "sound" });
     config.Settings.InactiveHoldMs = 500; // 盖过测试 wav 循环间隙（~350ms），排除已知间隙导致的恢复循环
     durationSec = 24;
 }

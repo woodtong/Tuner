@@ -308,22 +308,22 @@ public sealed class DuckingEngine : IDisposable
     }
 
     /// <summary>
-    /// 评估各选择器（分组或单应用）是否"出声或在播"，返回生效选择器键集合。三层信号：
-    /// 1. 峰值出声（即时、任何应用可用）；
-    /// 2. SMTC 播放状态（应用自报"还在播放"，覆盖歌间静音/极弱段落；报告"已暂停/已停止"则立即解除，不进宽限）；
-    /// 3. 静音宽限（仅对没有 SMTC 信号的应用兜底，避免短暂静音误判为停止）。
+    /// 评估各选择器（分组或单应用）是否"在播"，返回生效选择器键集合。键含判定方式。
+    /// state（状态判定，默认）：SMTC 报告"播放中"→在播；已暂停/已停止→立即解除（无宽限）；
+    ///   无 SMTC 信号的应用以会话 Active 兜底。不看峰值。
+    /// sound（声音判定）：峰值迟滞（双阈值+低电平保持）+ 静音宽限。
     /// </summary>
     private HashSet<string> EvaluateSelectors(List<DuckingRuleConfig> rules, EngineSettings settings, DateTime now)
     {
         var sounding = new HashSet<string>(StringComparer.Ordinal);
-        var byKey = new Dictionary<string, RuleRef>(StringComparer.Ordinal);
+        var byKey = new Dictionary<string, (RuleRef Sel, string Mode)>(StringComparer.Ordinal);
         foreach (var r in rules)
         {
-            byKey[ConfigStore.RefKey(r.Trigger!)] = r.Trigger!;
-            byKey[ConfigStore.RefKey(r.Target!)] = r.Target!;
+            byKey[SoundingKey(r, r.Trigger!)] = (r.Trigger!, r.DetectionMode);
+            byKey[SoundingKey(r, r.Target!)] = (r.Target!, r.DetectionMode);
         }
 
-        foreach (var (key, selector) in byKey)
+        foreach (var (key, (selector, mode)) in byKey)
         {
             List<Tracked> matches;
             if (selector.Type == "app")
@@ -339,22 +339,45 @@ public sealed class DuckingEngine : IDisposable
             }
 
             if (matches.Count == 0)
-                continue; // 无成员：无从出声（键计时由下方清理）
+                continue; // 无成员：无从在播（键计时由下方清理）
 
-            bool sound = matches.Any(t => t.Speaking);
-            if (!sound && settings.UseMediaSessionStatus)
+            if (mode == "state")
             {
-                sound = matches.Any(t => _mediaTracker.IsPlaying(t.Session.ProcessName) == true);
+                bool sound;
+                if (settings.UseMediaSessionStatus)
+                {
+                    bool anyKnown = false, anyPlaying = false;
+                    foreach (var t in matches)
+                    {
+                        var playing = _mediaTracker.IsPlaying(t.Session.ProcessName);
+                        if (playing is null)
+                            continue;
+                        anyKnown = true;
+                        if (playing == true)
+                        {
+                            anyPlaying = true;
+                            break;
+                        }
+                    }
+                    // 应用自报了状态 → 以自报为准（暂停/停止立即解除）；未知 → 会话 Active 兜底
+                    sound = anyKnown ? anyPlaying : matches.Any(t => t.Session.State == Audio.SessionState.Active);
+                }
+                else
+                {
+                    sound = matches.Any(t => t.Session.State == Audio.SessionState.Active);
+                }
+                if (sound)
+                    sounding.Add(key);
+                continue; // 状态判定：无宽限、不看峰值
             }
 
-            if (sound)
+            // sound 模式：峰值迟滞 + 静音宽限
+            if (matches.Any(t => t.Speaking))
             {
                 _lastSounding[key] = now;
                 sounding.Add(key);
                 continue;
             }
-
-            // 宽限兜底：无 SMTC 信号的应用，按音频流是否仍打开取宽限时长
             if (!_lastSounding.TryGetValue(key, out var lastSounding))
                 continue;
             double silenceMs = (now - lastSounding).TotalMilliseconds;
@@ -372,6 +395,9 @@ public sealed class DuckingEngine : IDisposable
         return sounding;
     }
 
+    private static string SoundingKey(DuckingRuleConfig rule, RuleRef selector) =>
+        (rule.DetectionMode == "state" ? "state:" : "sound:") + ConfigStore.RefKey(selector);
+
     /// <summary>会话是否匹配选择器：分组模式按解析后的分组，应用模式按归一化进程名。</summary>
     private static bool RefMatchesSession(RuleRef selector, SoundSession session, string sessionGroupId) =>
         selector.Type == "app"
@@ -388,7 +414,7 @@ public sealed class DuckingEngine : IDisposable
         DuckingRuleConfig? winner = null;
         foreach (var r in rules)
         {
-            if (!sounding.Contains(ConfigStore.RefKey(r.Trigger!)))
+            if (!sounding.Contains(SoundingKey(r, r.Trigger!)))
                 continue;
             if (RefMatchesSession(r.Trigger!, t.Session, t.GroupId))
                 continue; // 不闪避触发者自身

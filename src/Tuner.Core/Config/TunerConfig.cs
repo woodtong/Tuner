@@ -77,6 +77,12 @@ public sealed class DuckingRuleConfig
     /// <summary>旧字段，仅用于旧配置迁移。</summary>
     public string TargetGroupId { get; set; } = "";
 
+    /// <summary>
+    /// 判定方式："sound"=声音判定（峰值迟滞+宽限，有无声音）；"state"=状态判定
+    /// （SMTC 播放状态优先、会话 Active 兜底，不看峰值、无宽限）。旧配置迁移默认 "sound"。
+    /// </summary>
+    public string DetectionMode { get; set; } = "sound";
+
     /// <summary>闪避期间的目标音量（百分比，0..100）。</summary>
     public float TargetVolumePercent { get; set; } = 20f;
 

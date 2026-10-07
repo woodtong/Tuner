@@ -479,9 +479,19 @@
                                 </StackPanel>
                             </Grid>
 
-                            <CheckBox Grid.Row="5" x:Name="RuleEnabled" Content="启用此规则" Margin="110,16,0,0"
-                                      HorizontalAlignment="Left" Checked="OnRuleFieldChanged"
-                                      Unchecked="OnRuleFieldChanged" />
+                            <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="110,16,0,0">
+                                <TextBlock Text="判定方式" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                           Margin="0,0,10,0" />
+                                <ComboBox x:Name="RuleDetectionMode" Style="{StaticResource Combo}" Width="150"
+                                          SelectedIndex="0" SelectionChanged="OnRuleFieldChanged"
+                                          ToolTip="状态判定=SMTC 播放状态/会话 Active（推荐，不看峰值，无宽限）；声音判定=峰值迟滞+宽限">
+                                    <ComboBoxItem>状态判定</ComboBoxItem>
+                                    <ComboBoxItem>声音判定</ComboBoxItem>
+                                </ComboBox>
+                                <CheckBox x:Name="RuleEnabled" Content="启用此规则" Margin="24,0,0,0"
+                                          VerticalAlignment="Center" Checked="OnRuleFieldChanged"
+                                          Unchecked="OnRuleFieldChanged" />
+                            </StackPanel>
 
                             <DockPanel Grid.Row="7" LastChildFill="False">
                                 <TextBlock VerticalAlignment="Center" Style="{StaticResource Hint}"

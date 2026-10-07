@@ -470,7 +470,7 @@ public partial class MainWindow : Window
         public required DuckingRuleConfig Rule { get; init; }
         public string Sentence =>
             (Rule.Enabled ? "" : "（已停用）") + Label(Rule.Trigger) + " 出声 → " + Label(Rule.Target) +
-            $" 渐变到 {Rule.TargetVolumePercent:F0}%";
+            $" 渐变到 {Rule.TargetVolumePercent:F0}%" + (Rule.DetectionMode == "state" ? "［状态判定］" : "［声音判定］");
 
         private static string Label(RuleRef? r)
         {
@@ -502,6 +502,7 @@ public partial class MainWindow : Window
         var r = SelectedRule;
         SetSelector(RuleTriggerType, RuleTriggerValue, r?.Trigger);
         SetSelector(RuleTargetType, RuleTargetValue, r?.Target);
+        RuleDetectionMode.SelectedIndex = r?.DetectionMode == "sound" ? 1 : 0;
         RuleVolume.Text = r is null ? "" : $"{r.TargetVolumePercent:F0}";
         RulePriority.Text = r?.Priority.ToString() ?? "";
         RuleEnabled.IsChecked = r?.Enabled ?? false;
@@ -579,6 +580,7 @@ public partial class MainWindow : Window
             Id = "r" + DateTime.Now.Ticks.ToString("x"),
             Trigger = new RuleRef { Type = "group", GroupId = trigger?.Id ?? "" },
             Target = new RuleRef { Type = "group", GroupId = target?.Id ?? "" },
+            DetectionMode = "state",
             TargetVolumePercent = 20,
             Priority = 5,
         };
@@ -620,6 +622,7 @@ public partial class MainWindow : Window
             return;
         r.Trigger = ReadSelector(RuleTriggerType, RuleTriggerValue);
         r.Target = ReadSelector(RuleTargetType, RuleTargetValue);
+        r.DetectionMode = RuleDetectionMode.SelectedIndex == 1 ? "sound" : "state";
         if (float.TryParse(RuleVolume.Text, out var vol))
             r.TargetVolumePercent = Math.Clamp(vol, 0f, 100f);
         if (int.TryParse(RulePriority.Text, out var prio))

@@ -77,6 +77,8 @@ public static class ConfigStore
                 r.Trigger.Type = "group";
             if (r.Target.Type != "app")
                 r.Target.Type = "group";
+            if (r.DetectionMode != "sound")
+                r.DetectionMode = "state"; // 默认状态判定
         }
     }
 
