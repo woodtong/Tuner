@@ -69,15 +69,18 @@ if (mode == "test")
     Console.WriteLine($"目标: AUMID={session.SourceAppUserModelId} | 初始状态={Zh(before)} | 标题={mediaTitle}");
     Console.WriteLine();
 
-    // 音频峰值观察器（与 Tuner 主程序同款监控，独立于 SMTC 的客观证据）
+    // 音频峰值 + WASAPI 会话状态观察器（与 SMTC 状态对照，验证"播放/暂停时注册状态如何变化"）
     var gate = new object();
-    var phaseMax = new Dictionary<string, float>();
+    var phaseMax = new Dictionary<string, (float Peak, string State)>();
     using var monitor = new AudioSessionMonitor(100);
     monitor.SamplesUpdated += sessions =>
     {
         lock (gate)
             foreach (var s in sessions)
-                phaseMax[s.ProcessName] = Math.Max(phaseMax.GetValueOrDefault(s.ProcessName), s.Peak);
+            {
+                var cur = phaseMax.GetValueOrDefault(s.ProcessName);
+                phaseMax[s.ProcessName] = (Math.Max(cur.Peak, s.Peak), s.State.ToString());
+            }
     };
     monitor.Start();
 
@@ -89,15 +92,15 @@ if (mode == "test")
             string line;
             lock (gate)
             {
-                // 每个观察窗独立统计（窗口内最大峰值），避免上一个瞬间的旧值"粘"住误导
+                // 每个观察窗独立统计（窗口内最大峰值 + WASAPI 会话状态），避免旧值"粘"住误导
                 line = string.Join("  ", phaseMax
-                    .Where(kv => kv.Value > 0.01f)
-                    .OrderByDescending(kv => kv.Value)
+                    .Where(kv => kv.Value.Peak > 0.01f || kv.Value.State == "Active")
+                    .OrderByDescending(kv => kv.Value.Peak)
                     .Take(4)
-                    .Select(kv => $"{kv.Key}={kv.Value * 100:F0}%"));
+                    .Select(kv => $"{kv.Key}={kv.Value.Peak * 100:F0}%({kv.Value.State})"));
                 phaseMax.Clear();
             }
-            Console.WriteLine($"  [{label} +{(i + 1) * 0.5:F1}s] {(line.Length > 0 ? line : "（无出声会话）")}");
+            Console.WriteLine($"  [{label} +{(i + 1) * 0.5:F1}s] {(line.Length > 0 ? line : "（无音频会话）")}");
         }
     }
 
