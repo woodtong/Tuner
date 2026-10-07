@@ -224,8 +224,11 @@ public partial class MainWindow : Window
         public double RestoreVolume { get; set; } = 50;
         /// <summary>用户意图的静音状态（快速点击时按意图严格交替，不依赖滞后的实际状态）。</summary>
         public bool MuteIntent;
-        /// <summary>滚轮 delta 累计（满 120 记 1% 步进）。</summary>
+        /// <summary>滚轮 delta 累计（满 120 记 1 步）。</summary>
         public double WheelAccum;
+        /// <summary>逻辑目标值：滚轮在其上累加（与动画进度无关，快速滚动不丢格）。</summary>
+        public double FaderTarget = 100;
+        public bool FaderTargetInit;
 
         public string Name { get => _name; set { _name = value; Pc(); } }
         public string PidText { get => _pidText; set { _pidText = value; Pc(); } }
@@ -287,6 +290,11 @@ public partial class MainWindow : Window
             // 恢复值只在用户主动动作（拖动松手、滚轮）时捕获
             if (DateTime.UtcNow >= row.HoldUntil) // 动画期间不回写推子，避免拉扯卡顿
                 row.VolumePercent = Math.Round(s.Volume * 100);
+            if (!row.FaderTargetInit)
+            {
+                row.FaderTarget = row.VolumePercent; // 首次以实际音量为逻辑基准
+                row.FaderTargetInit = true;
+            }
             // 显示规则唯一判断：音量为 0 → 取消静音
             row.MuteText = row.VolumePercent <= 0 ? "取消静音" : "静音";
             row.Suppress = false;
@@ -428,7 +436,7 @@ public partial class MainWindow : Window
             e.Handled = true;
             return; // 滑块到位前处于保护期
         }
-        // 累计滚轮 delta：每 120（一格）= 1% 精度
+        // 累计滚轮 delta：每 120（一格）= 2%；在逻辑目标值上累加，动画进度不影响计数
         ch.WheelAccum += e.Delta;
         e.Handled = true;
         int steps = 0;
@@ -436,7 +444,8 @@ public partial class MainWindow : Window
         while (ch.WheelAccum <= -120) { ch.WheelAccum += 120; steps--; }
         if (steps == 0)
             return;
-        var target = Math.Clamp(s.Value + steps, 0, 100);
+        ch.FaderTarget = Math.Clamp(ch.FaderTarget + steps * 2, 0, 100);
+        var target = ch.FaderTarget;
         // 实际值立即落（一次写入），视觉动效 357ms（静音 500ms 的 140% 速度）
         var v = (float)(target / 100.0);
         var sessLive = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
@@ -463,27 +472,34 @@ public partial class MainWindow : Window
         App.Monitor.SetMasterVolume((float)target / 100f);
     }
 
-    /// <summary>拖动开始：冻结刷新回写（推子完全跟手）；保护期内拖动不接管。</summary>
+    /// <summary>拖动开始：推子立即吸附到光标位置（零延迟起步），冻结刷新回写；保护期内拖动不接管。</summary>
     private void OnChannelFaderDragStarted(VolumeChannel ch, Slider slider)
     {
         if (ch.Suppress)
             return; // 滑块到位前处于保护期
-        var current = slider.Value;
-        slider.BeginAnimation(Slider.ValueProperty, null);
-        slider.Value = current;
+        slider.BeginAnimation(Slider.ValueProperty, null); // 终止进行中的动画
+        var snapped = ValueAtMouse(slider);               // 立即吸附，消除起步迟滞
+        slider.Value = snapped;
+        ch.FaderTarget = snapped;
         ch.HoldUntil = DateTime.UtcNow + TimeSpan.FromSeconds(10); // 拖动期间刷新不回写
     }
 
-    /// <summary>拖动追赶：推子以 90ms 短动效滑向鼠标位置（与滚轮/静音同一动效语言），实时写会话音量。</summary>
+    private static double ValueAtMouse(Slider slider)
+    {
+        var track = FindDescendant<System.Windows.Controls.Primitives.Track>(slider);
+        if (track is null || track.ActualHeight < 1)
+            return slider.Value;
+        var pos = System.Windows.Input.Mouse.GetPosition(track);
+        return Math.Clamp((1.0 - pos.Y / track.ActualHeight) * 100.0, 0, 100);
+    }
+
+    /// <summary>拖动追赶：45ms 线性短动效滑向光标（近乎跟手且保留动效），实时写会话音量。</summary>
     private void OnChannelFaderDragDelta(VolumeChannel ch, Slider slider, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
     {
         if (ch.Suppress)
             return;
-        var track = FindDescendant<System.Windows.Controls.Primitives.Track>(slider);
-        if (track is null || track.ActualHeight < 1)
-            return;
-        var pos = System.Windows.Input.Mouse.GetPosition(track);
-        var target = Math.Clamp((1.0 - pos.Y / track.ActualHeight) * 100.0, 0, 100);
+        var target = ValueAtMouse(slider);
+        ch.FaderTarget = target;
         var v = (float)(target / 100.0);
         var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
         if (sess is { Mute: true } && v > 0.005f)
@@ -494,16 +510,17 @@ public partial class MainWindow : Window
         App.Monitor.SetSessionVolume(ch.InstanceId, v);
         App.Engine.SetUserVolume(ch.InstanceId, v);
         slider.BeginAnimation(Slider.ValueProperty,
-            new System.Windows.Media.Animation.DoubleAnimation(target, TimeSpan.FromMilliseconds(90)));
+            new System.Windows.Media.Animation.DoubleAnimation(target, TimeSpan.FromMilliseconds(45)));
     }
 
     /// <summary>松手才记录恢复值；松手位置为 0 则不记录。</summary>
     private void OnChannelFaderDragCompleted(VolumeChannel ch, Slider slider)
     {
+        slider.BeginAnimation(Slider.ValueProperty, null);
+        slider.Value = ch.FaderTarget; // 定格逻辑目标
         ch.HoldUntil = DateTime.UtcNow; // 解除拖动冻结，刷新恢复
-        var v = slider.Value;
-        if (v > 0.005)
-            ch.RestoreVolume = Math.Round(v);
+        if (ch.FaderTarget > 0.005)
+            ch.RestoreVolume = ch.FaderTarget;
     }
 
     /// <summary>推子动画到目标值（结束后解除动画时钟并回写绑定值）。</summary>
@@ -542,6 +559,7 @@ public partial class MainWindow : Window
         ch.MuteIntent = !ch.MuteIntent;
         if (ch.MuteIntent)
         {
+            ch.FaderTarget = 0;
             App.Monitor.SetSessionMute(ch.InstanceId, true);
             App.Monitor.SetSessionVolume(ch.InstanceId, 0f);
             App.Engine.SetUserVolume(ch.InstanceId, 0f);
@@ -550,6 +568,7 @@ public partial class MainWindow : Window
         else
         {
             var restore = (float)Math.Clamp(ch.RestoreVolume, 1, 100) / 100f;
+            ch.FaderTarget = Math.Round(restore * 100);
             App.Monitor.SetSessionMute(ch.InstanceId, false);
             App.Monitor.SetSessionVolume(ch.InstanceId, restore);
             App.Engine.SetUserVolume(ch.InstanceId, restore);
