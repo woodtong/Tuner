@@ -138,13 +138,10 @@
                                                     </Grid>
                                                 </Border>
 
-                                                <StackPanel Grid.Column="3" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Process}" FontSize="14" FontWeight="SemiBold"
-                                                               Foreground="{StaticResource TextPrimary}"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Text="{Binding GroupName}" FontSize="11"
-                                                               Foreground="{StaticResource TextFaint}" Margin="0,1,0,0" />
-                                                </StackPanel>
+                                                <TextBlock Grid.Column="3" Text="{Binding Process}" FontSize="14"
+                                                           FontWeight="SemiBold" VerticalAlignment="Center"
+                                                           Foreground="{StaticResource TextPrimary}"
+                                                           TextTrimming="CharacterEllipsis" />
 
                                                 <StackPanel Grid.Column="5" VerticalAlignment="Center" Margin="0,0,14,0">
                                                     <TextBlock Text="PEAK" FontSize="9.5" Foreground="{StaticResource TextFaint}" />
