@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>Tuner</AssemblyName>
-    <Version>0.1.0-delta</Version>
+    <Version>0.1.0-epsilon</Version>
     <Product>Tuner</Product>
   </PropertyGroup>
 
