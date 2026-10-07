@@ -8,7 +8,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>Tuner</AssemblyName>
-    <Version>0.1.0-lambda</Version>
+    <Version>0.1.0-mu</Version>
     <Product>Tuner</Product>
   </PropertyGroup>
 
