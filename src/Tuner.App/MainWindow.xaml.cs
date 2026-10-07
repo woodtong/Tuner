@@ -218,6 +218,8 @@ public partial class MainWindow : Window
         private bool _zeroState;
         /// <summary>有效音量为 0（静音标志或音量≈0，不论何种原因触发）。</summary>
         public bool ZeroState { get => _zeroState; set { _zeroState = value; Pc(); } }
+        /// <summary>动画期间冻结实际值回写（防推子被刷新拉扯）。</summary>
+        public DateTime HoldUntil = DateTime.MinValue;
         /// <summary>最近一次非零音量（取消静音时恢复）。</summary>
         public double RestoreVolume { get; set; } = 50;
 
@@ -277,7 +279,8 @@ public partial class MainWindow : Window
             var zero = s.Mute || s.Volume <= 0.005;
             // 注意：不被动跟踪音量——动画滑落/闪避渐变的中间值会污染恢复值；
             // 恢复值只在用户主动动作（拖推子、点静音前）时捕获
-            row.VolumePercent = Math.Round(s.Volume * 100);
+            if (DateTime.UtcNow >= row.HoldUntil) // 动画期间不回写推子，避免拉扯卡顿
+                row.VolumePercent = Math.Round(s.Volume * 100);
             row.ZeroState = zero;
             row.MuteText = zero ? "取消静音" : "静音";
             row.Suppress = false;
@@ -344,6 +347,7 @@ public partial class MainWindow : Window
     {
         if ((sender as Slider)?.DataContext is not VolumeChannel ch || ch.Suppress)
             return;
+        ch.HoldUntil = DateTime.MinValue; // 用户接管，恢复实际值回写
         var v = (float)Math.Clamp(((Slider)sender).Value, 0, 100) / 100f;
         var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
         if (sess is { Mute: true } && v > 0.005f)
@@ -452,8 +456,8 @@ public partial class MainWindow : Window
         // 动画全程抑制：动画帧触发的 ValueChanged 不是用户拖动，
         // 不得写入会话音量、不得捕获恢复值（否则恢复值被渐变中间值污染）
         ch.Suppress = true;
-        var dur = TimeSpan.FromMilliseconds(Math.Max(50, App.Config.Settings.FadeDurationMs));
-        var anim = new System.Windows.Media.Animation.DoubleAnimation(target, dur)
+        ch.HoldUntil = DateTime.UtcNow + TimeSpan.FromMilliseconds(750); // 动画期+余量，刷新不回写推子
+        var anim = new System.Windows.Media.Animation.DoubleAnimation(target, TimeSpan.FromMilliseconds(500))
         {
             EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
         };
