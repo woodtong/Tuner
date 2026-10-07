@@ -220,8 +220,10 @@ public partial class MainWindow : Window
         public bool ZeroState { get => _zeroState; set { _zeroState = value; Pc(); } }
         /// <summary>动画期间冻结实际值回写（防推子被刷新拉扯）。</summary>
         public DateTime HoldUntil = DateTime.MinValue;
-        /// <summary>最近一次非零音量（取消静音时恢复）。</summary>
+        /// <summary>最近一次非零音量（取消静音时恢复）。仅用户主动动作写入：拖动松手、滚轮逐格。</summary>
         public double RestoreVolume { get; set; } = 50;
+        /// <summary>用户意图的静音状态（快速点击时按意图严格交替，不依赖滞后的实际状态）。</summary>
+        public bool MuteIntent;
 
         public string Name { get => _name; set { _name = value; Pc(); } }
         public string PidText { get => _pidText; set { _pidText = value; Pc(); } }
@@ -350,7 +352,10 @@ public partial class MainWindow : Window
         var v = (float)Math.Clamp(((Slider)sender).Value, 0, 100) / 100f;
         var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
         if (sess is { Mute: true } && v > 0.005f)
-            App.Monitor.SetSessionMute(ch.InstanceId, false); // 拖起音量即解除静音标志
+        {
+            App.Monitor.SetSessionMute(ch.InstanceId, false); // 拖起音量即解除静音
+            ch.MuteIntent = false;
+        }
         App.Monitor.SetSessionVolume(ch.InstanceId, v);
         App.Engine.SetUserVolume(ch.InstanceId, v); // 闪避中手动调整 → 更新恢复锚点
         // 恢复值不在此处记录：拖动松手（DragCompleted）才记录，避免渐变中间值污染
@@ -427,7 +432,10 @@ public partial class MainWindow : Window
         var v = (float)(target / 100.0);
         var sessLive = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
         if (sessLive is { Mute: true } && v > 0.005f)
+        {
             App.Monitor.SetSessionMute(ch.InstanceId, false);
+            ch.MuteIntent = false;
+        }
         s.BeginAnimation(Slider.ValueProperty, null); // 终止进行中的动画
         App.Monitor.SetSessionVolume(ch.InstanceId, v);
         App.Engine.SetUserVolume(ch.InstanceId, v);
@@ -496,25 +504,22 @@ public partial class MainWindow : Window
     {
         if ((sender as FrameworkElement)?.DataContext is not VolumeChannel ch)
             return;
-        var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
-        bool zero = sess is null ? ch.ZeroState : sess.Mute || sess.Volume <= 0.005;
-        if (zero)
+        // 严格按用户意图交替，不读滞后的实际状态；恢复值寄存器此处绝不写入
+        ch.MuteIntent = !ch.MuteIntent;
+        if (ch.MuteIntent)
         {
-            // 取消静音：恢复最近非零音量
+            App.Monitor.SetSessionMute(ch.InstanceId, true);
+            App.Monitor.SetSessionVolume(ch.InstanceId, 0f);
+            App.Engine.SetUserVolume(ch.InstanceId, 0f);
+            AnimateFader(ch, 0);
+        }
+        else
+        {
             var restore = (float)Math.Clamp(ch.RestoreVolume, 1, 100) / 100f;
             App.Monitor.SetSessionMute(ch.InstanceId, false);
             App.Monitor.SetSessionVolume(ch.InstanceId, restore);
             App.Engine.SetUserVolume(ch.InstanceId, restore);
             AnimateFader(ch, Math.Round(restore * 100));
-        }
-        else
-        {
-            // 静音：音量归零（动画滑落），静音标志同步置位
-            ch.RestoreVolume = sess is null ? 50 : Math.Round(sess.Volume * 100);
-            App.Monitor.SetSessionMute(ch.InstanceId, true);
-            App.Monitor.SetSessionVolume(ch.InstanceId, 0f);
-            App.Engine.SetUserVolume(ch.InstanceId, 0f);
-            AnimateFader(ch, 0);
         }
     }
 
