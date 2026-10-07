@@ -212,6 +212,7 @@ public partial class MainWindow : Window
         private double _peakPercent;
         private double _volumePercent = 100;
         private string _muteText = "静音";
+        private BitmapImage? _icon;
 
         public string Name { get => _name; set { _name = value; Pc(); } }
         public string PidText { get => _pidText; set { _pidText = value; Pc(); } }
@@ -220,6 +221,7 @@ public partial class MainWindow : Window
         public double PeakPercent { get => _peakPercent; set { _peakPercent = value; Pc(); } }
         public double VolumePercent { get => _volumePercent; set { _volumePercent = value; Pc(); } }
         public string MuteText { get => _muteText; set { _muteText = value; Pc(); } }
+        public BitmapImage? Icon { get => _icon; set { _icon = value; Pc(); } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void Pc() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
@@ -261,6 +263,7 @@ public partial class MainWindow : Window
             row.Suppress = true;
             row.Name = s.ProcessName;
             row.PidText = s.Pid.ToString();
+            row.Icon = ProcessIconService.ToBitmap(s.IconPng);
             row.GroupName = e?.GroupName ?? "—";
             row.GroupBrush = GroupBrush(e?.GroupId ?? "");
             row.PeakPercent = Math.Round(s.Peak * 100);

@@ -245,6 +245,17 @@
                                                         BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
                                                         CornerRadius="8" Padding="10,10" Margin="0,0,10,4">
                                                     <StackPanel>
+                                                        <Border Width="34" Height="34" CornerRadius="7"
+                                                                Background="{StaticResource CardBg}"
+                                                                HorizontalAlignment="Center" Margin="0,0,0,8">
+                                                            <Grid>
+                                                                <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="17"
+                                                                           Foreground="{StaticResource TextFaint}"
+                                                                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                                <Image Source="{Binding Icon}" Width="24" Height="24"
+                                                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                            </Grid>
+                                                        </Border>
                                                         <!-- 固定高度名称区，跨通道对齐 -->
                                                         <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold"
                                                                    Height="32" Foreground="{StaticResource TextPrimary}"
