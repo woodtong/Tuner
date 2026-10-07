@@ -46,6 +46,36 @@ public sealed class AudioSessionMonitor : IDisposable
     /// <summary>默认播放设备名。</summary>
     public string DeviceName => _device?.FriendlyName ?? string.Empty;
 
+    /// <summary>默认播放设备 ID（供设备切换器高亮当前项）。</summary>
+    public string DeviceId { get; private set; } = "";
+
+    /// <summary>枚举全部可用的播放（渲染）设备：ID → 友好名。</summary>
+    public IReadOnlyDictionary<string, string> EnumerateRenderDevices()
+    {
+        var result = new Dictionary<string, string>();
+        lock (_gate)
+        {
+            if (_enumerator is null)
+                return result;
+            foreach (var d in _enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active))
+            {
+                try
+                {
+                    result[d.ID] = d.FriendlyName;
+                }
+                catch { /* 个别设备属性读取失败，跳过 */ }
+                finally
+                {
+                    d.Dispose();
+                }
+            }
+        }
+        return result;
+    }
+
+    /// <summary>用户主动切换默认播放设备（走 IMMNotificationClient 回调后由轮询线程重绑）。</summary>
+    public static void SwitchDefaultDevice(string deviceId) => DefaultDeviceSwitcher.SetDefaultDevice(deviceId);
+
     /// <summary>设备整体峰值电平（0..1），用于诊断整机静音等问题。</summary>
     public float DevicePeak { get; private set; }
 
@@ -171,6 +201,7 @@ public sealed class AudioSessionMonitor : IDisposable
             manager.OnSessionCreated += OnSessionCreated;
             _device = device;
             _manager = manager;
+            DeviceId = device.ID;
             _tracked.Clear();
             _enumeratePending = true;
             DevicePeak = 0;
@@ -270,6 +301,7 @@ public sealed class AudioSessionMonitor : IDisposable
                     ProcessName = isSystemSounds ? "System Sounds" : name,
                     IsSystemSounds = isSystemSounds,
                     State = MapState(native.State),
+                    IconPng = TryGetProcessIcon(pid),
                 };
                 _tracked[id] = new TrackedSession
                 {
@@ -334,6 +366,11 @@ public sealed class AudioSessionMonitor : IDisposable
                     t.Snapshot.Volume = Clamp01(t.Native.SimpleAudioVolume.Volume);
                     t.Snapshot.Mute = t.Native.SimpleAudioVolume.Mute;
                     t.Snapshot.State = MapState(t.Native.State);
+                    if (t.Snapshot.IconPng is null && !t.IconAttempted && IconProvider is not null)
+                    {
+                        t.IconAttempted = true; // 提供器就绪后每会话只尝试一次（其内部有缓存）
+                        t.Snapshot.IconPng = TryGetProcessIcon(t.Snapshot.Pid);
+                    }
                 }
                 catch
                 {
@@ -391,12 +428,29 @@ public sealed class AudioSessionMonitor : IDisposable
         }
     }
 
+    /// <summary>取进程图标 PNG 的委托（由 UI 层注入，Core 不依赖图形库）；返回 null 表示无法获取。</summary>
+    public static Func<uint, byte[]?>? IconProvider { get; set; }
+
+    private static byte[]? TryGetProcessIcon(uint pid)
+    {
+        var provider = IconProvider;
+        try
+        {
+            return provider?.Invoke(pid);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private sealed class TrackedSession
     {
         public required AudioSessionControl Native { get; init; }
         public required SessionVolumeControl Control { get; init; }
         public required SoundSession Snapshot { get; init; }
         public bool ProcessAlive { get; set; }
+        public bool IconAttempted { get; set; }
     }
 
     private sealed class SessionVolumeControl : ISessionVolumeControl

@@ -7,6 +7,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
+using Tuner.Core.Audio;
 using Tuner.Core.Config;
 using Tuner.Core.Ducking;
 using Application = System.Windows.Application;
@@ -48,6 +49,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        ProcessIconService.Register();
         try
         {
             var icon = TrayIconFactory.Create();
@@ -110,6 +112,10 @@ public partial class MainWindow : Window
         private double _stripOpacity = 0.25;
         /// <summary>通道色条透明度：出声时点亮。</summary>
         public double StripOpacity { get => _stripOpacity; set { _stripOpacity = value; Pc(); } }
+
+        private BitmapImage? _icon;
+        /// <summary>应用图标。</summary>
+        public BitmapImage? Icon { get => _icon; set { _icon = value; Pc(); } }
 
         public string Process { get => _process; set { _process = value; Pc(); } }
         public string PidText { get => _pidText; set { _pidText = $"PID {value}"; Pc(); } }
@@ -182,7 +188,7 @@ public partial class MainWindow : Window
             row.DuckVisibility = e is { Ducked: true } ? Visibility.Visible : Visibility.Collapsed;
             row.DuckText = $"闪避中 → {(int)Math.Round((e?.TargetVolume ?? 0) * 100)}%";
             if (e is { Ducked: true }) ducking++;
-            row.OriginalText = e is null ? "" : $"原始 {(int)Math.Round(e.OriginalVolume * 100)}%";
+            row.Icon = ProcessIconService.ToBitmap(s.IconPng);
         }
 
         StatTotal.Text = sessions.Count.ToString();
@@ -282,6 +288,42 @@ public partial class MainWindow : Window
     private void OnMasterMuteClick(object sender, RoutedEventArgs e)
     {
         App.Monitor.SetMasterMute(!App.Monitor.MasterMuted);
+    }
+
+    // ---------- 输出设备切换 ----------
+
+    private void OnDeviceButtonClicked(object sender, RoutedEventArgs e)
+    {
+        var devices = App.Monitor.EnumerateRenderDevices();
+        var menu = (ContextMenu)FindResource("DeviceMenu");
+        menu.Items.Clear();
+        foreach (var (id, name) in devices.OrderBy(kv => kv.Value, StringComparer.OrdinalIgnoreCase))
+        {
+            var item = new MenuItem
+            {
+                Header = id == App.Monitor.DeviceId ? "● " + name : name,
+                Tag = id,
+            };
+            item.Click += OnDeviceMenuItemClicked;
+            menu.Items.Add(item);
+        }
+        menu.PlacementTarget = DeviceButton;
+        menu.IsOpen = true;
+    }
+
+    private void OnDeviceMenuItemClicked(object sender, RoutedEventArgs e)
+    {
+        if ((sender as MenuItem)?.Tag is not string id)
+            return;
+        try
+        {
+            AudioSessionMonitor.SwitchDefaultDevice(id); // 切换后经 IMMNotificationClient 自动重绑会话
+            App.Log("默认输出设备已切换: " + id);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("切换输出设备失败：" + ex.Message, "Tuner");
+        }
     }
 
     private void OnChannelVolumeChanged(object sender, RoutedEventArgs e)

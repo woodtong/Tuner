@@ -17,6 +17,9 @@ public sealed class SoundSession
     /// <summary>会话归属进程的 PID（System Sounds 会话为 0）。</summary>
     public required uint Pid { get; init; }
 
+    /// <summary>进程主窗口图标（PNG 字节，取自进程可执行文件；获取失败为 null）。</summary>
+    public byte[]? IconPng { get; internal set; }
+
     public required string ProcessName { get; set; }
 
     public required bool IsSystemSounds { get; init; }

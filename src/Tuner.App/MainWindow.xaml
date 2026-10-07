@@ -7,6 +7,9 @@
         Background="{StaticResource PageBg}"
         FontFamily="Microsoft YaHei UI, Segoe UI"
         UseLayoutRounding="True">
+    <Window.Resources>
+        <ContextMenu x:Key="DeviceMenu" Placement="Bottom" />
+    </Window.Resources>
     <Grid Margin="20,14,20,14">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -22,16 +25,20 @@
                            VerticalAlignment="Bottom" Margin="10,0,0,3" />
             </StackPanel>
             <controls:LedMeter DockPanel.Dock="Right" x:Name="MasterMeter" Width="110" Height="8" Segments="14"
-                               VerticalAlignment="Center" Margin="0,0,0,0" ToolTip="设备总峰值" />
-            <Border DockPanel.Dock="Right" Background="{StaticResource CardBg}"
-                    BorderBrush="{StaticResource CardBorder}" BorderThickness="1" CornerRadius="14"
-                    Padding="11,4" VerticalAlignment="Center" Margin="0,0,10,0">
+                               VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="设备总峰值" />
+            <Button DockPanel.Dock="Right" x:Name="DeviceButton" HorizontalContentAlignment="Stretch"
+                    Background="{StaticResource CardBg}" BorderBrush="{StaticResource FieldBorder}"
+                    Padding="11,4" Margin="0,0,10,0" VerticalAlignment="Center" Cursor="Hand"
+                    Click="OnDeviceButtonClicked"
+                    ToolTip="点击切换默认输出设备">
                 <StackPanel Orientation="Horizontal">
                     <Ellipse Width="7" Height="7" Fill="{StaticResource Green}" VerticalAlignment="Center" />
                     <TextBlock x:Name="DeviceText" Margin="7,0,0,0" FontSize="12"
                                Foreground="{StaticResource TextSecondary}" />
+                    <TextBlock Text="&#xE70D;" FontFamily="Segoe MDL2 Assets" FontSize="10" Margin="8,0,0,0"
+                               Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center" />
                 </StackPanel>
-            </Border>
+            </Button>
         </DockPanel>
 
         <TabControl Grid.Row="1" x:Name="Tabs" SelectionChanged="Tabs_SelectionChanged">
@@ -105,7 +112,8 @@
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="30" />
                                                     <ColumnDefinition Width="16" />
-                                                    <ColumnDefinition Width="150" />
+                                                    <ColumnDefinition Width="46" />
+                                                    <ColumnDefinition Width="200" />
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="132" />
                                                     <ColumnDefinition Width="112" />
@@ -114,34 +122,37 @@
 
                                                 <TextBlock Grid.Column="0" Text="{Binding Channel}" FontFamily="Consolas"
                                                            FontSize="11" Foreground="{StaticResource TextFaint}"
-                                                           VerticalAlignment="Top" Margin="2,1,0,0" />
+                                                           VerticalAlignment="Center" Margin="2,0,0,0" />
 
                                                 <Ellipse Grid.Column="1" Width="9" Height="9"
                                                          Fill="{Binding SpeakingBrush}" VerticalAlignment="Center" />
 
-                                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                                                <Border Grid.Column="2" Width="30" Height="30" CornerRadius="6"
+                                                        Background="{StaticResource PageBg}" VerticalAlignment="Center">
+                                                    <Grid>
+                                                        <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="16"
+                                                                   Foreground="{StaticResource TextFaint}"
+                                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                        <Image Source="{Binding Icon}" Width="22" Height="22"
+                                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                                    </Grid>
+                                                </Border>
+
+                                                <StackPanel Grid.Column="3" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding Process}" FontSize="14" FontWeight="SemiBold"
                                                                Foreground="{StaticResource TextPrimary}"
                                                                TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Text="{Binding PidText}" FontSize="10.5" FontFamily="Consolas"
+                                                    <TextBlock Text="{Binding GroupName}" FontSize="11"
                                                                Foreground="{StaticResource TextFaint}" Margin="0,1,0,0" />
                                                 </StackPanel>
 
-                                                <Border Grid.Column="3" Background="Transparent"
-                                                        BorderBrush="{StaticResource FieldBorder}" BorderThickness="1"
-                                                        CornerRadius="4" Padding="8,3" HorizontalAlignment="Left"
-                                                        VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding GroupName}" FontSize="11"
-                                                               Foreground="{StaticResource TextSecondary}" />
-                                                </Border>
-
-                                                <StackPanel Grid.Column="4" VerticalAlignment="Center" Margin="0,0,14,0">
+                                                <StackPanel Grid.Column="5" VerticalAlignment="Center" Margin="0,0,14,0">
                                                     <TextBlock Text="PEAK" FontSize="9.5" Foreground="{StaticResource TextFaint}" />
                                                     <controls:LedMeter Height="10" Segments="12" Margin="0,3,0,0"
                                                                        Value="{Binding PeakPercent}" />
                                                 </StackPanel>
 
-                                                <Border Grid.Column="5" Background="{StaticResource AmberSoft}"
+                                                <Border Grid.Column="6" Background="{StaticResource AmberSoft}"
                                                         BorderBrush="#5A2626" BorderThickness="1" CornerRadius="4"
                                                         Padding="8,3" VerticalAlignment="Center" Margin="0,0,14,0"
                                                         Visibility="{Binding DuckVisibility}">
@@ -149,7 +160,7 @@
                                                                Foreground="{StaticResource AmberText}" />
                                                 </Border>
 
-                                                <StackPanel Grid.Column="6" Width="188" VerticalAlignment="Center">
+                                                <StackPanel Grid.Column="7" VerticalAlignment="Center">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*" />
@@ -162,9 +173,6 @@
                                                                    Foreground="{StaticResource TextSecondary}"
                                                                    Margin="8,0,0,0" MinWidth="40" TextAlignment="Right" />
                                                     </Grid>
-                                                    <TextBlock Text="{Binding OriginalText}" FontSize="10.5"
-                                                               Foreground="{StaticResource TextFaint}" Margin="0,3,0,0"
-                                                               TextAlignment="Right" />
                                                 </StackPanel>
                                                 </Grid>
                                             </Grid>
