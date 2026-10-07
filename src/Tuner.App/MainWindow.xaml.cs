@@ -213,6 +213,11 @@ public partial class MainWindow : Window
         private double _volumePercent = 100;
         private string _muteText = "静音";
         private BitmapImage? _icon;
+        private bool _zeroState;
+        /// <summary>有效音量为 0（静音标志或音量≈0，不论何种原因触发）。</summary>
+        public bool ZeroState { get => _zeroState; set { _zeroState = value; Pc(); } }
+        /// <summary>最近一次非零音量（取消静音时恢复）。</summary>
+        public double RestoreVolume { get; set; } = 50;
 
         public string Name { get => _name; set { _name = value; Pc(); } }
         public string PidText { get => _pidText; set { _pidText = value; Pc(); } }
@@ -267,8 +272,12 @@ public partial class MainWindow : Window
             row.GroupName = e?.GroupName ?? "—";
             row.GroupBrush = GroupBrush(e?.GroupId ?? "");
             row.PeakPercent = Math.Round(s.Peak * 100);
+            var zero = s.Mute || s.Volume <= 0.005;
+            if (s.Volume > 0.005)
+                row.RestoreVolume = Math.Round(s.Volume * 100);
             row.VolumePercent = Math.Round(s.Volume * 100);
-            row.MuteText = s.Mute ? "已静音" : "静音";
+            row.ZeroState = zero;
+            row.MuteText = zero ? "取消静音" : "静音";
             row.Suppress = false;
         }
 
@@ -334,8 +343,41 @@ public partial class MainWindow : Window
         if ((sender as Slider)?.DataContext is not VolumeChannel ch || ch.Suppress)
             return;
         var v = (float)Math.Clamp(((Slider)sender).Value, 0, 100) / 100f;
+        var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
+        if (sess is { Mute: true } && v > 0.005f)
+            App.Monitor.SetSessionMute(ch.InstanceId, false); // 拖起音量即解除静音标志
         App.Monitor.SetSessionVolume(ch.InstanceId, v);
         App.Engine.SetUserVolume(ch.InstanceId, v); // 闪避中手动调整 → 更新恢复锚点
+    }
+
+    private readonly Dictionary<string, Slider> _faderByInstance = new();
+
+    private void OnChannelFaderLoaded(object sender, RoutedEventArgs e)
+    {
+        if (sender is Slider s && s.DataContext is VolumeChannel ch)
+            _faderByInstance[ch.InstanceId] = s;
+    }
+
+    /// <summary>推子动画到目标值（结束后解除动画时钟并回写绑定值）。</summary>
+    private void AnimateFader(VolumeChannel ch, double target)
+    {
+        if (!_faderByInstance.TryGetValue(ch.InstanceId, out var slider))
+        {
+            ch.VolumePercent = target;
+            return;
+        }
+        var anim = new System.Windows.Media.Animation.DoubleAnimation(target, TimeSpan.FromMilliseconds(300))
+        {
+            EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
+        };
+        anim.Completed += (_, _) =>
+        {
+            ch.Suppress = true;
+            slider.BeginAnimation(Slider.ValueProperty, null);
+            slider.Value = target;
+            ch.Suppress = false;
+        };
+        slider.BeginAnimation(Slider.ValueProperty, anim);
     }
 
     private void OnChannelMuteClick(object sender, RoutedEventArgs e)
@@ -343,7 +385,34 @@ public partial class MainWindow : Window
         if ((sender as FrameworkElement)?.DataContext is not VolumeChannel ch)
             return;
         var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
-        App.Monitor.SetSessionMute(ch.InstanceId, sess?.Mute != true);
+        bool zero = sess is null ? ch.ZeroState : sess.Mute || sess.Volume <= 0.005;
+        if (zero)
+        {
+            // 取消静音：恢复最近非零音量
+            var restore = (float)Math.Clamp(ch.RestoreVolume, 1, 100) / 100f;
+            App.Monitor.SetSessionMute(ch.InstanceId, false);
+            App.Monitor.SetSessionVolume(ch.InstanceId, restore);
+            App.Engine.SetUserVolume(ch.InstanceId, restore);
+            AnimateFader(ch, Math.Round(restore * 100));
+        }
+        else
+        {
+            // 静音：音量归零（动画滑落），静音标志同步置位
+            ch.RestoreVolume = sess is null ? 50 : Math.Round(sess.Volume * 100);
+            App.Monitor.SetSessionMute(ch.InstanceId, true);
+            App.Monitor.SetSessionVolume(ch.InstanceId, 0f);
+            App.Engine.SetUserVolume(ch.InstanceId, 0f);
+            AnimateFader(ch, 0);
+        }
+    }
+
+    /// <summary>调音台区滚轮 → 横向滚动（多应用时显示全部通道）。</summary>
+    private void OnChannelsMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (ChannelsScroller.ScrollableWidth <= 0)
+            return;
+        ChannelsScroller.ScrollToHorizontalOffset(ChannelsScroller.HorizontalOffset - e.Delta);
+        e.Handled = true;
     }
 
     // ---------- 分组 ----------

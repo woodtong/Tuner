@@ -210,7 +210,9 @@
                                 <TextBlock Text="MASTER=默认播放设备；被闪避的应用由规则接管，此时调整将更新其恢复目标"
                                            Style="{StaticResource Hint}" HorizontalAlignment="Right" />
                             </Grid>
-                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ScrollViewer x:Name="ChannelsScroller"
+                                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
+                                          PreviewMouseWheel="OnChannelsMouseWheel">
                                 <StackPanel Orientation="Horizontal">
                                     <!-- MASTER 通道（调音台主输出） -->
                                     <Border Width="112" Background="{StaticResource PageBg}"
@@ -273,14 +275,22 @@
                                                         <Slider Style="{StaticResource FaderV}" Height="130" Orientation="Vertical"
                                                                 Minimum="0" Maximum="100" Value="{Binding VolumePercent}"
                                                                 ValueChanged="OnChannelVolumeChanged" Margin="0,8,0,0"
+                                                                Loaded="OnChannelFaderLoaded"
                                                                 HorizontalAlignment="Center" />
                                                         <TextBlock Text="{Binding VolumeText}" FontFamily="Consolas" FontSize="12"
                                                                    Height="18" Foreground="{StaticResource TextSecondary}"
                                                                    Margin="0,6,0,0" TextAlignment="Center" />
-                                                        <Button Content="{Binding MuteText}" Width="76" Margin="0,8,0,0"
+                                                        <Button x:Name="MuteBtn" Content="{Binding MuteText}" Width="76" Margin="0,8,0,0"
                                                                 Style="{StaticResource Btn}" Click="OnChannelMuteClick" />
                                                     </StackPanel>
                                                 </Border>
+                                                <DataTemplate.Triggers>
+                                                    <DataTrigger Binding="{Binding ZeroState}" Value="True">
+                                                        <Setter TargetName="MuteBtn" Property="Background" Value="#3A1B1B" />
+                                                        <Setter TargetName="MuteBtn" Property="BorderBrush" Value="#7A2E2E" />
+                                                        <Setter TargetName="MuteBtn" Property="Foreground" Value="#F8A0A0" />
+                                                    </DataTrigger>
+                                                </DataTemplate.Triggers>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
