@@ -256,27 +256,30 @@
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
     </Style>
 
-    <!-- 页签（下划线式） -->
+    <!-- 导航（左侧栏式） -->
     <Style TargetType="TabItem">
         <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
-                    <Border x:Name="Bd" BorderThickness="0,0,0,2.5" BorderBrush="Transparent"
-                            Padding="6,0" Margin="0,0,10,0">
+                    <Border x:Name="Bd" BorderThickness="3,0,0,0" BorderBrush="Transparent"
+                            Background="Transparent" CornerRadius="0,6,6,0"
+                            Padding="12,9" Margin="0,0,10,4">
                         <ContentPresenter x:Name="Header" ContentSource="Header"
-                                          TextElement.FontSize="14"
+                                          TextElement.FontSize="13.5"
                                           TextElement.Foreground="{TemplateBinding Foreground}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Accent}" />
-                            <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSoft}" />
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
                             <Setter TargetName="Header" Property="TextElement.FontWeight" Value="SemiBold" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverSoft}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -290,14 +293,15 @@
             <Setter.Value>
                 <ControlTemplate TargetType="TabControl">
                     <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
-                        <Border Grid.Row="0" BorderBrush="{StaticResource CardBorder}" BorderThickness="0,0,0,1">
-                            <TabPanel IsItemsHost="True" Background="Transparent" Margin="0,0,0,-1" />
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Border Grid.Column="0" BorderBrush="{StaticResource CardBorder}"
+                                BorderThickness="0,0,1,0" Margin="0,0,16,0">
+                            <StackPanel IsItemsHost="True" Orientation="Vertical" Margin="0,4,0,0" />
                         </Border>
-                        <ContentPresenter Grid.Row="1" ContentSource="SelectedContent" Margin="0,14,0,0" />
+                        <ContentPresenter Grid.Column="1" ContentSource="SelectedContent" Margin="2,0,0,0" />
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
