@@ -17,6 +17,8 @@ using Color = System.Windows.Media.Color;
 using ComboBox = System.Windows.Controls.ComboBox;
 using Imaging = System.Windows.Interop.Imaging;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
+using MouseEventArgs = System.Windows.Input.MouseEventArgs;
+using MouseWheelEventArgs = System.Windows.Input.MouseWheelEventArgs;
 using MessageBox = System.Windows.MessageBox;
 using TabControl = System.Windows.Controls.TabControl;
 
