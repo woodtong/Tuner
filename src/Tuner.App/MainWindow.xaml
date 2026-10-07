@@ -26,10 +26,9 @@
             </StackPanel>
             <controls:LedMeter DockPanel.Dock="Right" x:Name="MasterMeter" Width="110" Height="8" Segments="14"
                                VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="设备总峰值" />
-            <Button DockPanel.Dock="Right" x:Name="DeviceButton" HorizontalContentAlignment="Stretch"
-                    Background="{StaticResource CardBg}" BorderBrush="{StaticResource FieldBorder}"
-                    Padding="11,4" Margin="0,0,10,0" VerticalAlignment="Center" Cursor="Hand"
-                    Click="OnDeviceButtonClicked"
+            <Button DockPanel.Dock="Right" x:Name="DeviceButton" Style="{StaticResource Btn}"
+                    HorizontalContentAlignment="Stretch" Padding="11,4" Margin="0,0,10,0"
+                    VerticalAlignment="Center" Click="OnDeviceButtonClicked"
                     ToolTip="点击切换默认输出设备">
                 <StackPanel Orientation="Horizontal">
                     <Ellipse Width="7" Height="7" Fill="{StaticResource Green}" VerticalAlignment="Center" />
