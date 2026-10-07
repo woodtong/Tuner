@@ -637,36 +637,19 @@ public partial class MainWindow : Window
     {
         var s = App.Config.Settings;
         SetUseSmtc.IsChecked = s.UseMediaSessionStatus;
-        SetActive.Text = $"{s.ActivePeakThreshold * 100:F0}";
-        SetInactive.Text = $"{s.InactivePeakThreshold * 100:F0}";
-        SetHold.Text = s.InactiveHoldMs.ToString();
-        SetGraceOpen.Text = s.StreamOpenSilenceGraceMs.ToString();
-        SetGraceClosed.Text = s.SilenceGraceMs.ToString();
         SetFade.Text = s.FadeDurationMs.ToString();
         SetPoll.Text = s.PollIntervalMs.ToString();
     }
 
     private bool TryParseSettings()
     {
-        float active = 0, inactive = 0;
-        int hold = 0, fade = 0, poll = 0, graceOpen = 0, graceClosed = 0;
-        var ok =
-            float.TryParse(SetActive.Text, out active) &&
-            float.TryParse(SetInactive.Text, out inactive) &&
-            int.TryParse(SetHold.Text, out hold) &&
-            int.TryParse(SetGraceOpen.Text, out graceOpen) &&
-            int.TryParse(SetGraceClosed.Text, out graceClosed) &&
-            int.TryParse(SetFade.Text, out fade) &&
-            int.TryParse(SetPoll.Text, out poll);
-        if (!ok)
+        // 峰值阈值/低电平保持/静音宽限为"未接入 SMTC 应用"的兜底参数，保留在配置文件中，界面不再暴露
+        if (!int.TryParse(SetFade.Text, out var fade))
+            return false;
+        if (!int.TryParse(SetPoll.Text, out var poll))
             return false;
         var s = App.Config.Settings;
         s.UseMediaSessionStatus = SetUseSmtc.IsChecked == true;
-        s.ActivePeakThreshold = Math.Clamp(active, 0.1f, 100f) / 100f;
-        s.InactivePeakThreshold = Math.Clamp(inactive, 0f, s.ActivePeakThreshold * 100f) / 100f;
-        s.InactiveHoldMs = Math.Clamp(hold, 0, 10_000);
-        s.StreamOpenSilenceGraceMs = Math.Clamp(graceOpen, 0, 60_000);
-        s.SilenceGraceMs = Math.Clamp(graceClosed, 0, 60_000);
         s.FadeDurationMs = Math.Clamp(fade, 50, 10_000);
         s.PollIntervalMs = Math.Clamp(poll, 10, 5_000);
         return true;

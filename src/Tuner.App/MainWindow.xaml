@@ -82,36 +82,36 @@
                                                 BorderThickness="1" CornerRadius="8" Padding="12,9" Margin="0,0,4,8">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="30" />
+                                                    <ColumnDefinition Width="16" />
+                                                    <ColumnDefinition Width="150" />
                                                     <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="132" />
+                                                    <ColumnDefinition Width="112" />
+                                                    <ColumnDefinition Width="192" />
                                                 </Grid.ColumnDefinitions>
 
                                                 <TextBlock Grid.Column="0" Text="{Binding Channel}" FontFamily="Consolas"
                                                            FontSize="11" Foreground="{StaticResource TextFaint}"
-                                                           VerticalAlignment="Top" Margin="2,1,10,0" />
+                                                           VerticalAlignment="Top" Margin="2,1,0,0" />
 
                                                 <Ellipse Grid.Column="1" Width="9" Height="9"
                                                          Fill="{Binding SpeakingBrush}" VerticalAlignment="Center" />
 
-                                                <StackPanel Grid.Column="2" Margin="9,0,0,0" VerticalAlignment="Center">
+                                                <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding Process}" FontSize="14" FontWeight="SemiBold"
-                                                               Foreground="{StaticResource TextPrimary}" />
+                                                               Foreground="{StaticResource TextPrimary}"
+                                                               TextTrimming="CharacterEllipsis" />
                                                     <TextBlock Text="{Binding PidText}" FontSize="10.5" FontFamily="Consolas"
                                                                Foreground="{StaticResource TextFaint}" Margin="0,1,0,0" />
                                                 </StackPanel>
 
                                                 <Border Grid.Column="3" Background="{Binding GroupBrush}" CornerRadius="4"
-                                                        Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center"
-                                                        Margin="12,0,0,0">
+                                                        Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding GroupName}" FontSize="11" Foreground="White" />
                                                 </Border>
 
-                                                <StackPanel Grid.Column="4" Width="132" VerticalAlignment="Center" Margin="0,0,14,0">
+                                                <StackPanel Grid.Column="4" VerticalAlignment="Center" Margin="0,0,14,0">
                                                     <TextBlock Text="PEAK" FontSize="9.5" Foreground="{StaticResource TextFaint}" />
                                                     <controls:LedMeter Height="10" Segments="12" Margin="0,3,0,0"
                                                                        Value="{Binding PeakPercent}" />
@@ -159,6 +159,7 @@
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
@@ -188,50 +189,58 @@
                         </Grid>
                     </Border>
 
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl x:Name="VolumeList">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}"
-                                            BorderThickness="1" CornerRadius="8" Padding="12,9" Margin="0,0,4,8">
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="170" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <StackPanel VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
-                                                           Foreground="{StaticResource TextPrimary}" />
-                                                <TextBlock Text="{Binding PidText}" FontSize="10.5" FontFamily="Consolas"
-                                                           Foreground="{StaticResource TextFaint}" Margin="0,1,0,0" />
-                                            </StackPanel>
-                                            <Border Grid.Column="1" Background="{Binding GroupBrush}" CornerRadius="4"
-                                                    Padding="8,3" VerticalAlignment="Center" Margin="0,0,12,0">
-                                                <TextBlock Text="{Binding GroupName}" FontSize="11" Foreground="White" />
+                    <Border Grid.Row="1" Style="{StaticResource Card}" Padding="14,12" VerticalAlignment="Top">
+                        <StackPanel>
+                            <Grid Margin="0,0,0,12">
+                                <TextBlock Text="应用通道" FontSize="13.5" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}" />
+                                <TextBlock Text="实时电平与音量；被闪避的应用由规则接管，此时调整将更新其恢复目标"
+                                           Style="{StaticResource Hint}" HorizontalAlignment="Right" />
+                            </Grid>
+                            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                                <ItemsControl x:Name="VolumeList">
+                                    <ItemsControl.ItemsPanel>
+                                        <ItemsPanelTemplate>
+                                            <StackPanel Orientation="Horizontal" />
+                                        </ItemsPanelTemplate>
+                                    </ItemsControl.ItemsPanel>
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Width="112" Background="{StaticResource PageBg}"
+                                                    BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
+                                                    CornerRadius="8" Padding="10,10" Margin="0,0,10,4">
+                                                <StackPanel>
+                                                    <Border Background="{Binding GroupBrush}" CornerRadius="4" Padding="6,2"
+                                                            HorizontalAlignment="Center">
+                                                        <TextBlock Text="{Binding GroupName}" FontSize="10.5" Foreground="White" />
+                                                    </Border>
+                                                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold"
+                                                               Foreground="{StaticResource TextPrimary}" Margin="0,8,0,0"
+                                                               TextAlignment="Center" TextWrapping="Wrap" MaxHeight="32"
+                                                               TextTrimming="CharacterEllipsis" />
+                                                    <TextBlock Text="{Binding PidText}" FontSize="9.5" FontFamily="Consolas"
+                                                               Foreground="{StaticResource TextFaint}" Margin="0,1,0,0"
+                                                               TextAlignment="Center" />
+                                                    <controls:LedMeter Height="110" Width="14" Orientation="Vertical"
+                                                                       Segments="16" Value="{Binding PeakPercent}"
+                                                                       Margin="0,10,0,0" HorizontalAlignment="Center" />
+                                                    <Slider Style="{StaticResource FaderV}" Height="130" Orientation="Vertical"
+                                                            Minimum="0" Maximum="100" Value="{Binding VolumePercent}"
+                                                            ValueChanged="OnChannelVolumeChanged" Margin="0,10,0,0"
+                                                            HorizontalAlignment="Center" />
+                                                    <TextBlock Text="{Binding VolumeText}" FontFamily="Consolas" FontSize="12"
+                                                               Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"
+                                                               TextAlignment="Center" />
+                                                    <Button Content="{Binding MuteText}" Width="76" Margin="0,8,0,0"
+                                                            Style="{StaticResource Btn}" Click="OnChannelMuteClick" />
+                                                </StackPanel>
                                             </Border>
-                                            <controls:LedMeter Grid.Column="2" Height="10" Segments="14"
-                                                               Value="{Binding PeakPercent}" VerticalAlignment="Center"
-                                                               Margin="0,0,14,0" Width="130" />
-                                            <Slider Grid.Column="3" Style="{StaticResource Fader}"
-                                                    Minimum="0" Maximum="100" VerticalAlignment="Center"
-                                                    Value="{Binding VolumePercent}"
-                                                    ValueChanged="OnChannelVolumeChanged" />
-                                            <TextBlock Grid.Column="4" Text="{Binding VolumeText}" FontFamily="Consolas"
-                                                       FontSize="12" Foreground="{StaticResource TextSecondary}"
-                                                       VerticalAlignment="Center" Margin="8,0,10,0" MinWidth="40"
-                                                       TextAlignment="Right" />
-                                            <Button Grid.Column="5" Content="{Binding MuteText}" Width="76"
-                                                    Style="{StaticResource Btn}" Click="OnChannelMuteClick" />
-                                        </Grid>
-                                    </Border>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </StackPanel>
+                    </Border>
                 </Grid>
             </TabItem>
 
@@ -494,76 +503,14 @@
                             <StackPanel>
                                 <TextBlock Text="出声判定" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" />
-                                <Grid Margin="0,12,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="230" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="进入阈值 %" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" x:Name="SetActive" Style="{StaticResource Tb}" Width="80" />
-                                    <TextBlock Grid.Column="2" Text="会话峰值超过该值判定为「出声」"
-                                               Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
-                                </Grid>
-                                <Grid Margin="0,10,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="230" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="退出阈值 %" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" x:Name="SetInactive" Style="{StaticResource Tb}" Width="80" />
-                                    <TextBlock Grid.Column="2" Text="低于进入阈值构成迟滞带，防止临界抖动"
-                                               Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
-                                </Grid>
-                            <CheckBox x:Name="SetUseSmtc" Content="优先使用系统媒体播放状态判定（推荐：歌间静音不误判，停止/暂停立即恢复）"
-                                      Margin="0,14,0,0" />
-
-                            <Grid Grid.Row="6" Margin="0,12,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="230" />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Text="低电平保持 ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                <TextBox Grid.Column="1" x:Name="SetHold" Style="{StaticResource Tb}" Width="80" />
-                                <TextBlock Grid.Column="2" Text="峰值持续低于退出阈值此时长才判定停止，防止断续声音导致音量抽搐"
-                                           Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
-                            </Grid>
-                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
-                                <TextBlock Text="宽限仅对未接入系统媒体会话的应用生效" Style="{StaticResource Hint}" />
-                            </StackPanel>
+                                <CheckBox x:Name="SetUseSmtc" Content="优先使用系统媒体播放状态判定（推荐：歌间静音不误判，停止/暂停立即恢复）"
+                                          Margin="0,14,0,0" HorizontalAlignment="Left" />
+                                <TextBlock Text="未接入系统媒体会话的应用（部分游戏、老播放器）自动回退为峰值判定，"
+                                           Style="{StaticResource Hint}" Margin="0,10,0,0" />
+                                <TextBlock Text="其进入/退出阈值、低电平保持与静音宽限等兜底参数在配置文件中调整"
+                                           Style="{StaticResource Hint}" />
                         </StackPanel>
                     </Border>
-
-                        <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,12">
-                            <StackPanel>
-                                <TextBlock Text="静音宽限（防止把短暂静音误判为停止）" FontSize="13.5" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextPrimary}" />
-                                <Grid Margin="0,12,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="230" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="宽限 · 音频流仍打开 ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" x:Name="SetGraceOpen" Style="{StaticResource Tb}" Width="80" />
-                                    <TextBlock Grid.Column="2" Text="触发组静音但音频流未关闭（歌曲间隙、淡入淡出）时，保持闪避此时长，默认约 8000"
-                                               Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
-                                </Grid>
-                                <Grid Margin="0,10,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="230" />
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="宽限 · 音频流已关闭 ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" x:Name="SetGraceClosed" Style="{StaticResource Tb}" Width="80" />
-                                    <TextBlock Grid.Column="2" Text="音频流已关闭（应用真正停止或退出）时的恢复宽限，默认约 1500"
-                                               Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
-                                </Grid>
-                            </StackPanel>
-                        </Border>
 
                         <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,12">
                             <StackPanel>
