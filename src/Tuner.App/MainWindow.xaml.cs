@@ -65,7 +65,7 @@ public partial class MainWindow : Window
         SetSaveStatus(null);
 
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-        timer.Tick += (_, _) => RefreshStatus();
+        timer.Tick += (_, _) => { RefreshStatus(); RefreshVolumes(); };
         timer.Start();
         App.Engine.EngineStateChanged += () => Dispatcher.BeginInvoke(() => RefreshStatus());
     }
@@ -184,6 +184,115 @@ public partial class MainWindow : Window
         StatDucking.Text = ducking.ToString();
         MasterMeter.Value = Math.Round(App.Monitor.DevicePeak * 100);
         StatusEmpty.Visibility = sessions.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    }
+
+    // ---------- 音量（输出混音台） ----------
+
+    private sealed class VolumeChannel : INotifyPropertyChanged
+    {
+        public string InstanceId = "";
+        public bool Suppress; // 程序化刷新时抑制 ValueChanged 回写
+
+        private string _name = "";
+        private string _pidText = "";
+        private string _groupName = "";
+        private Brush _groupBrush = IdleBrush;
+        private double _peakPercent;
+        private double _volumePercent = 100;
+        private string _muteText = "静音";
+
+        public string Name { get => _name; set { _name = value; Pc(); } }
+        public string PidText { get => _pidText; set { _pidText = value; Pc(); } }
+        public string GroupName { get => _groupName; set { _groupName = value; Pc(); } }
+        public Brush GroupBrush { get => _groupBrush; set { _groupBrush = value; Pc(); } }
+        public double PeakPercent { get => _peakPercent; set { _peakPercent = value; Pc(); } }
+        public double VolumePercent { get => _volumePercent; set { _volumePercent = value; Pc(); } }
+        public string MuteText { get => _muteText; set { _muteText = value; Pc(); } }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        private void Pc() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
+    }
+
+    private readonly ObservableCollection<VolumeChannel> _volumeRows = new();
+    private readonly Dictionary<string, VolumeChannel> _volumeById = new();
+    private string _volumeSignature = "";
+    private bool _masterSuppress;
+
+    private void RefreshVolumes()
+    {
+        var states = App.Engine.CurrentStates.ToDictionary(s => s.InstanceId);
+        var sessions = App.Monitor.CurrentSnapshot
+            .OrderBy(s => GroupIndex(states.GetValueOrDefault(s.InstanceId)?.GroupId ?? ""))
+            .ThenBy(s => s.ProcessName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(s => s.Pid)
+            .ToList();
+
+        var sig = string.Join("|", sessions.Select(s => s.InstanceId));
+        if (sig != _volumeSignature)
+        {
+            _volumeSignature = sig;
+            _volumeRows.Clear();
+            _volumeById.Clear();
+            foreach (var s in sessions)
+            {
+                var row = new VolumeChannel { InstanceId = s.InstanceId };
+                _volumeRows.Add(row);
+                _volumeById[s.InstanceId] = row;
+            }
+            VolumeList.ItemsSource = _volumeRows;
+        }
+
+        foreach (var s in sessions)
+        {
+            var row = _volumeById[s.InstanceId];
+            var e = states.GetValueOrDefault(s.InstanceId);
+            row.Suppress = true;
+            row.Name = s.ProcessName;
+            row.PidText = s.Pid.ToString();
+            row.GroupName = e?.GroupName ?? "—";
+            row.GroupBrush = GroupBrush(e?.GroupId ?? "");
+            row.PeakPercent = Math.Round(s.Peak * 100);
+            row.VolumePercent = Math.Round(s.Volume * 100);
+            row.MuteText = s.Mute ? "已静音" : "静音";
+            row.Suppress = false;
+        }
+
+        _masterSuppress = true;
+        if (!MasterSlider.IsMouseCaptureWithin)
+            MasterSlider.Value = Math.Round(App.Monitor.MasterVolume * 100);
+        MasterVolText.Text = $"{(int)Math.Round(App.Monitor.MasterVolume * 100)}%";
+        MasterMeterBig.Value = Math.Round(App.Monitor.DevicePeak * 100);
+        MasterMuteBtn.Content = App.Monitor.MasterMuted ? "取消静音" : "静音";
+        _masterSuppress = false;
+    }
+
+    private void OnMasterVolumeChanged(object sender, RoutedEventArgs e)
+    {
+        if (_masterSuppress)
+            return;
+        App.Monitor.SetMasterVolume((float)Math.Clamp(MasterSlider.Value, 0, 100) / 100f);
+    }
+
+    private void OnMasterMuteClick(object sender, RoutedEventArgs e)
+    {
+        App.Monitor.SetMasterMute(!App.Monitor.MasterMuted);
+    }
+
+    private void OnChannelVolumeChanged(object sender, RoutedEventArgs e)
+    {
+        if ((sender as Slider)?.DataContext is not VolumeChannel ch || ch.Suppress)
+            return;
+        var v = (float)Math.Clamp(((Slider)sender).Value, 0, 100) / 100f;
+        App.Monitor.SetSessionVolume(ch.InstanceId, v);
+        App.Engine.SetUserVolume(ch.InstanceId, v); // 闪避中手动调整 → 更新恢复锚点
+    }
+
+    private void OnChannelMuteClick(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.DataContext is not VolumeChannel ch)
+            return;
+        var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
+        App.Monitor.SetSessionMute(ch.InstanceId, sess?.Mute != true);
     }
 
     // ---------- 分组 ----------
@@ -614,7 +723,7 @@ public partial class MainWindow : Window
         try
         {
             Directory.CreateDirectory(dir);
-            var names = new[] { "1-实时状态", "2-分组", "3-规则", "4-设置" };
+            var names = new[] { "1-实时状态", "2-音量", "3-分组", "4-规则", "5-设置" };
             for (int i = 0; i < Tabs.Items.Count && i < names.Length; i++)
             {
                 Tabs.SelectedIndex = i;

@@ -16,6 +16,11 @@ public sealed class AudioSessionMonitor : IDisposable
     private readonly int _fullReconcilePeriodTicks;
     private readonly object _gate = new();
     private readonly Dictionary<string, TrackedSession> _tracked = new();
+    private readonly object _pendingGate = new();
+    private readonly Dictionary<string, float> _pendingSessionVolumes = new();
+    private readonly Dictionary<string, bool> _pendingSessionMutes = new();
+    private float? _pendingMasterVolume;
+    private bool? _pendingMasterMute;
 
     private MMDeviceEnumerator? _enumerator;
     private MMDevice? _device;
@@ -43,6 +48,36 @@ public sealed class AudioSessionMonitor : IDisposable
 
     /// <summary>设备整体峰值电平（0..1），用于诊断整机静音等问题。</summary>
     public float DevicePeak { get; private set; }
+
+    /// <summary>主输出（默认设备）音量（0..1），由轮询线程每周期回读。</summary>
+    public float MasterVolume { get; private set; }
+
+    /// <summary>主输出是否静音。</summary>
+    public bool MasterMuted { get; private set; }
+
+    // —— 音量写入入口（UI 线程调用，实际 COM 写在轮询线程执行，避免跨套间） ——
+
+    public void SetMasterVolume(float volume)
+    {
+        _pendingMasterVolume = Math.Clamp(volume, 0f, 1f);
+    }
+
+    public void SetMasterMute(bool mute)
+    {
+        _pendingMasterMute = mute;
+    }
+
+    public void SetSessionVolume(string instanceId, float volume)
+    {
+        lock (_pendingGate)
+            _pendingSessionVolumes[instanceId] = Math.Clamp(volume, 0f, 1f);
+    }
+
+    public void SetSessionMute(string instanceId, bool mute)
+    {
+        lock (_pendingGate)
+            _pendingSessionMutes[instanceId] = mute;
+    }
 
     /// <summary>最近一个轮询周期的会话快照（供异步消费者以自己的节奏读取）。</summary>
     public IReadOnlyList<SoundSession> CurrentSnapshot => _lastSnapshot;
@@ -258,16 +293,46 @@ public sealed class AudioSessionMonitor : IDisposable
 
     private void UpdateSamples(bool fullReconcile)
     {
+        float? pendingMasterVolume;
+        bool? pendingMasterMute;
+        Dictionary<string, float> pendingVolumes;
+        Dictionary<string, bool> pendingMutes;
+        lock (_pendingGate)
+        {
+            pendingMasterVolume = _pendingMasterVolume;
+            _pendingMasterVolume = null;
+            pendingMasterMute = _pendingMasterMute;
+            _pendingMasterMute = null;
+            pendingVolumes = new Dictionary<string, float>(_pendingSessionVolumes);
+            _pendingSessionVolumes.Clear();
+            pendingMutes = new Dictionary<string, bool>(_pendingSessionMutes);
+            _pendingSessionMutes.Clear();
+        }
+
         lock (_gate)
         {
             DevicePeak = Clamp01(_device!.AudioMeterInformation.MasterPeakValue);
+
+            var endpoint = _device.AudioEndpointVolume;
+            if (pendingMasterVolume is not null)
+                endpoint.MasterVolumeLevelScalar = pendingMasterVolume.Value;
+            if (pendingMasterMute is not null)
+                endpoint.Mute = pendingMasterMute.Value;
+            MasterVolume = Clamp01(endpoint.MasterVolumeLevelScalar);
+            MasterMuted = endpoint.Mute;
 
             foreach (var t in _tracked.Values)
             {
                 try
                 {
+                    if (pendingVolumes.TryGetValue(t.Snapshot.InstanceId, out var sv))
+                        t.Native.SimpleAudioVolume.Volume = sv;
+                    if (pendingMutes.TryGetValue(t.Snapshot.InstanceId, out var sm))
+                        t.Native.SimpleAudioVolume.Mute = sm;
+
                     t.Snapshot.Peak = Clamp01(t.Native.AudioMeterInformation.MasterPeakValue);
                     t.Snapshot.Volume = Clamp01(t.Native.SimpleAudioVolume.Volume);
+                    t.Snapshot.Mute = t.Native.SimpleAudioVolume.Mute;
                     t.Snapshot.State = MapState(t.Native.State);
                 }
                 catch

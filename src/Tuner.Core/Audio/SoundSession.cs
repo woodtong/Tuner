@@ -26,6 +26,9 @@ public sealed class SoundSession
     /// <summary>会话音量（0..1，即音量混合器中该应用的音量）。</summary>
     public float Volume { get; internal set; }
 
-    /// <summary>最近一次轮询的峰值电平（0..1）。</summary>
+    /// <summary>最近一次轮询的峰值电平（0..1）。注意：测量的是应用音量之前的信号。</summary>
     public float Peak { get; internal set; }
+
+    /// <summary>会话是否被静音。</summary>
+    public bool Mute { get; internal set; }
 }

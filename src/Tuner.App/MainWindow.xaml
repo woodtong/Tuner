@@ -154,6 +154,87 @@
                 </Grid>
             </TabItem>
 
+            <!-- ═══ 音量（输出混音台） ═══ -->
+            <TabItem Header="音量">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0" Style="{StaticResource Card}" Padding="16,12" Margin="0,0,4,10">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="主输出" FontSize="14" FontWeight="SemiBold"
+                                       Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center" />
+                            <Slider Grid.Column="1" x:Name="MasterSlider" Style="{StaticResource Fader}"
+                                    Width="280" Minimum="0" Maximum="100" Margin="20,0,0,0"
+                                    VerticalAlignment="Center" ValueChanged="OnMasterVolumeChanged" />
+                            <TextBlock Grid.Column="2" x:Name="MasterVolText" FontFamily="Consolas" FontSize="13"
+                                       Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"
+                                       Margin="10,0,0,0" MinWidth="46" />
+                            <controls:LedMeter Grid.Column="3" x:Name="MasterMeterBig" Width="170" Height="14"
+                                               Segments="20" VerticalAlignment="Center" Margin="16,0,0,0"
+                                               ToolTip="设备总峰值" />
+                            <Button Grid.Column="4" x:Name="MasterMuteBtn" Style="{StaticResource Btn}" Width="86"
+                                    Margin="16,0,0,0" Click="OnMasterMuteClick" />
+                        </Grid>
+                    </Border>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl x:Name="VolumeList">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}"
+                                            BorderThickness="1" CornerRadius="8" Padding="12,9" Margin="0,0,4,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="170" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel VerticalAlignment="Center">
+                                                <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold"
+                                                           Foreground="{StaticResource TextPrimary}" />
+                                                <TextBlock Text="{Binding PidText}" FontSize="10.5" FontFamily="Consolas"
+                                                           Foreground="{StaticResource TextFaint}" Margin="0,1,0,0" />
+                                            </StackPanel>
+                                            <Border Grid.Column="1" Background="{Binding GroupBrush}" CornerRadius="4"
+                                                    Padding="8,3" VerticalAlignment="Center" Margin="0,0,12,0">
+                                                <TextBlock Text="{Binding GroupName}" FontSize="11" Foreground="White" />
+                                            </Border>
+                                            <controls:LedMeter Grid.Column="2" Height="10" Segments="14"
+                                                               Value="{Binding PeakPercent}" VerticalAlignment="Center"
+                                                               Margin="0,0,14,0" Width="130" />
+                                            <Slider Grid.Column="3" Style="{StaticResource Fader}"
+                                                    Minimum="0" Maximum="100" VerticalAlignment="Center"
+                                                    Value="{Binding VolumePercent}"
+                                                    ValueChanged="OnChannelVolumeChanged" />
+                                            <TextBlock Grid.Column="4" Text="{Binding VolumeText}" FontFamily="Consolas"
+                                                       FontSize="12" Foreground="{StaticResource TextSecondary}"
+                                                       VerticalAlignment="Center" Margin="8,0,10,0" MinWidth="40"
+                                                       TextAlignment="Right" />
+                                            <Button Grid.Column="5" Content="{Binding MuteText}" Width="76"
+                                                    Style="{StaticResource Btn}" Click="OnChannelMuteClick" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
             <!-- ═══ 分组 ═══ -->
             <TabItem Header="分组">
                 <Grid>

@@ -133,6 +133,20 @@ public sealed class DuckingEngine : IDisposable
         }
     }
 
+    /// <summary>
+    /// 用户在混音台手动调整某会话音量：若该会话正在闪避，仅更新其"恢复锚点"
+    /// （闪避结束回到用户调整后的值），实际音量仍由规则接管；未闪避的会话无需处理
+    /// （引擎仅在自身写入时更新，不会覆盖用户的调整）。
+    /// </summary>
+    public void SetUserVolume(string instanceId, float volume)
+    {
+        lock (_gate)
+        {
+            if (_tracked.TryGetValue(instanceId, out var t) && t.Ducked)
+                t.OriginalVolume = Math.Clamp(volume, 0f, 1f);
+        }
+    }
+
     private void Loop()
     {
         var ct = _cts!.Token;
