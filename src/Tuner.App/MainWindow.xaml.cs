@@ -348,8 +348,7 @@ public partial class MainWindow : Window
             App.Monitor.SetSessionMute(ch.InstanceId, false); // 拖起音量即解除静音标志
         App.Monitor.SetSessionVolume(ch.InstanceId, v);
         App.Engine.SetUserVolume(ch.InstanceId, v); // 闪避中手动调整 → 更新恢复锚点
-        if (v > 0.005f)
-            ch.RestoreVolume = Math.Round(v * 100); // 用户主动设置的非零音量才作为恢复值
+        // 恢复值不在此处记录：拖动松手（DragCompleted）才记录，避免渐变中间值污染
     }
 
     private readonly Dictionary<string, Slider> _faderByInstance = new();
@@ -357,7 +356,35 @@ public partial class MainWindow : Window
     private void OnChannelFaderLoaded(object sender, RoutedEventArgs e)
     {
         if (sender is Slider s && s.DataContext is VolumeChannel ch)
+        {
             _faderByInstance[ch.InstanceId] = s;
+            var thumb = FindDescendant<System.Windows.Controls.Primitives.Thumb>(s);
+            if (thumb is not null)
+                thumb.DragCompleted += (_, _) => OnChannelFaderDragCompleted(ch, s);
+        }
+    }
+
+    private static T? FindDescendant<T>(DependencyObject root) where T : DependencyObject
+    {
+        var count = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < count; i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is T hit)
+                return hit;
+            var deeper = FindDescendant<T>(child);
+            if (deeper is not null)
+                return deeper;
+        }
+        return null;
+    }
+
+    /// <summary>松手才记录恢复值；松手位置为 0 则不记录。</summary>
+    private void OnChannelFaderDragCompleted(VolumeChannel ch, Slider slider)
+    {
+        var v = slider.Value;
+        if (v > 0.005)
+            ch.RestoreVolume = Math.Round(v);
     }
 
     /// <summary>推子动画到目标值（结束后解除动画时钟并回写绑定值）。</summary>
@@ -371,7 +398,8 @@ public partial class MainWindow : Window
         // 动画全程抑制：动画帧触发的 ValueChanged 不是用户拖动，
         // 不得写入会话音量、不得捕获恢复值（否则恢复值被渐变中间值污染）
         ch.Suppress = true;
-        var anim = new System.Windows.Media.Animation.DoubleAnimation(target, TimeSpan.FromMilliseconds(300))
+        var dur = TimeSpan.FromMilliseconds(Math.Max(50, App.Config.Settings.FadeDurationMs));
+        var anim = new System.Windows.Media.Animation.DoubleAnimation(target, dur)
         {
             EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
         };
