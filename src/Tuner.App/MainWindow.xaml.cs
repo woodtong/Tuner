@@ -379,6 +379,58 @@ public partial class MainWindow : Window
         return null;
     }
 
+    /// <summary>悬停于滑轨区时显示凹陷槽。</summary>
+    private void OnChannelFaderMouseEnter(object sender, MouseEventArgs e)
+    {
+        if (sender is Slider s)
+            SetGrooveVisible(s, true);
+    }
+
+    private void OnChannelFaderMouseLeave(object sender, MouseEventArgs e)
+    {
+        if (sender is Slider s)
+            SetGrooveVisible(s, false);
+    }
+
+    private static void SetGrooveVisible(Slider s, bool on)
+    {
+        if (s.Parent is System.Windows.Controls.Panel panel)
+            foreach (var child in panel.Children)
+                if (child is System.Windows.Controls.Border b && b.Name == "FaderGroove")
+                    b.Opacity = on ? 1 : 0;
+    }
+
+    /// <summary>滚轮 1% 精度微调；每次调节都记录恢复值（用户主动微调）。</summary>
+    private void OnChannelFaderMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is not Slider s || s.DataContext is not VolumeChannel ch)
+            return;
+        if (ch.Suppress)
+        {
+            e.Handled = true;
+            return;
+        }
+        var step = e.Delta > 0 ? 1 : -1;
+        var target = Math.Clamp(s.Value + step, 0, 100);
+        e.Handled = true;
+        if (Math.Abs(target - s.Value) < 0.001)
+            return;
+        s.Value = target; // 触发 OnChannelVolumeChanged：写会话音量、拖起解除静音
+        ch.RestoreVolume = target; // 每一次滚轮微调都记录
+    }
+
+    /// <summary>MASTER 滚轮 1% 微调。</summary>
+    private void OnMasterFaderMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is not Slider s)
+            return;
+        var target = Math.Clamp(s.Value + (e.Delta > 0 ? 1 : -1), 0, 100);
+        e.Handled = true;
+        if (Math.Abs(target - s.Value) < 0.001)
+            return;
+        App.Monitor.SetMasterVolume((float)target / 100f);
+    }
+
     /// <summary>松手才记录恢复值；松手位置为 0 则不记录。</summary>
     private void OnChannelFaderDragCompleted(VolumeChannel ch, Slider slider)
     {

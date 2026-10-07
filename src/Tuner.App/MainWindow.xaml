@@ -231,9 +231,17 @@
                                             <controls:LedMeter Height="110" Width="14" Orientation="Vertical" Segments="16"
                                                                x:Name="MasterMeterBig" HorizontalAlignment="Center"
                                                                ToolTip="设备总峰值" />
-                                            <Slider x:Name="MasterSlider" Style="{StaticResource FaderV}" Height="130"
-                                                    Orientation="Vertical" Minimum="0" Maximum="100" Margin="0,10,0,0"
-                                                    HorizontalAlignment="Center" ValueChanged="OnMasterVolumeChanged" />
+                                            <Grid Margin="0,10,0,0" HorizontalAlignment="Center">
+                                                <Border x:Name="MasterGroove" Width="30" CornerRadius="9"
+                                                        Background="#0C0F14" BorderBrush="#04060A"
+                                                        BorderThickness="1" Opacity="0" />
+                                                <Slider x:Name="MasterSlider" Style="{StaticResource FaderV}" Height="130"
+                                                        Orientation="Vertical" Minimum="0" Maximum="100"
+                                                        MouseEnter="OnChannelFaderMouseEnter"
+                                                        MouseLeave="OnChannelFaderMouseLeave"
+                                                        PreviewMouseWheel="OnMasterFaderMouseWheel"
+                                                        HorizontalAlignment="Center" ValueChanged="OnMasterVolumeChanged" />
+                                            </Grid>
                                             <TextBlock x:Name="MasterVolText" FontFamily="Consolas" FontSize="12"
                                                        Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"
                                                        HorizontalAlignment="Center" />
@@ -272,11 +280,20 @@
                                                         <controls:LedMeter Height="110" Width="14" Orientation="Vertical"
                                                                            Segments="16" Value="{Binding PeakPercent}"
                                                                            HorizontalAlignment="Center" />
-                                                        <Slider Style="{StaticResource FaderV}" Height="130" Orientation="Vertical"
-                                                                Minimum="0" Maximum="100" Value="{Binding VolumePercent}"
-                                                                ValueChanged="OnChannelVolumeChanged" Margin="0,8,0,0"
-                                                                Loaded="OnChannelFaderLoaded"
-                                                                HorizontalAlignment="Center" />
+                                                        <Grid Margin="0,8,0,0" HorizontalAlignment="Center">
+                                                            <!-- 凹陷滑轨槽：鼠标悬停于滑轨区时浮现 -->
+                                                            <Border x:Name="FaderGroove" Width="30" CornerRadius="9"
+                                                                    Background="#0C0F14" BorderBrush="#04060A"
+                                                                    BorderThickness="1" Opacity="0" />
+                                                            <Slider Style="{StaticResource FaderV}" Height="130" Orientation="Vertical"
+                                                                    Minimum="0" Maximum="100" Value="{Binding VolumePercent}"
+                                                                    ValueChanged="OnChannelVolumeChanged"
+                                                                    Loaded="OnChannelFaderLoaded"
+                                                                    MouseEnter="OnChannelFaderMouseEnter"
+                                                                    MouseLeave="OnChannelFaderMouseLeave"
+                                                                    PreviewMouseWheel="OnChannelFaderMouseWheel"
+                                                                    HorizontalAlignment="Center" />
+                                                        </Grid>
                                                         <TextBlock Text="{Binding VolumeText}" FontFamily="Consolas" FontSize="12"
                                                                    Height="18" Foreground="{StaticResource TextSecondary}"
                                                                    Margin="0,6,0,0" TextAlignment="Center" />
