@@ -347,7 +347,6 @@ public partial class MainWindow : Window
     {
         if ((sender as Slider)?.DataContext is not VolumeChannel ch || ch.Suppress)
             return;
-        ch.HoldUntil = DateTime.MinValue; // 用户接管，恢复实际值回写
         var v = (float)Math.Clamp(((Slider)sender).Value, 0, 100) / 100f;
         var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
         if (sess is { Mute: true } && v > 0.005f)
@@ -366,7 +365,10 @@ public partial class MainWindow : Window
             _faderByInstance[ch.InstanceId] = s;
             var thumb = FindDescendant<System.Windows.Controls.Primitives.Thumb>(s);
             if (thumb is not null)
+            {
+                thumb.DragStarted += (_, _) => OnChannelFaderDragStarted(ch, s);
                 thumb.DragCompleted += (_, _) => OnChannelFaderDragCompleted(ch, s);
+            }
         }
     }
 
@@ -421,8 +423,16 @@ public partial class MainWindow : Window
         e.Handled = true;
         if (Math.Abs(target - s.Value) < 0.001)
             return;
-        s.Value = target; // 触发 OnChannelVolumeChanged：写会话音量、拖起解除静音
+        // 实际值立即落（一次写入），视觉动效 357ms（静音 500ms 的 140% 速度）
+        var v = (float)(target / 100.0);
+        var sessLive = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
+        if (sessLive is { Mute: true } && v > 0.005f)
+            App.Monitor.SetSessionMute(ch.InstanceId, false);
+        s.BeginAnimation(Slider.ValueProperty, null); // 终止进行中的动画
+        App.Monitor.SetSessionVolume(ch.InstanceId, v);
+        App.Engine.SetUserVolume(ch.InstanceId, v);
         ch.RestoreVolume = target; // 每一次滚轮微调都记录
+        AnimateFader(ch, target, (int)(500 / 1.4));
     }
 
     /// <summary>MASTER 滚轮 1% 微调。</summary>
@@ -437,16 +447,27 @@ public partial class MainWindow : Window
         App.Monitor.SetMasterVolume((float)target / 100f);
     }
 
+    /// <summary>拖动开始：冻结刷新回写（推子完全跟手），并终止进行中的动画。</summary>
+    private void OnChannelFaderDragStarted(VolumeChannel ch, Slider slider)
+    {
+        var current = slider.Value; // 动画值
+        slider.BeginAnimation(Slider.ValueProperty, null); // 终止动画
+        slider.Value = current; // 基值钉在当前位置，避免回弹
+        ch.Suppress = false;
+        ch.HoldUntil = DateTime.UtcNow + TimeSpan.FromSeconds(10); // 拖动期间刷新不回写
+    }
+
     /// <summary>松手才记录恢复值；松手位置为 0 则不记录。</summary>
     private void OnChannelFaderDragCompleted(VolumeChannel ch, Slider slider)
     {
+        ch.HoldUntil = DateTime.UtcNow; // 解除拖动冻结，刷新恢复
         var v = slider.Value;
         if (v > 0.005)
             ch.RestoreVolume = Math.Round(v);
     }
 
     /// <summary>推子动画到目标值（结束后解除动画时钟并回写绑定值）。</summary>
-    private void AnimateFader(VolumeChannel ch, double target)
+    private void AnimateFader(VolumeChannel ch, double target, int durationMs = 500)
     {
         if (!_faderByInstance.TryGetValue(ch.InstanceId, out var slider))
         {
@@ -456,8 +477,9 @@ public partial class MainWindow : Window
         // 动画全程抑制：动画帧触发的 ValueChanged 不是用户拖动，
         // 不得写入会话音量、不得捕获恢复值（否则恢复值被渐变中间值污染）
         ch.Suppress = true;
-        ch.HoldUntil = DateTime.UtcNow + TimeSpan.FromMilliseconds(750); // 动画期+余量，刷新不回写推子
-        var anim = new System.Windows.Media.Animation.DoubleAnimation(target, TimeSpan.FromMilliseconds(500))
+        ch.HoldUntil = DateTime.UtcNow + TimeSpan.FromMilliseconds(durationMs + 250); // 动画期+余量，刷新不回写推子
+        // 从当前动画位置出发（中途重定向不跳变）
+        var anim = new System.Windows.Media.Animation.DoubleAnimation(slider.Value, target, TimeSpan.FromMilliseconds(durationMs))
         {
             EasingFunction = new System.Windows.Media.Animation.CubicEase { EasingMode = System.Windows.Media.Animation.EasingMode.EaseOut },
         };
