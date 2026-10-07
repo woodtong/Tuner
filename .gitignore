@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+dist/
+*.user
+*.suo
+ui-preview/
+*.log
+.mimosa/

@@ -1,0 +1,22 @@
+{
+  // 自动化验收用测试配置（勿作为日常配置）：
+  // r1: "测试目标"(tuner.console，即 --selftest 进程内音源) 出声 → 音乐组(qqmusic) 渐变到 20%
+  // r2: 音乐组出声 → "测试目标" 成员创建即初始化到 50%（短促声音对策验证）
+  // 注：--selftest 使用内嵌等价配置（音源进程名自动取当前进程），此文件供手动 --config 复现用
+  "settings": {
+    "activePeakThreshold": 0.05,
+    "inactivePeakThreshold": 0.02,
+    "inactiveHoldMs": 500,
+    "fadeDurationMs": 1200,
+    "pollIntervalMs": 100
+  },
+  "groups": [
+    { "id": "music", "name": "音乐", "processNames": ["qqmusic"], "isDefault": false },
+    { "id": "aux", "name": "测试目标", "processNames": ["tuner.console"], "isDefault": false },
+    { "id": "default", "name": "其他", "processNames": [], "isDefault": true }
+  ],
+  "rules": [
+    { "id": "r1", "enabled": true, "triggerGroupId": "aux", "targetGroupId": "music", "targetVolumePercent": 20, "priority": 10 },
+    { "id": "r2", "enabled": true, "triggerGroupId": "music", "targetGroupId": "aux", "targetVolumePercent": 50, "priority": 5 }
+  ]
+}

@@ -1,0 +1,79 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace Tuner.Core.Config;
+
+/// <summary>TunerConfig 的 JSON 读写。</summary>
+public static class ConfigStore
+{
+    private static readonly JsonSerializerOptions Options = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true,
+        WriteIndented = true,
+        ReadCommentHandling = JsonCommentHandling.Skip,
+        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
+    };
+
+    public static string DefaultDir =>
+        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tuner");
+
+    public static string DefaultPath => Path.Combine(DefaultDir, "config.json");
+
+    public static TunerConfig Load(string path)
+    {
+        if (!File.Exists(path))
+            return CreateDefault();
+        var config = JsonSerializer.Deserialize<TunerConfig>(File.ReadAllText(path), Options) ?? CreateDefault();
+        Normalize(config);
+        return config;
+    }
+
+    /// <summary>深拷贝配置（用于把 UI 编辑的配置交给引擎，避免共享可变集合）。</summary>
+    public static TunerConfig Clone(TunerConfig config) =>
+        JsonSerializer.Deserialize<TunerConfig>(JsonSerializer.Serialize(config, Options), Options) ?? CreateDefault();
+
+    public static TunerConfig CreateDefault()
+    {
+        var config = new TunerConfig();
+        Normalize(config);
+        return config;
+    }
+
+    public static void Save(string path, TunerConfig config)
+    {
+        Normalize(config);
+        Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
+        File.WriteAllText(path, JsonSerializer.Serialize(config, Options));
+    }
+
+    /// <summary>修复缺失字段：确保恰好一个默认组、去掉无效字符。</summary>
+    public static void Normalize(TunerConfig config)
+    {
+        config.Groups ??= new List<AppGroupConfig>();
+        config.Rules ??= new List<DuckingRuleConfig>();
+        config.Settings ??= new EngineSettings();
+
+        foreach (var g in config.Groups)
+        {
+            g.Id ??= "";
+            g.Name ??= "";
+            g.ProcessNames ??= new List<string>();
+        }
+        if (config.Groups.All(g => !g.IsDefault))
+            config.Groups.Add(new AppGroupConfig { Id = "default", Name = "其他", IsDefault = true });
+
+        foreach (var r in config.Rules)
+        {
+            r.Id ??= "";
+            r.TriggerGroupId ??= "";
+            r.TargetGroupId ??= "";
+        }
+    }
+
+    /// <summary>进程名归一化：小写、去 .exe 后缀、去空白。</summary>
+    public static string NormalizeProcessName(string name) =>
+        name.Trim().ToLowerInvariant().EndsWith(".exe")
+            ? name.Trim().ToLowerInvariant()[..^4]
+            : name.Trim().ToLowerInvariant();
+}
