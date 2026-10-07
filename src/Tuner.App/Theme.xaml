@@ -1,25 +1,25 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- 调色板 -->
-    <SolidColorBrush x:Key="PageBg" Color="#F5F7FA" />
-    <SolidColorBrush x:Key="CardBg" Color="White" />
-    <SolidColorBrush x:Key="CardBorder" Color="#E3E8F0" />
-    <SolidColorBrush x:Key="TextPrimary" Color="#1A2233" />
-    <SolidColorBrush x:Key="TextSecondary" Color="#6B7280" />
-    <SolidColorBrush x:Key="TextFaint" Color="#9AA3B2" />
-    <SolidColorBrush x:Key="Accent" Color="#2563EB" />
-    <SolidColorBrush x:Key="AccentHover" Color="#1D4ED8" />
-    <SolidColorBrush x:Key="AccentSoft" Color="#EFF4FF" />
-    <SolidColorBrush x:Key="FieldBorder" Color="#D5DCE6" />
-    <SolidColorBrush x:Key="FieldBorderHover" Color="#B9C6DA" />
-    <SolidColorBrush x:Key="Green" Color="#22C55E" />
-    <SolidColorBrush x:Key="IdleDot" Color="#CBD5E1" />
-    <SolidColorBrush x:Key="Amber" Color="#F59E0B" />
-    <SolidColorBrush x:Key="AmberSoft" Color="#FEF3C7" />
-    <SolidColorBrush x:Key="AmberText" Color="#B45309" />
-    <SolidColorBrush x:Key="Danger" Color="#DC2626" />
-    <SolidColorBrush x:Key="HoverSoft" Color="#F6F9FF" />
+    <!-- 调色板（调音台深色风格） -->
+    <SolidColorBrush x:Key="PageBg" Color="#12151B" />
+    <SolidColorBrush x:Key="CardBg" Color="#1B2028" />
+    <SolidColorBrush x:Key="CardBorder" Color="#2A303B" />
+    <SolidColorBrush x:Key="TextPrimary" Color="#E8ECF4" />
+    <SolidColorBrush x:Key="TextSecondary" Color="#98A2B3" />
+    <SolidColorBrush x:Key="TextFaint" Color="#626B7E" />
+    <SolidColorBrush x:Key="Accent" Color="#E8A33D" />
+    <SolidColorBrush x:Key="AccentHover" Color="#F0B258" />
+    <SolidColorBrush x:Key="AccentSoft" Color="#332B1C" />
+    <SolidColorBrush x:Key="FieldBorder" Color="#3A4150" />
+    <SolidColorBrush x:Key="FieldBorderHover" Color="#4A5468" />
+    <SolidColorBrush x:Key="Green" Color="#34D399" />
+    <SolidColorBrush x:Key="IdleDot" Color="#3A4150" />
+    <SolidColorBrush x:Key="Amber" Color="#F5B942" />
+    <SolidColorBrush x:Key="AmberSoft" Color="#331B1E" />
+    <SolidColorBrush x:Key="AmberText" Color="#F8A0A0" />
+    <SolidColorBrush x:Key="Danger" Color="#F87171" />
+    <SolidColorBrush x:Key="HoverSoft" Color="#232936" />
 
     <!-- 文本样式 -->
     <Style x:Key="Label" TargetType="TextBlock">
@@ -42,7 +42,7 @@
 
     <!-- 按钮（次要） -->
     <Style x:Key="Btn" TargetType="Button">
-        <Setter Property="Background" Value="White" />
+        <Setter Property="Background" Value="{StaticResource CardBg}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}" />
         <Setter Property="Padding" Value="12,6" />
@@ -61,9 +61,9 @@
                             <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverSoft}" />
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource FieldBorderHover}" />
                         </Trigger>
-                        <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#EDF2FA" />
-                        </Trigger>
+                    <Trigger Property="IsPressed" Value="True">
+                        <Setter TargetName="Bd" Property="Background" Value="#141821" />
+                    </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
                         </Trigger>
@@ -93,7 +93,7 @@
                             <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentHover}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#1E46B8" />
+                            <Setter TargetName="Bd" Property="Background" Value="#B87F1F" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
@@ -112,7 +112,7 @@
 
     <!-- 输入框 -->
     <Style x:Key="Tb" TargetType="TextBox">
-        <Setter Property="Background" Value="White" />
+        <Setter Property="Background" Value="{StaticResource CardBg}" />
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Setter Property="Padding" Value="8,6" />
@@ -154,7 +154,7 @@
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Border x:Name="Bd" Background="White" BorderBrush="{StaticResource FieldBorder}"
+                                    <Border x:Name="Bd" Background="{StaticResource CardBg}" BorderBrush="{StaticResource FieldBorder}"
                                             BorderThickness="1" CornerRadius="6" Padding="0,6">
                                         <Path Data="M0,0 L4,4 8,0" Stroke="{StaticResource TextSecondary}"
                                               StrokeThickness="1.5" HorizontalAlignment="Right"
@@ -168,11 +168,15 @@
                                 </ControlTemplate>
                             </ToggleButton.Template>
                         </ToggleButton>
-                        <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" Margin="10,0,28,0"
+                        <ContentPresenter x:Name="Selected" Content="{TemplateBinding SelectionBoxItem}" Margin="10,0,28,0"
                                           VerticalAlignment="Center" IsHitTestVisible="False" />
+                        <TextBox x:Name="PART_EditableTextBox" Margin="9,0,28,0" VerticalAlignment="Center"
+                                 Background="Transparent" BorderThickness="0" Padding="0"
+                                 Foreground="{TemplateBinding Foreground}" FontSize="{TemplateBinding FontSize}"
+                                 Visibility="Hidden" />
                         <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
                                AllowsTransparency="True" PopupAnimation="Fade" StaysOpen="False">
-                            <Border Background="White" BorderBrush="{StaticResource CardBorder}"
+                            <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}"
                                     BorderThickness="1" CornerRadius="8" Margin="0,4,8,8"
                                     MinWidth="{TemplateBinding ActualWidth}" MaxHeight="260" Padding="4">
                                 <Border.Effect>
@@ -185,6 +189,10 @@
                         </Popup>
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="IsEditable" Value="True">
+                            <Setter TargetName="Selected" Property="Visibility" Value="Hidden" />
+                            <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible" />
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
                         </Trigger>
@@ -224,7 +232,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="Bd" Background="White" BorderBrush="{StaticResource CardBorder}"
+                    <Border x:Name="Bd" Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}"
                             BorderThickness="1" CornerRadius="8" Padding="11,9" Margin="0,0,0,7">
                         <ContentPresenter />
                     </Border>
@@ -316,7 +324,7 @@
                                         <Thumb>
                                             <Thumb.Template>
                                                 <ControlTemplate TargetType="Thumb">
-                                                    <Border Background="#C4CCD9" CornerRadius="4" Margin="2,0" />
+                    <Border Background="#3E4655" CornerRadius="4" Margin="2,0" />
                                                 </ControlTemplate>
                                             </Thumb.Template>
                                         </Thumb>
@@ -339,7 +347,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ProgressBar">
                     <Grid>
-                        <Border x:Name="PART_Track" Background="#E8EDF5" CornerRadius="3" />
+                        <Border x:Name="PART_Track" Background="#242A34" CornerRadius="3" />
                         <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}"
                                 CornerRadius="3" HorizontalAlignment="Left" />
                     </Grid>

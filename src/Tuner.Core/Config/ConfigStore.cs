@@ -66,8 +66,17 @@ public static class ConfigStore
         foreach (var r in config.Rules)
         {
             r.Id ??= "";
-            r.TriggerGroupId ??= "";
-            r.TargetGroupId ??= "";
+            // 旧配置迁移：TriggerGroupId/TargetGroupId → Trigger/Target 选择器
+            if (r.Trigger is null && !string.IsNullOrEmpty(r.TriggerGroupId))
+                r.Trigger = new RuleRef { Type = "group", GroupId = r.TriggerGroupId };
+            if (r.Target is null && !string.IsNullOrEmpty(r.TargetGroupId))
+                r.Target = new RuleRef { Type = "group", GroupId = r.TargetGroupId };
+            r.Trigger ??= new RuleRef();
+            r.Target ??= new RuleRef();
+            if (r.Trigger.Type != "app")
+                r.Trigger.Type = "group";
+            if (r.Target.Type != "app")
+                r.Target.Type = "group";
         }
     }
 
@@ -76,4 +85,8 @@ public static class ConfigStore
         name.Trim().ToLowerInvariant().EndsWith(".exe")
             ? name.Trim().ToLowerInvariant()[..^4]
             : name.Trim().ToLowerInvariant();
+
+    /// <summary>选择器稳定键（宽限计时等按选择器维度记账）。</summary>
+    public static string RefKey(RuleRef r) =>
+        r.Type == "app" ? "app:" + NormalizeProcessName(r.ProcessName) : "group:" + r.GroupId;
 }

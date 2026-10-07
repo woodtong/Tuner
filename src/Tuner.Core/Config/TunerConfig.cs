@@ -47,20 +47,39 @@ public sealed class AppGroupConfig
     public bool IsDefault { get; set; }
 }
 
+/// <summary>规则引用的选择器：可以指向一个分组，也可以精确到单个应用（进程名）。</summary>
+public sealed class RuleRef
+{
+    /// <summary>"group" 或 "app"。</summary>
+    public string Type { get; set; } = "group";
+
+    /// <summary>分组模式下的分组 Id。</summary>
+    public string GroupId { get; set; } = "";
+
+    /// <summary>应用模式下的进程名（不区分大小写，可带可不带 .exe）。</summary>
+    public string ProcessName { get; set; } = "";
+}
+
 public sealed class DuckingRuleConfig
 {
     public string Id { get; set; } = "";
     public bool Enabled { get; set; } = true;
 
-    /// <summary>触发组：该组"出声"时规则生效。</summary>
+    /// <summary>触发选择器：该分组/应用"出声或在播"时规则生效。</summary>
+    public RuleRef? Trigger { get; set; }
+
+    /// <summary>目标选择器：其成员音量渐变到目标值。</summary>
+    public RuleRef? Target { get; set; }
+
+    /// <summary>旧字段（v0.1-zeta 起由 Trigger/Target 取代），仅用于旧配置迁移。</summary>
     public string TriggerGroupId { get; set; } = "";
 
-    /// <summary>目标组：其成员音量渐变到目标值。</summary>
+    /// <summary>旧字段，仅用于旧配置迁移。</summary>
     public string TargetGroupId { get; set; } = "";
 
     /// <summary>闪避期间的目标音量（百分比，0..100）。</summary>
     public float TargetVolumePercent { get; set; } = 20f;
 
-    /// <summary>同一目标组有多条规则同时生效时，优先级高者胜。</summary>
+    /// <summary>同一会话被多条规则命中时，优先级高者胜；同级时应用级规则优先于分组级。</summary>
     public int Priority { get; set; }
 }

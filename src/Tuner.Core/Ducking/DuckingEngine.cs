@@ -63,6 +63,7 @@ public sealed class DuckingEngine : IDisposable
     {
         _monitor = monitor;
         _config = config;
+        ConfigStore.Normalize(config); // 旧字段迁移（TriggerGroupId → Trigger 选择器）
     }
 
     /// <summary>全部会话的当前引擎状态。</summary>
@@ -164,6 +165,12 @@ public sealed class DuckingEngine : IDisposable
             var settings = config.Settings;
             var now = DateTime.UtcNow;
 
+            // 0) 规则评估：按选择器（分组或单应用）汇总"出声或在播"
+            var activeRules = config.Rules
+                .Where(r => r.Enabled && r.Trigger is not null && r.Target is not null)
+                .ToList();
+            var sounding = EvaluateSelectors(activeRules, settings, now);
+
             // 1) 成员差量 + 分组解析（配置可能已更换，所有成员每拍重解析）
             var seen = new HashSet<string>();
             foreach (var s in sessions)
@@ -186,9 +193,9 @@ public sealed class DuckingEngine : IDisposable
                     t.CurrentVolume = v;
                     t.OriginalVolume = v;
 
-                    // 短促声音对策：新会话所属组已是生效规则目标 → 创建即初始化音量
-                    var initWinners = ComputeWinners(config, GroupSoundingMap(settings, now));
-                    if (initWinners.TryGetValue(t.GroupId, out var initRule) && initRule.TriggerGroupId != t.GroupId)
+                    // 短促声音对策：新会话已被某条生效规则的目标命中 → 创建即初始化音量
+                    var initRule = EvaluateWinner(t, activeRules, sounding);
+                    if (initRule is not null)
                     {
                         t.OriginalVolume = v;
                         t.Ducked = true;
@@ -213,11 +220,6 @@ public sealed class DuckingEngine : IDisposable
                     stateChange = true;
                 }
             }
-
-            // 清理已消失分组的静音计时
-            var liveGroups = _tracked.Values.Select(t => t.GroupId).ToHashSet();
-            foreach (var gone in _lastSounding.Keys.Where(id => !liveGroups.Contains(id)).ToArray())
-                _lastSounding.Remove(gone);
 
             // 2) 出声判定：双阈值迟滞 + 低电平保持时长
             foreach (var t in _tracked.Values)
@@ -247,12 +249,11 @@ public sealed class DuckingEngine : IDisposable
                 }
             }
 
-            // 3) 规则汇总 + 渐变
-            var winners = ComputeWinners(config, GroupSoundingMap(settings, now));
+            // 3) 逐会话挑选生效规则并渐变
             float maxStep = FadeTickMs / (float)Math.Max(1, settings.FadeDurationMs);
             foreach (var t in _tracked.Values)
             {
-                var rule = winners.TryGetValue(t.GroupId, out var r) && r.TriggerGroupId != t.GroupId ? r : null;
+                var rule = EvaluateWinner(t, activeRules, sounding);
                 float target;
                 if (rule is not null)
                 {
@@ -293,81 +294,101 @@ public sealed class DuckingEngine : IDisposable
     }
 
     /// <summary>
-    /// 组级"出声/在播"判定（用于规则触发），三层信号：
+    /// 评估各选择器（分组或单应用）是否"出声或在播"，返回生效选择器键集合。三层信号：
     /// 1. 峰值出声（即时、任何应用可用）；
     /// 2. SMTC 播放状态（应用自报"还在播放"，覆盖歌间静音/极弱段落；报告"已暂停/已停止"则立即解除，不进宽限）；
     /// 3. 静音宽限（仅对没有 SMTC 信号的应用兜底，避免短暂静音误判为停止）。
     /// </summary>
-    private Dictionary<string, bool> GroupSoundingMap(EngineSettings settings, DateTime now)
+    private HashSet<string> EvaluateSelectors(List<DuckingRuleConfig> rules, EngineSettings settings, DateTime now)
     {
-        var map = new Dictionary<string, bool>();
-        foreach (var g in _tracked.Values.GroupBy(t => t.GroupId))
+        var sounding = new HashSet<string>(StringComparer.Ordinal);
+        var byKey = new Dictionary<string, RuleRef>(StringComparer.Ordinal);
+        foreach (var r in rules)
         {
-            if (g.Any(t => t.Speaking))
+            byKey[ConfigStore.RefKey(r.Trigger!)] = r.Trigger!;
+            byKey[ConfigStore.RefKey(r.Target!)] = r.Target!;
+        }
+
+        foreach (var (key, selector) in byKey)
+        {
+            List<Tracked> matches;
+            if (selector.Type == "app")
             {
-                _lastSounding[g.Key] = now;
-                map[g.Key] = true;
-                continue;
+                var norm = ConfigStore.NormalizeProcessName(selector.ProcessName);
+                matches = _tracked.Values
+                    .Where(t => ConfigStore.NormalizeProcessName(t.Session.ProcessName) == norm)
+                    .ToList();
+            }
+            else
+            {
+                matches = _tracked.Values.Where(t => t.GroupId == selector.GroupId).ToList();
             }
 
-            if (settings.UseMediaSessionStatus)
+            if (matches.Count == 0)
+                continue; // 无成员：无从出声（键计时由下方清理）
+
+            bool sound = matches.Any(t => t.Speaking);
+            if (!sound && settings.UseMediaSessionStatus)
             {
-                bool smtcPlaying = false;
-                bool smtcKnown = false;
-                foreach (var t in g)
-                {
-                    var playing = _mediaTracker.IsPlaying(t.Session.ProcessName);
-                    if (playing is null)
-                        continue;
-                    smtcKnown = true;
-                    if (playing == true)
-                    {
-                        smtcPlaying = true;
-                        break;
-                    }
-                }
-                if (smtcKnown)
-                {
-                    // 应用自己声明了播放状态：播放中→保持；已暂停/已停止→立即解除
-                    if (smtcPlaying)
-                    {
-                        _lastSounding[g.Key] = now;
-                        map[g.Key] = true;
-                    }
-                    continue;
-                }
+                sound = matches.Any(t => _mediaTracker.IsPlaying(t.Session.ProcessName) == true);
+            }
+
+            if (sound)
+            {
+                _lastSounding[key] = now;
+                sounding.Add(key);
+                continue;
             }
 
             // 宽限兜底：无 SMTC 信号的应用，按音频流是否仍打开取宽限时长
-            if (!_lastSounding.TryGetValue(g.Key, out var lastSounding))
+            if (!_lastSounding.TryGetValue(key, out var lastSounding))
                 continue;
             double silenceMs = (now - lastSounding).TotalMilliseconds;
-            int graceMs = g.Any(t => t.Session.State == Audio.SessionState.Active)
+            int graceMs = matches.Any(t => t.Session.State == Audio.SessionState.Active)
                 ? Math.Max(0, settings.StreamOpenSilenceGraceMs)
                 : Math.Max(0, settings.SilenceGraceMs);
             if (silenceMs < graceMs)
-                map[g.Key] = true;
+                sounding.Add(key);
         }
-        return map;
+
+        // 清理不再被任何规则使用的选择器计时
+        foreach (var gone in _lastSounding.Keys.Where(k => !byKey.ContainsKey(k)).ToArray())
+            _lastSounding.Remove(gone);
+
+        return sounding;
     }
 
-    /// <summary>汇总生效规则：触发组出声 → 规则生效；同一目标组多条生效时优先级高者胜（同优先级取先配置者）。</summary>
-    private static Dictionary<string, DuckingRuleConfig> ComputeWinners(
-        TunerConfig config, Dictionary<string, bool> groupSpeaking)
+    /// <summary>会话是否匹配选择器：分组模式按解析后的分组，应用模式按归一化进程名。</summary>
+    private static bool RefMatchesSession(RuleRef selector, SoundSession session, string sessionGroupId) =>
+        selector.Type == "app"
+            ? ConfigStore.NormalizeProcessName(selector.ProcessName) == ConfigStore.NormalizeProcessName(session.ProcessName)
+            : selector.GroupId == sessionGroupId;
+
+    /// <summary>
+    /// 为单个会话挑选生效规则：触发选择器"在播"、目标选择器命中且不是触发者自身。
+    /// 优先级高者胜；同级时应用级规则优先于分组级；再同级取先配置者。
+    /// </summary>
+    private DuckingRuleConfig? EvaluateWinner(
+        Tracked t, List<DuckingRuleConfig> rules, HashSet<string> sounding)
     {
-        var winners = new Dictionary<string, DuckingRuleConfig>();
-        foreach (var rule in config.Rules)
+        DuckingRuleConfig? winner = null;
+        foreach (var r in rules)
         {
-            if (!rule.Enabled)
+            if (!sounding.Contains(ConfigStore.RefKey(r.Trigger!)))
                 continue;
-            if (!groupSpeaking.TryGetValue(rule.TriggerGroupId, out var speaking) || !speaking)
+            if (RefMatchesSession(r.Trigger!, t.Session, t.GroupId))
+                continue; // 不闪避触发者自身
+            if (!RefMatchesSession(r.Target!, t.Session, t.GroupId))
                 continue;
-            if (winners.TryGetValue(rule.TargetGroupId, out var current) && current.Priority >= rule.Priority)
-                continue;
-            winners[rule.TargetGroupId] = rule;
+            if (winner is null || Better(r, winner))
+                winner = r;
         }
-        return winners;
+        return winner;
     }
+
+    private static bool Better(DuckingRuleConfig a, DuckingRuleConfig b) =>
+        a.Priority > b.Priority ||
+        (a.Priority == b.Priority && a.Target!.Type == "app" && b.Target!.Type != "app");
 
     private string ResolveGroup(TunerConfig config, SoundSession session)
     {

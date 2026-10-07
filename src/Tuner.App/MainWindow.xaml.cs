@@ -13,6 +13,7 @@ using Application = System.Windows.Application;
 using Brush = System.Windows.Media.Brush;
 using CheckBox = System.Windows.Controls.CheckBox;
 using Color = System.Windows.Media.Color;
+using ComboBox = System.Windows.Controls.ComboBox;
 using Imaging = System.Windows.Interop.Imaging;
 using KeyEventArgs = System.Windows.Input.KeyEventArgs;
 using MessageBox = System.Windows.MessageBox;
@@ -99,6 +100,12 @@ public partial class MainWindow : Window
 
         private static readonly Brush IdleBrushStatic = new SolidColorBrush(Color.FromRgb(0xCB, 0xD5, 0xE1));
 
+        private string _channel = "";
+        private double _peakPercent;
+
+        public string Channel { get => _channel; set { _channel = value; Pc(); } }
+        public double PeakPercent { get => _peakPercent; set { _peakPercent = value; Pc(); } }
+
         public string Process { get => _process; set { _process = value; Pc(); } }
         public string PidText { get => _pidText; set { _pidText = $"PID {value}"; Pc(); } }
         public string GroupName { get => _groupName; set { _groupName = value; Pc(); } }
@@ -143,11 +150,11 @@ public partial class MainWindow : Window
             _statusSignature = sig;
             _statusRows.Clear();
             _statusById.Clear();
-            foreach (var s in sessions)
+            for (int i = 0; i < sessions.Count; i++)
             {
-                var row = new StatusRow { InstanceId = s.InstanceId };
+                var row = new StatusRow { InstanceId = sessions[i].InstanceId, Channel = ((i + 1).ToString("00")) };
                 _statusRows.Add(row);
-                _statusById[s.InstanceId] = row;
+                _statusById[sessions[i].InstanceId] = row;
             }
         }
 
@@ -156,6 +163,7 @@ public partial class MainWindow : Window
         {
             var row = _statusById[s.InstanceId];
             var e = states.GetValueOrDefault(s.InstanceId);
+            row.PeakPercent = Math.Round(s.Peak * 100);
             row.Process = s.ProcessName;
             row.PidText = s.Pid.ToString();
             row.GroupName = e?.GroupName ?? "—";
@@ -174,6 +182,7 @@ public partial class MainWindow : Window
         StatTotal.Text = sessions.Count.ToString();
         StatSpeaking.Text = speaking.ToString();
         StatDucking.Text = ducking.ToString();
+        MasterMeter.Value = Math.Round(App.Monitor.DevicePeak * 100);
         StatusEmpty.Visibility = sessions.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
@@ -210,7 +219,6 @@ public partial class MainWindow : Window
         GroupList.ItemsSource = App.Config.Groups.Select(g => new GroupVm { Group = g }).ToList();
         GroupList.SelectedItem = GroupList.ItemsSource.Cast<GroupVm>().FirstOrDefault(v => v.Group == selected)
                                  ?? GroupList.ItemsSource.Cast<GroupVm>().FirstOrDefault();
-        RefreshGroupCombo();
         _loadingUi = false;
         RefreshGroupDetail();
     }
@@ -282,7 +290,6 @@ public partial class MainWindow : Window
         _loadingUi = true;
         GroupList.Items.Refresh();
         _loadingUi = false;
-        RefreshGroupCombo();
         MarkDirty();
     }
 
@@ -347,24 +354,23 @@ public partial class MainWindow : Window
         MarkDirty();
     }
 
-    private void RefreshGroupCombo()
-    {
-        var groups = App.Config.Groups.Select(g => new GroupVm { Group = g }).ToList();
-        RuleTrigger.ItemsSource = groups;
-        RuleTarget.ItemsSource = groups;
-    }
-
     // ---------- 规则 ----------
 
     private sealed class RuleVm
     {
         public required DuckingRuleConfig Rule { get; init; }
         public string Sentence =>
-            GroupName(Rule.TriggerGroupId) + " 出声 → " + GroupName(Rule.TargetGroupId) +
-            $" 渐变到 {Rule.TargetVolumePercent:F0}%" + (Rule.Enabled ? "" : "（已停用）");
+            (Rule.Enabled ? "" : "（已停用）") + Label(Rule.Trigger) + " 出声 → " + Label(Rule.Target) +
+            $" 渐变到 {Rule.TargetVolumePercent:F0}%";
 
-        private string GroupName(string id) =>
-            App.Config.Groups.FirstOrDefault(g => g.Id == id)?.Name ?? id + "?";
+        private static string Label(RuleRef? r)
+        {
+            if (r is null)
+                return "?";
+            return r.Type == "app"
+                ? r.ProcessName + "（应用）"
+                : (App.Config.Groups.FirstOrDefault(g => g.Id == r.GroupId)?.Name ?? r.GroupId + "?") + "（分组）";
+        }
     }
 
     private DuckingRuleConfig? SelectedRule => (RuleList.SelectedItem as RuleVm)?.Rule;
@@ -376,7 +382,6 @@ public partial class MainWindow : Window
         RuleList.ItemsSource = App.Config.Rules.Select(r => new RuleVm { Rule = r }).ToList();
         RuleList.SelectedItem = RuleList.ItemsSource.Cast<RuleVm>().FirstOrDefault(v => v.Rule == selected)
                                 ?? RuleList.ItemsSource.Cast<RuleVm>().FirstOrDefault();
-        RefreshGroupCombo();
         _loadingUi = false;
         RefreshRuleDetail();
     }
@@ -386,13 +391,72 @@ public partial class MainWindow : Window
         bool outer = _loadingUi;
         _loadingUi = true;
         var r = SelectedRule;
-        RuleTrigger.SelectedItem = (RuleTrigger.ItemsSource as IEnumerable<GroupVm>)?.FirstOrDefault(v => v.Group.Id == r?.TriggerGroupId);
-        RuleTarget.SelectedItem = (RuleTarget.ItemsSource as IEnumerable<GroupVm>)?.FirstOrDefault(v => v.Group.Id == r?.TargetGroupId);
+        SetSelector(RuleTriggerType, RuleTriggerValue, r?.Trigger);
+        SetSelector(RuleTargetType, RuleTargetValue, r?.Target);
         RuleVolume.Text = r is null ? "" : $"{r.TargetVolumePercent:F0}";
         RulePriority.Text = r?.Priority.ToString() ?? "";
         RuleEnabled.IsChecked = r?.Enabled ?? false;
         _loadingUi = outer; // 恢复外层状态（可能被嵌套调用）
     }
+
+    /// <summary>按选择器类型填充"取值"下拉：分组模式列出分组，应用模式列出已知进程名（可编辑输入）。</summary>
+    private void SetSelector(ComboBox type, ComboBox value, RuleRef? sel)
+    {
+        bool isApp = sel?.Type == "app";
+        type.SelectedIndex = isApp ? 1 : 0;
+        if (isApp)
+        {
+            var names = AppNames();
+            value.ItemsSource = names;
+            value.Text = sel?.ProcessName ?? "";
+            if (names.Count > 0 && !names.Contains(sel?.ProcessName ?? "", StringComparer.OrdinalIgnoreCase))
+                value.SelectedIndex = 0;
+        }
+        else
+        {
+            var groups = App.Config.Groups.Select(g => new GroupVm { Group = g }).ToList();
+            value.ItemsSource = groups;
+            value.SelectedItem = groups.FirstOrDefault(v => v.Group.Id == sel?.GroupId) ?? groups.FirstOrDefault();
+        }
+    }
+
+    /// <summary>切换选择器类型时重填取值下拉。</summary>
+    private void OnRuleSelectorTypeChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loadingUi)
+            return;
+        _loadingUi = true;
+        if (sender == RuleTriggerType)
+            SetSelector(RuleTriggerType, RuleTriggerValue, null);
+        else if (sender == RuleTargetType)
+            SetSelector(RuleTargetType, RuleTargetValue, null);
+        _loadingUi = false;
+        ApplyRuleEdits();
+    }
+
+    private void OnRuleSelectorChanged(object sender, SelectionChangedEventArgs e) => ApplyRuleEdits();
+
+    /// <summary>从界面读取一个选择器：应用模式取输入文本，分组模式取选中分组。</summary>
+    private RuleRef ReadSelector(ComboBox type, ComboBox value)
+    {
+        if (type.SelectedIndex == 1)
+            return new RuleRef { Type = "app", ProcessName = (value.Text ?? "").Trim() };
+        return new RuleRef
+        {
+            Type = "group",
+            GroupId = (value.SelectedItem as GroupVm)?.Group.Id ?? "",
+        };
+    }
+
+    /// <summary>已知应用名：实时会话 + 各分组配置 + 既有规则引用，供应用模式下拉与手输提示。</summary>
+    private List<string> AppNames() =>
+        App.Monitor.CurrentSnapshot.Select(s => s.ProcessName)
+            .Concat(App.Config.Groups.SelectMany(g => g.ProcessNames))
+            .Concat(App.Config.Rules.SelectMany(r => new[] { r.Trigger?.ProcessName ?? "", r.Target?.ProcessName ?? "" }))
+            .Where(n => n.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
+            .ToList();
 
     private void OnRuleSelected(object sender, SelectionChangedEventArgs e) => RefreshRuleDetail();
 
@@ -404,8 +468,8 @@ public partial class MainWindow : Window
         var rule = new DuckingRuleConfig
         {
             Id = "r" + DateTime.Now.Ticks.ToString("x"),
-            TriggerGroupId = trigger?.Id ?? "",
-            TargetGroupId = target?.Id ?? "",
+            Trigger = new RuleRef { Type = "group", GroupId = trigger?.Id ?? "" },
+            Target = new RuleRef { Type = "group", GroupId = target?.Id ?? "" },
             TargetVolumePercent = 20,
             Priority = 5,
         };
@@ -438,14 +502,15 @@ public partial class MainWindow : Window
         MarkDirty();
     }
 
-    private void OnRuleFieldChanged(object sender, RoutedEventArgs e)
+    /// <summary>XAML 事件入口：音量/优先级/启用变更（选择器事件另有入口）。</summary>
+    private void OnRuleFieldChanged(object sender, RoutedEventArgs e) => ApplyRuleEdits();
+
+    private void ApplyRuleEdits()
     {
         if (_loadingUi || SelectedRule is not { } r)
             return;
-        if (RuleTrigger.SelectedItem is GroupVm t)
-            r.TriggerGroupId = t.Group.Id;
-        if (RuleTarget.SelectedItem is GroupVm g)
-            r.TargetGroupId = g.Group.Id;
+        r.Trigger = ReadSelector(RuleTriggerType, RuleTriggerValue);
+        r.Target = ReadSelector(RuleTargetType, RuleTargetValue);
         if (float.TryParse(RuleVolume.Text, out var vol))
             r.TargetVolumePercent = Math.Clamp(vol, 0f, 100f);
         if (int.TryParse(RulePriority.Text, out var prio))

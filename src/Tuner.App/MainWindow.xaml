@@ -1,6 +1,7 @@
 <Window x:Class="Tuner.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="clr-namespace:Tuner.Controls"
         Title="Tuner — 分组音频闪避" Width="920" Height="660"
         MinWidth="800" MinHeight="580" WindowStartupLocation="CenterScreen"
         Background="{StaticResource PageBg}"
@@ -14,15 +15,17 @@
         </Grid.RowDefinitions>
 
         <!-- 顶栏 -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+        <DockPanel Grid.Row="0" Margin="0,0,0,12" LastChildFill="False">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="Tuner" FontSize="21" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" />
                 <TextBlock Text="分组音频闪避" FontSize="13" Foreground="{StaticResource TextSecondary}"
                            VerticalAlignment="Bottom" Margin="10,0,0,3" />
             </StackPanel>
-            <Border DockPanel.Dock="Right" HorizontalAlignment="Right" Background="White"
+            <controls:LedMeter DockPanel.Dock="Right" x:Name="MasterMeter" Width="110" Height="8" Segments="14"
+                               VerticalAlignment="Center" Margin="0,0,0,0" ToolTip="设备总峰值" />
+            <Border DockPanel.Dock="Right" Background="{StaticResource CardBg}"
                     BorderBrush="{StaticResource CardBorder}" BorderThickness="1" CornerRadius="14"
-                    Padding="11,4" VerticalAlignment="Center">
+                    Padding="11,4" VerticalAlignment="Center" Margin="0,0,10,0">
                 <StackPanel Orientation="Horizontal">
                     <Ellipse Width="7" Height="7" Fill="{StaticResource Green}" VerticalAlignment="Center" />
                     <TextBlock x:Name="DeviceText" Margin="7,0,0,0" FontSize="12"
@@ -42,7 +45,7 @@
                     </Grid.RowDefinitions>
 
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="2,0,0,10">
-                        <Border Background="White" BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
+                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
                                 CornerRadius="7" Padding="12,5" Margin="0,0,8,0">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="会话" Style="{StaticResource Label}" />
@@ -50,7 +53,7 @@
                                            Margin="7,0,0,0" />
                             </StackPanel>
                         </Border>
-                        <Border Background="White" BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
+                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
                                 CornerRadius="7" Padding="12,5" Margin="0,0,8,0">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="7" Height="7" Fill="{StaticResource Green}" VerticalAlignment="Center" />
@@ -59,7 +62,7 @@
                                            Margin="7,0,0,0" />
                             </StackPanel>
                         </Border>
-                        <Border Background="White" BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
+                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
                                 CornerRadius="7" Padding="12,5">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="7" Height="7" Fill="{StaticResource Amber}" VerticalAlignment="Center" />
@@ -75,10 +78,11 @@
                             <ItemsControl x:Name="StatusList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="White" BorderBrush="{StaticResource CardBorder}"
-                                                BorderThickness="1" CornerRadius="8" Padding="14,10" Margin="0,0,4,8">
+                                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}"
+                                                BorderThickness="1" CornerRadius="8" Padding="12,9" Margin="0,0,4,8">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition Width="*" />
@@ -87,45 +91,55 @@
                                                     <ColumnDefinition Width="Auto" />
                                                 </Grid.ColumnDefinitions>
 
-                                                <Ellipse Grid.Column="0" Width="9" Height="9"
+                                                <TextBlock Grid.Column="0" Text="{Binding Channel}" FontFamily="Consolas"
+                                                           FontSize="11" Foreground="{StaticResource TextFaint}"
+                                                           VerticalAlignment="Top" Margin="2,1,10,0" />
+
+                                                <Ellipse Grid.Column="1" Width="9" Height="9"
                                                          Fill="{Binding SpeakingBrush}" VerticalAlignment="Center" />
 
-                                                <StackPanel Grid.Column="1" Margin="10,0,0,0" VerticalAlignment="Center">
+                                                <StackPanel Grid.Column="2" Margin="9,0,0,0" VerticalAlignment="Center">
                                                     <TextBlock Text="{Binding Process}" FontSize="14" FontWeight="SemiBold"
                                                                Foreground="{StaticResource TextPrimary}" />
-                                                    <TextBlock Text="{Binding PidText}" FontSize="11"
+                                                    <TextBlock Text="{Binding PidText}" FontSize="10.5" FontFamily="Consolas"
                                                                Foreground="{StaticResource TextFaint}" Margin="0,1,0,0" />
                                                 </StackPanel>
 
-                                                <Border Grid.Column="2" Background="{Binding GroupBrush}" CornerRadius="4"
-                                                        Padding="8,3" HorizontalAlignment="Left" Margin="14,0,0,0"
-                                                        VerticalAlignment="Center">
+                                                <Border Grid.Column="3" Background="{Binding GroupBrush}" CornerRadius="4"
+                                                        Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center"
+                                                        Margin="12,0,0,0">
                                                     <TextBlock Text="{Binding GroupName}" FontSize="11" Foreground="White" />
                                                 </Border>
 
-                                                <Border Grid.Column="3" Background="{StaticResource AmberSoft}"
-                                                        BorderBrush="#FDE68A" BorderThickness="1" CornerRadius="4"
-                                                        Padding="8,3" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                <StackPanel Grid.Column="4" Width="132" VerticalAlignment="Center" Margin="0,0,14,0">
+                                                    <TextBlock Text="PEAK" FontSize="9.5" Foreground="{StaticResource TextFaint}" />
+                                                    <controls:LedMeter Height="10" Segments="12" Margin="0,3,0,0"
+                                                                       Value="{Binding PeakPercent}" />
+                                                </StackPanel>
+
+                                                <Border Grid.Column="5" Background="{StaticResource AmberSoft}"
+                                                        BorderBrush="#5A2626" BorderThickness="1" CornerRadius="4"
+                                                        Padding="8,3" VerticalAlignment="Center" Margin="0,0,14,0"
                                                         Visibility="{Binding DuckVisibility}">
                                                     <TextBlock Text="{Binding DuckText}" FontSize="11" FontWeight="SemiBold"
                                                                Foreground="{StaticResource AmberText}" />
                                                 </Border>
 
-                                                <StackPanel Grid.Column="4" Width="200" VerticalAlignment="Center">
+                                                <StackPanel Grid.Column="6" Width="188" VerticalAlignment="Center">
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
                                                             <ColumnDefinition Width="*" />
                                                             <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
-                                                        <ProgressBar Grid.Column="0" Style="{StaticResource Meter}"
-                                                                     Value="{Binding VolumePercent}"
-                                                                     Foreground="{Binding VolBrush}" />
+                                                        <controls:LedMeter Grid.Column="0" Height="12" Segments="16"
+                                                                           Value="{Binding VolumePercent}" />
                                                         <TextBlock Grid.Column="1" Text="{Binding VolumeText}" FontSize="12"
+                                                                   FontFamily="Consolas"
                                                                    Foreground="{StaticResource TextSecondary}"
-                                                                   Margin="8,0,0,0" MinWidth="38" TextAlignment="Right" />
+                                                                   Margin="8,0,0,0" MinWidth="40" TextAlignment="Right" />
                                                     </Grid>
-                                                    <TextBlock Text="{Binding OriginalText}" FontSize="11"
-                                                               Foreground="{StaticResource TextFaint}" Margin="0,4,0,0"
+                                                    <TextBlock Text="{Binding OriginalText}" FontSize="10.5"
+                                                               Foreground="{StaticResource TextFaint}" Margin="0,3,0,0"
                                                                TextAlignment="Right" />
                                                 </StackPanel>
                                             </Grid>
@@ -309,28 +323,41 @@
 
                             <TextBlock Grid.Row="0" FontSize="13.5" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextPrimary}"
-                                       Text="当【触发组】出声时，【目标组】的音量渐变到目标值" />
+                                       Text="当【触发】出声或在播时，【目标】的音量渐变到目标值（触发/目标均支持分组或单个应用）" />
 
                             <Grid Grid.Row="1" Margin="0,16,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="触发组" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                <ComboBox Grid.Column="1" x:Name="RuleTrigger" Style="{StaticResource Combo}"
-                                          Width="240" HorizontalAlignment="Left"
-                                          SelectionChanged="OnRuleFieldChanged" />
+                                <TextBlock Text="触发" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" x:Name="RuleTriggerType" Style="{StaticResource Combo}"
+                                          Width="90" SelectionChanged="OnRuleSelectorTypeChanged">
+                                    <ComboBoxItem>分组</ComboBoxItem>
+                                    <ComboBoxItem>应用</ComboBoxItem>
+                                </ComboBox>
+                                <ComboBox Grid.Column="2" x:Name="RuleTriggerValue" Style="{StaticResource Combo}"
+                                          Width="210" HorizontalAlignment="Left" Margin="8,0,0,0" IsEditable="True"
+                                          SelectionChanged="OnRuleSelectorChanged"
+                                          ToolTip="分组=按分组成员匹配；应用=精确到单个进程（可直接输入进程名，无需已运行）" />
                             </Grid>
 
                             <Grid Grid.Row="2" Margin="0,12,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="目标组" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                <ComboBox Grid.Column="1" x:Name="RuleTarget" Style="{StaticResource Combo}"
-                                          Width="240" HorizontalAlignment="Left"
-                                          SelectionChanged="OnRuleFieldChanged" />
+                                <TextBlock Text="目标" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" x:Name="RuleTargetType" Style="{StaticResource Combo}"
+                                          Width="90" SelectionChanged="OnRuleSelectorTypeChanged">
+                                    <ComboBoxItem>分组</ComboBoxItem>
+                                    <ComboBoxItem>应用</ComboBoxItem>
+                                </ComboBox>
+                                <ComboBox Grid.Column="2" x:Name="RuleTargetValue" Style="{StaticResource Combo}"
+                                          Width="210" HorizontalAlignment="Left" Margin="8,0,0,0" IsEditable="True"
+                                          SelectionChanged="OnRuleSelectorChanged" />
                             </Grid>
 
                             <Grid Grid.Row="3" Margin="0,12,0,0">
