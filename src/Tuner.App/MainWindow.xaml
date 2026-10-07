@@ -37,7 +37,13 @@
         <TabControl Grid.Row="1" x:Name="Tabs" SelectionChanged="Tabs_SelectionChanged">
 
             <!-- ═══ 实时状态 ═══ -->
-            <TabItem Header="实时状态">
+            <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                            <TextBlock Text="实时状态" Margin="9,0,0,0" />
+                        </StackPanel>
+                    </TabItem.Header>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -79,8 +85,23 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}"
-                                                BorderThickness="1" CornerRadius="8" Padding="12,9" Margin="0,0,4,8">
+                                                BorderThickness="1" CornerRadius="8" Padding="0" Margin="0,0,4,8"
+                                                ClipToBounds="True">
                                             <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="4" />
+                                                    <ColumnDefinition Width="30" />
+                                                    <ColumnDefinition Width="16" />
+                                                    <ColumnDefinition Width="150" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="132" />
+                                                    <ColumnDefinition Width="112" />
+                                                    <ColumnDefinition Width="192" />
+                                                </Grid.ColumnDefinitions>
+                                                <!-- 通道色条：出声时点亮为分组色 -->
+                                                <Border Grid.Column="0" Margin="0,0,0,0" Background="{Binding GroupBrush}"
+                                                        Opacity="{Binding StripOpacity}" />
+                                                <Grid Grid.Column="1" Grid.ColumnSpan="7" Margin="12,9">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="30" />
                                                     <ColumnDefinition Width="16" />
@@ -106,9 +127,12 @@
                                                                Foreground="{StaticResource TextFaint}" Margin="0,1,0,0" />
                                                 </StackPanel>
 
-                                                <Border Grid.Column="3" Background="{Binding GroupBrush}" CornerRadius="4"
-                                                        Padding="8,3" HorizontalAlignment="Left" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding GroupName}" FontSize="11" Foreground="White" />
+                                                <Border Grid.Column="3" Background="Transparent"
+                                                        BorderBrush="{StaticResource FieldBorder}" BorderThickness="1"
+                                                        CornerRadius="4" Padding="8,3" HorizontalAlignment="Left"
+                                                        VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding GroupName}" FontSize="11"
+                                                               Foreground="{StaticResource TextSecondary}" />
                                                 </Border>
 
                                                 <StackPanel Grid.Column="4" VerticalAlignment="Center" Margin="0,0,14,0">
@@ -142,6 +166,7 @@
                                                                Foreground="{StaticResource TextFaint}" Margin="0,3,0,0"
                                                                TextAlignment="Right" />
                                                 </StackPanel>
+                                                </Grid>
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -155,7 +180,13 @@
             </TabItem>
 
             <!-- ═══ 音量（输出混音台） ═══ -->
-            <TabItem Header="音量">
+            <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE767;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                            <TextBlock Text="音量" Margin="9,0,0,0" />
+                        </StackPanel>
+                    </TabItem.Header>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -163,81 +194,82 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0" Style="{StaticResource Card}" Padding="16,12" Margin="0,0,4,10">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Text="主输出" FontSize="14" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center" />
-                            <Slider Grid.Column="1" x:Name="MasterSlider" Style="{StaticResource Fader}"
-                                    Width="280" Minimum="0" Maximum="100" Margin="20,0,0,0"
-                                    VerticalAlignment="Center" ValueChanged="OnMasterVolumeChanged" />
-                            <TextBlock Grid.Column="2" x:Name="MasterVolText" FontFamily="Consolas" FontSize="13"
-                                       Foreground="{StaticResource TextSecondary}" VerticalAlignment="Center"
-                                       Margin="10,0,0,0" MinWidth="46" />
-                            <controls:LedMeter Grid.Column="3" x:Name="MasterMeterBig" Width="170" Height="14"
-                                               Segments="20" VerticalAlignment="Center" Margin="16,0,0,0"
-                                               ToolTip="设备总峰值" />
-                            <Button Grid.Column="4" x:Name="MasterMuteBtn" Style="{StaticResource Btn}" Width="86"
-                                    Margin="16,0,0,0" Click="OnMasterMuteClick" />
-                        </Grid>
-                    </Border>
+                    <TextBlock Grid.Row="0" x:Name="OutputTitle" FontSize="13.5" FontWeight="SemiBold"
+                               Foreground="{StaticResource TextPrimary}" Margin="2,0,0,10"
+                               Text="输出与设备" />
 
                     <Border Grid.Row="1" Style="{StaticResource Card}" Padding="14,12" VerticalAlignment="Top">
                         <StackPanel>
                             <Grid Margin="0,0,0,12">
-                                <TextBlock Text="应用通道" FontSize="13.5" FontWeight="SemiBold"
+                                <TextBlock Text="调音台 · MASTER + 应用通道" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" />
-                                <TextBlock Text="实时电平与音量；被闪避的应用由规则接管，此时调整将更新其恢复目标"
+                                <TextBlock Text="MASTER=默认播放设备；被闪避的应用由规则接管，此时调整将更新其恢复目标"
                                            Style="{StaticResource Hint}" HorizontalAlignment="Right" />
                             </Grid>
                             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                                <ItemsControl x:Name="VolumeList">
-                                    <ItemsControl.ItemsPanel>
-                                        <ItemsPanelTemplate>
-                                            <StackPanel Orientation="Horizontal" />
-                                        </ItemsPanelTemplate>
-                                    </ItemsControl.ItemsPanel>
-                                    <ItemsControl.ItemTemplate>
-                                        <DataTemplate>
-                                            <Border Width="112" Background="{StaticResource PageBg}"
-                                                    BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
-                                                    CornerRadius="8" Padding="10,10" Margin="0,0,10,4">
-                                                <StackPanel>
-                                                    <Border Background="{Binding GroupBrush}" CornerRadius="4" Padding="6,2"
-                                                            HorizontalAlignment="Center">
-                                                        <TextBlock Text="{Binding GroupName}" FontSize="10.5" Foreground="White" />
-                                                    </Border>
-                                                    <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold"
-                                                               Foreground="{StaticResource TextPrimary}" Margin="0,8,0,0"
-                                                               TextAlignment="Center" TextWrapping="Wrap" MaxHeight="32"
-                                                               TextTrimming="CharacterEllipsis" />
-                                                    <TextBlock Text="{Binding PidText}" FontSize="9.5" FontFamily="Consolas"
-                                                               Foreground="{StaticResource TextFaint}" Margin="0,1,0,0"
-                                                               TextAlignment="Center" />
-                                                    <controls:LedMeter Height="110" Width="14" Orientation="Vertical"
-                                                                       Segments="16" Value="{Binding PeakPercent}"
-                                                                       Margin="0,10,0,0" HorizontalAlignment="Center" />
-                                                    <Slider Style="{StaticResource FaderV}" Height="130" Orientation="Vertical"
-                                                            Minimum="0" Maximum="100" Value="{Binding VolumePercent}"
-                                                            ValueChanged="OnChannelVolumeChanged" Margin="0,10,0,0"
-                                                            HorizontalAlignment="Center" />
-                                                    <TextBlock Text="{Binding VolumeText}" FontFamily="Consolas" FontSize="12"
-                                                               Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"
-                                                               TextAlignment="Center" />
-                                                    <Button Content="{Binding MuteText}" Width="76" Margin="0,8,0,0"
-                                                            Style="{StaticResource Btn}" Click="OnChannelMuteClick" />
-                                                </StackPanel>
-                                            </Border>
-                                        </DataTemplate>
-                                    </ItemsControl.ItemTemplate>
-                                </ItemsControl>
+                                <StackPanel Orientation="Horizontal">
+                                    <!-- MASTER 通道（调音台主输出） -->
+                                    <Border Width="112" Background="{StaticResource PageBg}"
+                                            BorderBrush="{StaticResource Accent}" BorderThickness="1"
+                                            CornerRadius="8" Padding="10,10" Margin="0,0,10,4">
+                                        <StackPanel>
+                                            <TextBlock Text="MASTER" FontSize="11" FontWeight="Bold" FontFamily="Consolas"
+                                                       Foreground="{StaticResource Accent}" HorizontalAlignment="Center"
+                                                       Margin="0,2,0,8" />
+                                            <controls:LedMeter Height="110" Width="14" Orientation="Vertical" Segments="16"
+                                                               x:Name="MasterMeterBig" HorizontalAlignment="Center"
+                                                               ToolTip="设备总峰值" />
+                                            <Slider x:Name="MasterSlider" Style="{StaticResource FaderV}" Height="130"
+                                                    Orientation="Vertical" Minimum="0" Maximum="100" Margin="0,10,0,0"
+                                                    HorizontalAlignment="Center" ValueChanged="OnMasterVolumeChanged" />
+                                            <TextBlock x:Name="MasterVolText" FontFamily="Consolas" FontSize="12"
+                                                       Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"
+                                                       HorizontalAlignment="Center" />
+                                            <Button x:Name="MasterMuteBtn" Content="静音" Width="76" Margin="0,8,0,0"
+                                                    Style="{StaticResource Btn}" Click="OnMasterMuteClick" />
+                                        </StackPanel>
+                                    </Border>
+                                    <ItemsControl x:Name="VolumeList">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Width="112" Background="{StaticResource PageBg}"
+                                                        BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
+                                                        CornerRadius="8" Padding="10,10" Margin="0,0,10,4">
+                                                    <StackPanel>
+                                                        <Border Background="{Binding GroupBrush}" CornerRadius="4" Padding="6,2"
+                                                                HorizontalAlignment="Center">
+                                                            <TextBlock Text="{Binding GroupName}" FontSize="10.5" Foreground="White" />
+                                                        </Border>
+                                                        <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold"
+                                                                   Foreground="{StaticResource TextPrimary}" Margin="0,8,0,0"
+                                                                   TextAlignment="Center" TextWrapping="Wrap" MaxHeight="32"
+                                                                   TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Text="{Binding PidText}" FontSize="9.5" FontFamily="Consolas"
+                                                                   Foreground="{StaticResource TextFaint}" Margin="0,1,0,0"
+                                                                   TextAlignment="Center" />
+                                                        <controls:LedMeter Height="110" Width="14" Orientation="Vertical"
+                                                                           Segments="16" Value="{Binding PeakPercent}"
+                                                                           Margin="0,10,0,0" HorizontalAlignment="Center" />
+                                                        <Slider Style="{StaticResource FaderV}" Height="130" Orientation="Vertical"
+                                                                Minimum="0" Maximum="100" Value="{Binding VolumePercent}"
+                                                                ValueChanged="OnChannelVolumeChanged" Margin="0,10,0,0"
+                                                                HorizontalAlignment="Center" />
+                                                        <TextBlock Text="{Binding VolumeText}" FontFamily="Consolas" FontSize="12"
+                                                                   Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"
+                                                                   TextAlignment="Center" />
+                                                        <Button Content="{Binding MuteText}" Width="76" Margin="0,8,0,0"
+                                                                Style="{StaticResource Btn}" Click="OnChannelMuteClick" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
                             </ScrollViewer>
                         </StackPanel>
                     </Border>
@@ -245,7 +277,13 @@
             </TabItem>
 
             <!-- ═══ 分组 ═══ -->
-            <TabItem Header="分组">
+            <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                            <TextBlock Text="分组" Margin="9,0,0,0" />
+                        </StackPanel>
+                    </TabItem.Header>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="280" />
@@ -309,12 +347,19 @@
                             </StackPanel>
 
                             <Grid Grid.Row="1" Margin="0,18,0,6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
                                 <TextBlock Text="进程匹配" FontSize="12.5" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextPrimary}" />
-                                <TextBlock Text="按进程名匹配，不区分大小写；填 system sounds 可匹配系统提示音"
-                                           Style="{StaticResource Hint}" HorizontalAlignment="Right" />
+                                           Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center" />
+                                <TextBlock Grid.Column="1" Text="按进程名匹配，不区分大小写；填 system sounds 可匹配系统提示音"
+                                           Style="{StaticResource Hint}" HorizontalAlignment="Right" MaxWidth="360"
+                                           TextWrapping="Wrap" TextAlignment="Right" />
                             </Grid>
 
+                            <TextBlock Grid.Row="2" x:Name="GroupProcEmpty" Text="（尚未添加进程）"
+                                       Style="{StaticResource Hint}" Margin="0,4,0,8" />
                             <ItemsControl Grid.Row="2" x:Name="GroupProcesses" MaxHeight="150"
                                           ScrollViewer.VerticalScrollBarVisibility="Auto">
                                 <ItemsControl.ItemTemplate>
@@ -355,19 +400,29 @@
                                         ToolTip="该应用的音频会话一旦出现，立即按本分组规则处理" />
                             </StackPanel>
 
-                            <DockPanel Grid.Row="7" LastChildFill="False">
-                                <TextBlock Style="{StaticResource Hint}" MaxWidth="380" VerticalAlignment="Center"
+                            <Grid Grid.Row="7">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="0,0,16,0"
                                            Text="提示：浏览器各标签页共享一个会话，只能按整个浏览器分组；独占模式 / ASIO 音频无法检测。" />
-                                <Button DockPanel.Dock="Right" Content="删除分组" Style="{StaticResource BtnDanger}"
-                                        Click="OnGroupDelete" />
-                            </DockPanel>
+                                <Button Grid.Column="1" Content="删除分组" Style="{StaticResource BtnDanger}"
+                                        VerticalAlignment="Center" Click="OnGroupDelete" />
+                            </Grid>
                         </Grid>
                     </Border>
                 </Grid>
             </TabItem>
 
             <!-- ═══ 规则 ═══ -->
-            <TabItem Header="规则">
+            <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                            <TextBlock Text="规则" Margin="9,0,0,0" />
+                        </StackPanel>
+                    </TabItem.Header>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="330" />
@@ -413,7 +468,7 @@
 
                             <TextBlock Grid.Row="0" FontSize="13.5" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextPrimary}"
-                                       Text="当【触发】出声或在播时，【目标】的音量渐变到目标值（触发/目标均支持分组或单个应用）" />
+                                       Text="当【触发】出声或在播时，【目标】音量渐变到目标值" />
 
                             <Grid Grid.Row="1" Margin="0,16,0,0">
                                 <Grid.ColumnDefinitions>
@@ -473,39 +528,53 @@
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                                     <TextBox x:Name="RulePriority" Style="{StaticResource Tb}" Width="80"
                                              TextChanged="OnRuleFieldChanged" />
-                                    <TextBlock Text="同一目标组有多条规则同时生效时，取优先级最高的一条"
+                                    <TextBlock Text="同一目标被多条规则命中时，优先级高者生效"
                                                Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="10,0,0,0"
-                                               MaxWidth="430" />
+                                               MaxWidth="240" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Grid>
 
-                            <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="110,16,0,0">
-                                <TextBlock Text="判定方式" Style="{StaticResource Label}" VerticalAlignment="Center"
-                                           Margin="0,0,10,0" />
-                                <ComboBox x:Name="RuleDetectionMode" Style="{StaticResource Combo}" Width="150"
+                            <Grid Grid.Row="5" Margin="0,16,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="判定方式" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                <ComboBox Grid.Column="1" x:Name="RuleDetectionMode" Style="{StaticResource Combo}" Width="150"
                                           SelectedIndex="0" SelectionChanged="OnRuleFieldChanged"
                                           ToolTip="状态判定=SMTC 播放状态/会话 Active（推荐，不看峰值，无宽限）；声音判定=峰值迟滞+宽限">
                                     <ComboBoxItem>状态判定</ComboBoxItem>
                                     <ComboBoxItem>声音判定</ComboBoxItem>
                                 </ComboBox>
-                                <CheckBox x:Name="RuleEnabled" Content="启用此规则" Margin="24,0,0,0"
-                                          VerticalAlignment="Center" Checked="OnRuleFieldChanged"
-                                          Unchecked="OnRuleFieldChanged" />
-                            </StackPanel>
+                                <CheckBox Grid.Column="2" x:Name="RuleEnabled" Content="启用此规则"
+                                          VerticalAlignment="Center" HorizontalAlignment="Right"
+                                          Checked="OnRuleFieldChanged" Unchecked="OnRuleFieldChanged" />
+                            </Grid>
 
-                            <DockPanel Grid.Row="7" LastChildFill="False">
-                                <TextBlock VerticalAlignment="Center" Style="{StaticResource Hint}"
+                            <Grid Grid.Row="7">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock VerticalAlignment="Center" Style="{StaticResource Hint}" Margin="0,0,16,0"
                                            Text="规则修改后点击右下角「应用并保存」立即生效并持久化。" />
-                                <Button DockPanel.Dock="Right" Content="删除规则" Style="{StaticResource BtnDanger}"
-                                        Click="OnRuleDelete" />
-                            </DockPanel>
+                                <Button Grid.Column="1" Content="删除规则" Style="{StaticResource BtnDanger}"
+                                        VerticalAlignment="Center" Click="OnRuleDelete" />
+                            </Grid>
                         </Grid>
                     </Border>
                 </Grid>
             </TabItem>
 
             <!-- ═══ 设置 ═══ -->
-            <TabItem Header="设置">
+            <TabItem>
+                    <TabItem.Header>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
+                            <TextBlock Text="设置" Margin="9,0,0,0" />
+                        </StackPanel>
+                    </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel MaxWidth="680" HorizontalAlignment="Left">
 

@@ -57,6 +57,7 @@ public partial class MainWindow : Window
         catch { /* 图标失败不影响功能 */ }
 
         DeviceText.Text = App.Monitor.DeviceName;
+        OutputTitle.Text = "输出与设备：" + App.Monitor.DeviceName;
         StatusList.ItemsSource = _statusRows;
         RefreshGroupColors();
         RefreshGroupTab();
@@ -105,6 +106,10 @@ public partial class MainWindow : Window
 
         public string Channel { get => _channel; set { _channel = value; Pc(); } }
         public double PeakPercent { get => _peakPercent; set { _peakPercent = value; Pc(); } }
+
+        private double _stripOpacity = 0.25;
+        /// <summary>通道色条透明度：出声时点亮。</summary>
+        public double StripOpacity { get => _stripOpacity; set { _stripOpacity = value; Pc(); } }
 
         public string Process { get => _process; set { _process = value; Pc(); } }
         public string PidText { get => _pidText; set { _pidText = $"PID {value}"; Pc(); } }
@@ -164,6 +169,7 @@ public partial class MainWindow : Window
             var row = _statusById[s.InstanceId];
             var e = states.GetValueOrDefault(s.InstanceId);
             row.PeakPercent = Math.Round(s.Peak * 100);
+            row.StripOpacity = e?.Speaking == true ? 1.0 : 0.25;
             row.Process = s.ProcessName;
             row.PidText = s.Pid.ToString();
             row.GroupName = e?.GroupName ?? "—";
@@ -340,6 +346,7 @@ public partial class MainWindow : Window
         GroupNameBox.Text = g?.Name ?? "";
         DefaultCheck.IsChecked = g?.IsDefault == true;
         GroupProcesses.ItemsSource = g?.ProcessNames.ToList() ?? new List<string>();
+        GroupProcEmpty.Visibility = (g is null || g.ProcessNames.Count == 0) ? Visibility.Visible : Visibility.Collapsed;
         RefreshRunningProcs();
         _loadingUi = outer; // 恢复外层状态（可能被嵌套调用）
     }
