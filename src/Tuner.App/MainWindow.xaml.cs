@@ -273,8 +273,8 @@ public partial class MainWindow : Window
             row.GroupBrush = GroupBrush(e?.GroupId ?? "");
             row.PeakPercent = Math.Round(s.Peak * 100);
             var zero = s.Mute || s.Volume <= 0.005;
-            if (s.Volume > 0.005)
-                row.RestoreVolume = Math.Round(s.Volume * 100);
+            // 注意：不被动跟踪音量——动画滑落/闪避渐变的中间值会污染恢复值；
+            // 恢复值只在用户主动动作（拖推子、点静音前）时捕获
             row.VolumePercent = Math.Round(s.Volume * 100);
             row.ZeroState = zero;
             row.MuteText = zero ? "取消静音" : "静音";
@@ -348,6 +348,8 @@ public partial class MainWindow : Window
             App.Monitor.SetSessionMute(ch.InstanceId, false); // 拖起音量即解除静音标志
         App.Monitor.SetSessionVolume(ch.InstanceId, v);
         App.Engine.SetUserVolume(ch.InstanceId, v); // 闪避中手动调整 → 更新恢复锚点
+        if (v > 0.005f)
+            ch.RestoreVolume = Math.Round(v * 100); // 用户主动设置的非零音量才作为恢复值
     }
 
     private readonly Dictionary<string, Slider> _faderByInstance = new();
