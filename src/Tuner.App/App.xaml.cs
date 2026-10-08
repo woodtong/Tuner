@@ -43,7 +43,8 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         var shot = e.Args.Contains("--screenshot");
-        if (!shot) // 截图/开发模式跳过单实例互斥，便于在运行中的实例旁做 UI 检查
+        var probe = e.Args.Contains("--probe");
+        if (!shot && !probe) // 截图/探针/开发模式跳过单实例互斥，便于在运行中的实例旁做 UI 检查
         {
             _singleInstanceMutex = new Mutex(true, @"Local\Tuner_SingleInstance", out var createdNew);
             if (!createdNew)
@@ -92,6 +93,12 @@ public partial class App : Application
             Engine.ApplyConfig(ConfigStore.CreateDefault());
         }
 
+        if (probe)
+        {
+            // 探针模式：先隔离引擎，再由探针自身施加临时规则做对照实验
+            Engine.ApplyConfig(ConfigStore.CreateDefault());
+        }
+
         var smoke = e.Args.Contains("--smoke");
         if (!e.Args.Contains("--minimized") || smoke)
             _mainWindow.Show();
@@ -108,6 +115,19 @@ public partial class App : Application
                 ForceExit = true;
                 Log("冒烟模式：触发退出");
                 Shutdown();
+            };
+            timer.Start();
+        }
+
+        if (probe)
+        {
+            // 探针模式：展示窗口，1.2s 后进入交互探针（进程内合成滚轮/拖动），完成即退出
+            var win = _mainWindow!;
+            var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1200) };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                _ = win.RunFaderProbeAsync();
             };
             timer.Start();
         }

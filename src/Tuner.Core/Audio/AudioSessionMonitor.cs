@@ -112,6 +112,16 @@ public sealed class AudioSessionMonitor : IDisposable
     /// <summary>最近一个轮询周期的会话快照（供异步消费者以自己的节奏读取）。</summary>
     public IReadOnlyList<SoundSession> CurrentSnapshot => _lastSnapshot;
 
+    /// <summary>
+    /// 该会话是否有尚未落地的音量写入（UI 刚写、轮询线程还没执行）。
+    /// 此时快照里的音量必然滞后，读取方不要用旧值回写显示。
+    /// </summary>
+    public bool HasPendingVolumeWrite(string instanceId)
+    {
+        lock (_pendingGate)
+            return _pendingSessionVolumes.ContainsKey(instanceId);
+    }
+
     /// <summary>全部会话的音量控制句柄（按 InstanceId 与快照一一对应）。</summary>
     public IReadOnlyList<ISessionVolumeControl> VolumeControls
     {

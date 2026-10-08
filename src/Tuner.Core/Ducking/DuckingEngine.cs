@@ -115,9 +115,9 @@ public sealed class DuckingEngine : IDisposable
 
         lock (_gate)
         {
-            // 退出还原：所有被修改过的音量恢复原值
+            // 退出还原：凡被引擎写过的会话（闪避中，或渐变回程被中断）都恢复到用户原始音量
             int restored = 0;
-            foreach (var t in _tracked.Values.Where(t => t.Ducked))
+            foreach (var t in _tracked.Values.Where(EngineControlling))
             {
                 t.Ducked = false;
                 t.Control?.SetVolume(t.OriginalVolume);
@@ -134,18 +134,28 @@ public sealed class DuckingEngine : IDisposable
     }
 
     /// <summary>
-    /// 用户在混音台手动调整某会话音量：若该会话正在闪避，仅更新其"恢复锚点"
-    /// （闪避结束回到用户调整后的值），实际音量仍由规则接管；未闪避的会话无需处理
-    /// （引擎仅在自身写入时更新，不会覆盖用户的调整）。
+    /// 用户在混音台手动调整某会话音量：若引擎正接管该会话（闪避中，或正在渐变回原音量），
+    /// 仅更新其"恢复锚点"（渐变结束时回到用户调整后的值），实际音量仍由规则接管；
+    /// 引擎未接管的会话无需处理（引擎不写，不会覆盖用户的调整）。
     /// </summary>
     public void SetUserVolume(string instanceId, float volume)
     {
         lock (_gate)
         {
-            if (_tracked.TryGetValue(instanceId, out var t) && t.Ducked)
+            if (_tracked.TryGetValue(instanceId, out var t) && EngineControlling(t))
                 t.OriginalVolume = Math.Clamp(volume, 0f, 1f);
         }
     }
+
+    /// <summary>引擎是否正在写该会话的音量（闪避中，或朝恢复锚点渐变中）。</summary>
+    public bool IsVolumeControlled(string instanceId)
+    {
+        lock (_gate)
+            return _tracked.TryGetValue(instanceId, out var t) && EngineControlling(t);
+    }
+
+    private static bool EngineControlling(Tracked t) =>
+        t.Ducked || Math.Abs(t.CurrentVolume - t.OriginalVolume) > 0.005f;
 
     private void Loop()
     {

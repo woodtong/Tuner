@@ -63,6 +63,7 @@ public partial class MainWindow : Window
         DeviceText.Text = App.Monitor.DeviceName;
         OutputTitle.Text = "输出与设备：" + App.Monitor.DeviceName;
         StatusList.ItemsSource = _statusRows;
+        VolumeList.ItemsSource = _volumeRows;
         RefreshGroupColors();
         RefreshGroupTab();
         RefreshRuleTab();
@@ -274,6 +275,9 @@ public partial class MainWindow : Window
     private string _volumeSignature = "";
     private bool _masterSuppress;
 
+    /// <summary>--probe 模式下打开：记录"刷新改写显示"这类关键回写（正常运行为关闭）。</summary>
+    internal static bool FaderTrace;
+
     private void RefreshVolumes()
     {
         var states = App.Engine.CurrentStates.ToDictionary(s => s.InstanceId);
@@ -287,15 +291,7 @@ public partial class MainWindow : Window
         if (sig != _volumeSignature)
         {
             _volumeSignature = sig;
-            _volumeRows.Clear();
-            _volumeById.Clear();
-            foreach (var s in sessions)
-            {
-                var row = new VolumeChannel { InstanceId = s.InstanceId };
-                _volumeRows.Add(row);
-                _volumeById[s.InstanceId] = row;
-            }
-            VolumeList.ItemsSource = _volumeRows;
+            ReconcileVolumeRows(sessions);
         }
 
         foreach (var s in sessions)
@@ -321,10 +317,23 @@ public partial class MainWindow : Window
                     App.Monitor.SetSessionVolume(row.InstanceId, 0f);
                 continue;
             }
+            if (row.IsDragging && Mouse.LeftButton == MouseButtonState.Released)
+                row.IsDragging = false; // 捕捉异常丢失时清除残影，避免显示永久冻结
             if (row.IsAnimating || row.IsDragging)
                 continue; // 动效/拖动期间显示由交互驱动，刷新不插手
+            if (App.Monitor.HasPendingVolumeWrite(row.InstanceId))
+                continue; // 音量写入还在队列里：快照必然滞后，不能用旧值把显示拽回去
 
-            row.VolumeDisplay = Math.Round(s.Volume * 100);
+            var newDisplay = Math.Round(s.Volume * 100);
+            if (App.Engine.IsVolumeControlled(row.InstanceId))
+            {
+                // 引擎接管（闪避中/渐变回程）：推子显示"恢复目标"（用户逻辑音量），
+                // 不显示被规则压住的瞬时值——否则每次调整都会被拽回规则值，看起来就是一闪一闪
+                newDisplay = Math.Round((e?.OriginalVolume ?? s.Volume) * 100);
+            }
+            if (FaderTrace && Math.Abs(row.VolumeDisplay - newDisplay) > 0.5)
+                App.Log($"[probe] 刷新改写显示 {row.Name} {row.VolumeDisplay:F0} -> {newDisplay:F0}（实际 {s.Volume * 100:F1} 目标 {row.FaderTarget:F0}）");
+            row.VolumeDisplay = newDisplay;
             if (!row.FaderTargetInit)
             {
                 row.FaderTarget = row.VolumeDisplay; // 首次以实际音量为逻辑基准
@@ -339,6 +348,41 @@ public partial class MainWindow : Window
         MasterMeterBig.Value = Math.Round(App.Monitor.DevicePeak * 100);
         MasterMuteBtn.Content = App.Monitor.MasterMuted ? "取消静音" : "静音";
         _masterSuppress = false;
+    }
+
+    /// <summary>
+    /// 会话集合变化时按目标顺序差量对齐通道行：只插入/移动/移除，不整表重建。
+    /// （整表重建会让所有推子瞬间重建、并打断正在进行的拖动 = 肉眼可见的闪一下）
+    /// </summary>
+    private void ReconcileVolumeRows(List<SoundSession> sessions)
+    {
+        var alive = sessions.Select(s => s.InstanceId).ToHashSet();
+        for (int i = _volumeRows.Count - 1; i >= 0; i--)
+        {
+            var id = _volumeRows[i].InstanceId;
+            if (alive.Contains(id))
+                continue;
+            _volumeRows.RemoveAt(i);
+            _volumeById.Remove(id);
+            _faderByInstance.Remove(id);
+            _trackByInstance.Remove(id);
+        }
+        for (int i = 0; i < sessions.Count; i++)
+        {
+            var id = sessions[i].InstanceId;
+            if (_volumeById.TryGetValue(id, out var row))
+            {
+                int cur = _volumeRows.IndexOf(row);
+                if (cur != i)
+                    _volumeRows.Move(cur, i);
+            }
+            else
+            {
+                var created = new VolumeChannel { InstanceId = id };
+                _volumeRows.Insert(Math.Min(i, _volumeRows.Count), created);
+                _volumeById[id] = created;
+            }
+        }
     }
 
     private void OnMasterVolumeChanged(object sender, RoutedEventArgs e)
@@ -397,7 +441,7 @@ public partial class MainWindow : Window
         ch.FaderTarget = target;
         if (!_faderByInstance.TryGetValue(ch.InstanceId, out var slider))
         {
-            ch.VolumeDisplay = target;
+            ch.VolumeDisplay = target; // 无滑块可动效时至少保证显示正确
             return;
         }
         ch.IsAnimating = true;
@@ -409,6 +453,7 @@ public partial class MainWindow : Window
         anim.Completed += (_, _) =>
         {
             ch.IsAnimating = false;
+            slider.BeginAnimation(Slider.ValueProperty, null); // 撤销 HoldEnd，把值的决定权交回绑定
             ch.VolumeDisplay = target; // 到位定格
         };
         slider.BeginAnimation(Slider.ValueProperty, anim);
@@ -456,6 +501,7 @@ public partial class MainWindow : Window
     {
         if (sender is Slider s && s.DataContext is VolumeChannel ch)
         {
+            _faderByInstance[ch.InstanceId] = s; // 动效与拖动保护都要靠它找到滑块
             _trackByInstance[ch.InstanceId] = FindDescendant<System.Windows.Controls.Primitives.Track>(s);
             var thumb = FindDescendant<System.Windows.Controls.Primitives.Thumb>(s);
             if (thumb is not null)
@@ -490,6 +536,17 @@ public partial class MainWindow : Window
                     b.Opacity = on ? 1 : 0;
     }
 
+    /// <summary>
+    /// 会话音量写入的唯一入口：引擎正接管（闪避中/渐变回程）时只更新其恢复锚点，
+    /// 绝不直写实际音量——否则与引擎的每拍渐变互相覆盖，听感就是音量抽动。
+    /// </summary>
+    private static void WriteChannelVolume(string instanceId, float volume)
+    {
+        if (!App.Engine.IsVolumeControlled(instanceId))
+            App.Monitor.SetSessionVolume(instanceId, volume);
+        App.Engine.SetUserVolume(instanceId, volume);
+    }
+
     /// <summary>滚轮：每格（delta 120）= 2%，逻辑目标值累加（快速滚动不丢格），每次调节都记录恢复值。</summary>
     private void OnChannelFaderMouseWheel(object sender, MouseWheelEventArgs e)
     {
@@ -512,8 +569,7 @@ public partial class MainWindow : Window
             App.Monitor.SetSessionMute(ch.InstanceId, false);
             ch.MuteIntent = false;
         }
-        App.Monitor.SetSessionVolume(ch.InstanceId, v);
-        App.Engine.SetUserVolume(ch.InstanceId, v);
+        WriteChannelVolume(ch.InstanceId, v);
         ch.RestoreVolume = ch.FaderTarget; // 每一次滚轮调节都记录
         ApplyFader(ch, ch.FaderTarget, 357); // 140% 速度动效
     }
@@ -523,6 +579,7 @@ public partial class MainWindow : Window
         if (ch.IsAnimating && DateTime.UtcNow < ch.BusyUntil)
             return; // 保护期：等滑块到位
         ch.IsAnimating = false; // 安全阀：超时强制解锁
+        ch.VolumeDisplay = slider.Value; // 以当前显示位置为新基准，撤动画瞬间不回跳
         slider.BeginAnimation(Slider.ValueProperty, null); // 终止动画
         ch.IsDragging = true;
         SetGrooveVisible(slider, true); // 拖动期间凹槽常亮，不随光标进出闪烁
@@ -543,8 +600,7 @@ public partial class MainWindow : Window
             App.Monitor.SetSessionMute(ch.InstanceId, false);
             ch.MuteIntent = false;
         }
-        App.Monitor.SetSessionVolume(ch.InstanceId, v);
-        App.Engine.SetUserVolume(ch.InstanceId, v);
+        WriteChannelVolume(ch.InstanceId, v);
     }
 
     private void OnChannelFaderDragCompleted(VolumeChannel ch, Slider slider)
@@ -580,8 +636,7 @@ public partial class MainWindow : Window
         {
             ch.FaderTarget = 0;
             App.Monitor.SetSessionMute(ch.InstanceId, true);
-            App.Monitor.SetSessionVolume(ch.InstanceId, 0f);
-            App.Engine.SetUserVolume(ch.InstanceId, 0f);
+            WriteChannelVolume(ch.InstanceId, 0f);
             ApplyFader(ch, 0, 500);
         }
         else
@@ -589,10 +644,249 @@ public partial class MainWindow : Window
             var restore = (float)Math.Clamp(ch.RestoreVolume, 1, 100) / 100f;
             ch.FaderTarget = Math.Round(restore * 100);
             App.Monitor.SetSessionMute(ch.InstanceId, false);
-            App.Monitor.SetSessionVolume(ch.InstanceId, restore);
-            App.Engine.SetUserVolume(ch.InstanceId, restore);
+            WriteChannelVolume(ch.InstanceId, restore);
             ApplyFader(ch, Math.Round(restore * 100), 500);
         }
+    }
+
+    // ---------- 推子交互探针（--probe 开发模式：进程内触发滚轮/拖动事件，观察"显示值 vs 刷新回写"的博弈） ----------
+
+    /// <summary>探针：切到音量页 → 合成滚轮 → 合成拖动 → 施加临时闪避规则后再合成滚轮；全程落日志后退出。</summary>
+    public async System.Threading.Tasks.Task RunFaderProbeAsync()
+    {
+        void L(string m) => App.Log("[probe] " + m);
+        FaderTrace = true;
+        var originals = new Dictionary<string, float>();
+        List<Slider> sliders = new();
+        try
+        {
+            Tabs.SelectedIndex = 1;
+            await System.Threading.Tasks.Task.Delay(2500);
+            UpdateLayout();
+
+            CollectSliders(VolumeList, sliders);
+            L($"音量页滑块数={sliders.Count}（MASTER 在 VolumeList 之外）");
+            foreach (var s in sliders)
+                if (s.DataContext is VolumeChannel c && !originals.ContainsKey(c.InstanceId))
+                {
+                    var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == c.InstanceId);
+                    originals[c.InstanceId] = sess?.Volume ?? 0.5f;
+                }
+            DumpFaders(sliders, "初始");
+            if (sliders.Count == 0)
+            {
+                L("无应用通道滑块");
+                return;
+            }
+            var target = sliders[0];
+            L("目标通道=" + Describe(target));
+
+            L("阶段A：合成滚轮（无闪避）。首格后每 40ms 采样 12 次，观察显示值是否被刷新拽回");
+            RaiseWheel(target, 120);
+            for (int i = 1; i <= 12; i++)
+            {
+                await System.Threading.Tasks.Task.Delay(40);
+                DumpFaders(sliders, $"A1.{i}");
+            }
+            for (int i = 2; i <= 4; i++)
+            {
+                RaiseWheel(target, 120);
+                await System.Threading.Tasks.Task.Delay(300);
+                DumpFaders(sliders, $"A{i}");
+            }
+            await System.Threading.Tasks.Task.Delay(1600);
+            DumpFaders(sliders, "A结束");
+
+            L("阶段B：合成拖动（DragStarted + 12×DragDelta + DragCompleted）");
+            RaiseDragStart(target);
+            for (int i = 0; i < 12; i++)
+            {
+                RaiseDragDelta(target, -3);
+                await System.Threading.Tasks.Task.Delay(40);
+            }
+            RaiseDragDone(target);
+            await System.Threading.Tasks.Task.Delay(1800);
+            DumpFaders(sliders, "B结束");
+
+            L("阶段C：施加临时闪避规则");
+            var ducked = ApplyProbeDuckConfigFor(target);
+            L("闪避配置=" + (ducked ?? "(无可用触发组)"));
+            sliders = new List<Slider>();
+            CollectSliders(VolumeList, sliders);
+            await System.Threading.Tasks.Task.Delay(3000);
+            DumpFaders(sliders, "C闪避生效");
+            target = sliders.Count > 0 ? sliders[0] : target;
+            L("阶段C：合成滚轮 x4（被闪避期间，向下）");
+            for (int i = 1; i <= 4; i++)
+            {
+                RaiseWheel(target, -120);
+                await System.Threading.Tasks.Task.Delay(300);
+                DumpFaders(sliders, $"C{i}");
+            }
+            await System.Threading.Tasks.Task.Delay(1400);
+            DumpFaders(sliders, "C结束");
+
+            L("阶段D：被闪避期间合成拖动");
+            RaiseDragStart(target);
+            for (int i = 0; i < 10; i++)
+            {
+                RaiseDragDelta(target, -3);
+                await System.Threading.Tasks.Task.Delay(40);
+            }
+            RaiseDragDone(target);
+            await System.Threading.Tasks.Task.Delay(1800);
+            DumpFaders(sliders, "D结束");
+        }
+        catch (Exception ex)
+        {
+            L("异常: " + ex);
+        }
+        finally
+        {
+            try
+            {
+                App.Engine.ApplyConfig(ConfigStore.Clone(App.Config)); // 还原真实配置
+                foreach (var kv in originals)
+                {
+                    WriteChannelVolume(kv.Key, kv.Value);
+                }
+                L("已还原配置与音量");
+            }
+            catch (Exception ex) { L("还原失败: " + ex.Message); }
+            await System.Threading.Tasks.Task.Delay(600);
+            App.ForceExit = true;
+            Application.Current.Shutdown();
+        }
+    }
+
+    private static void CollectSliders(DependencyObject root, List<Slider> found)
+    {
+        int n = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < n; i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is Slider s)
+                found.Add(s);
+            CollectSliders(child, found);
+        }
+    }
+
+    private static string Describe(Slider s)
+    {
+        var ch = s.DataContext as VolumeChannel;
+        return ch is null ? "?" : $"{ch.Name}（{ch.InstanceId}）";
+    }
+
+    private void DumpFaders(List<Slider> sliders, string tag)
+    {
+        var sb = new System.Text.StringBuilder();
+        foreach (var s in sliders)
+        {
+            if (s.DataContext is not VolumeChannel ch)
+                continue;
+            var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
+            bool bind = System.Windows.Data.BindingOperations.GetBindingExpression(s, Slider.ValueProperty) is not null;
+            sb.Append($" | {ch.Name}: 显示={ch.VolumeDisplay:F0} 滑块={s.Value:F0} 实际={(sess is null ? -1 : sess.Volume * 100):F0} 目标={ch.FaderTarget:F0} drag={ch.IsDragging} anim={ch.IsAnimating} bind={bind}");
+        }
+        App.Log($"[probe] [{tag}]" + sb);
+    }
+
+    private static void RaiseWheel(Slider s, int delta)
+    {
+        var args = new MouseWheelEventArgs(Mouse.PrimaryDevice, Environment.TickCount, delta)
+        {
+            RoutedEvent = UIElement.PreviewMouseWheelEvent,
+        };
+        s.RaiseEvent(args);
+    }
+
+    private static void RaiseDragStart(Slider s)
+    {
+        var thumb = FindDescendant<System.Windows.Controls.Primitives.Thumb>(s);
+        thumb?.RaiseEvent(new System.Windows.Controls.Primitives.DragStartedEventArgs(0, 0)
+        {
+            RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragStartedEvent,
+        });
+    }
+
+    private static void RaiseDragDelta(Slider s, double dy)
+    {
+        var thumb = FindDescendant<System.Windows.Controls.Primitives.Thumb>(s);
+        thumb?.RaiseEvent(new System.Windows.Controls.Primitives.DragDeltaEventArgs(0, dy)
+        {
+            RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragDeltaEvent,
+        });
+    }
+
+    private static void RaiseDragDone(Slider s)
+    {
+        var thumb = FindDescendant<System.Windows.Controls.Primitives.Thumb>(s);
+        thumb?.RaiseEvent(new System.Windows.Controls.Primitives.DragCompletedEventArgs(0, 0, false)
+        {
+            RoutedEvent = System.Windows.Controls.Primitives.Thumb.DragCompletedEvent,
+        });
+    }
+
+    /// <summary>临时规则：任一有会话的组（探针把声音判定阈值压到 0，"必然出声"）→ 目标通道所在组 0%。</summary>
+    private string? ApplyProbeDuckConfigFor(Slider slider)
+    {
+        if (slider.DataContext is not VolumeChannel ch)
+            return null;
+        var cfg = ConfigStore.Clone(App.Config);
+        cfg.Settings.UseMediaSessionStatus = false;
+        cfg.Settings.FadeDurationMs = 300;
+        cfg.Settings.ActivePeakThreshold = 0f;   // 探针专用：让触发组恒判为出声
+        cfg.Settings.InactivePeakThreshold = 0f;
+        cfg.Settings.InactiveHoldMs = 100;
+        cfg.Settings.SilenceGraceMs = 0;
+        cfg.Settings.StreamOpenSilenceGraceMs = 0;
+
+        // 注意：探针模式下引擎持有的是隔离配置，这里按用户配置自行解析分组
+        var targetGroup = ResolveProbeGroup(cfg, ch.Name);
+        string? triggerGroup = null;
+        foreach (var s in App.Monitor.CurrentSnapshot)
+        {
+            var gid = ResolveProbeGroup(cfg, s.ProcessName);
+            if (gid != targetGroup)
+            {
+                triggerGroup = gid;
+                break;
+            }
+        }
+        cfg.Rules.Clear();
+        if (triggerGroup is null)
+        {
+            App.Engine.ApplyConfig(cfg); // 无可用触发组：清空规则即可
+            return null;
+        }
+        cfg.Rules.Add(new DuckingRuleConfig
+        {
+            Id = "probe-duck",
+            Enabled = true,
+            Trigger = new RuleRef { Type = "group", GroupId = triggerGroup },
+            Target = new RuleRef { Type = "group", GroupId = targetGroup },
+            DetectionMode = "sound",
+            TargetVolumePercent = 0,
+            Priority = 20,
+        });
+        App.Engine.ApplyConfig(cfg);
+        return $"触发组={triggerGroup} 目标组={targetGroup}";
+    }
+
+    /// <summary>与引擎一致的进程名→分组解析（未匹配落入默认组）。</summary>
+    private static string ResolveProbeGroup(TunerConfig cfg, string processName)
+    {
+        var name = ConfigStore.NormalizeProcessName(processName);
+        AppGroupConfig? fallback = null;
+        foreach (var g in cfg.Groups)
+        {
+            if (g.IsDefault)
+                fallback ??= g;
+            foreach (var p in g.ProcessNames)
+                if (ConfigStore.NormalizeProcessName(p) == name)
+                    return g.Id;
+        }
+        return fallback?.Id ?? "default";
     }
 
     // ---------- 分组 ----------
