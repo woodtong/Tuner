@@ -222,6 +222,12 @@ public partial class MainWindow : Window
         public double RestoreVolume = 50;
         public bool MuteIntent;
 
+        /// <summary>动效序号：递增后，被替换/被接管的那次动画的 Completed 事件会被丢弃。</summary>
+        public int AnimSeq;
+
+        /// <summary>拖动镜像已排队（一帧一次）。</summary>
+        public bool MirrorPending;
+
         public static readonly DependencyProperty VolumeDisplayProperty = DependencyProperty.Register(
             nameof(VolumeDisplay), typeof(double), typeof(VolumeChannel),
             new FrameworkPropertyMetadata(100.0, OnVolumeDisplayChanged));
@@ -317,8 +323,8 @@ public partial class MainWindow : Window
                     App.Monitor.SetSessionVolume(row.InstanceId, 0f);
                 continue;
             }
-            if (row.IsDragging && Mouse.LeftButton == MouseButtonState.Released)
-                row.IsDragging = false; // 捕捉异常丢失时清除残影，避免显示永久冻结
+            if (row.IsAnimating && DateTime.UtcNow > row.BusyUntil)
+                StopFaderAnimation(row); // 超时安全阀：动画完成事件丢失时不永久冻结显示
             if (row.IsAnimating || row.IsDragging)
                 continue; // 动效/拖动期间显示由交互驱动，刷新不插手
             if (App.Monitor.HasPendingVolumeWrite(row.InstanceId))
@@ -445,6 +451,7 @@ public partial class MainWindow : Window
             return;
         }
         ch.IsAnimating = true;
+        int seq = ++ch.AnimSeq;
         ch.BusyUntil = DateTime.UtcNow + TimeSpan.FromMilliseconds(durationMs + 400); // 超时安全阀
         var anim = new System.Windows.Media.Animation.DoubleAnimation(slider.Value, target, TimeSpan.FromMilliseconds(durationMs))
         {
@@ -452,6 +459,10 @@ public partial class MainWindow : Window
         };
         anim.Completed += (_, _) =>
         {
+            // 被新动效替换、或被拖动/静音接管后，撤下的动画仍会触发 Completed：
+            // 此时它揣着的是旧目标，写回去就是一次肉眼可见的回弹，必须丢弃
+            if (seq != ch.AnimSeq)
+                return;
             ch.IsAnimating = false;
             slider.BeginAnimation(Slider.ValueProperty, null); // 撤销 HoldEnd，把值的决定权交回绑定
             ch.VolumeDisplay = target; // 到位定格
@@ -501,7 +512,7 @@ public partial class MainWindow : Window
     {
         if (sender is Slider s && s.DataContext is VolumeChannel ch)
         {
-            _faderByInstance[ch.InstanceId] = s; // 动效与拖动保护都要靠它找到滑块
+            _faderByInstance[ch.InstanceId] = s; // 动效与拖动的接管都要靠它找到滑块
             _trackByInstance[ch.InstanceId] = FindDescendant<System.Windows.Controls.Primitives.Track>(s);
             var thumb = FindDescendant<System.Windows.Controls.Primitives.Thumb>(s);
             if (thumb is not null)
@@ -574,26 +585,61 @@ public partial class MainWindow : Window
         ApplyFader(ch, ch.FaderTarget, 357); // 140% 速度动效
     }
 
+    /// <summary>
+    /// 用户操作接管在跑的动效：标记结束并作废该次动画的 Completed（避免它把旧目标写回显示）。
+    /// </summary>
+    private static void StopFaderAnimation(VolumeChannel ch)
+    {
+        ch.IsAnimating = false;
+        ch.AnimSeq++;
+    }
+
+    /// <summary>
+    /// 按下即接管：终止在跑的动效（并作废它的 Completed），此后滑块值由 Track 原生拖拽驱动。
+    /// 这里绝不能再按光标绝对定位回写滑块值——此前正是"绝对写 + 原生增量写"两个写者互抢，
+    /// 才出现拖动中的回弹/抖动；用户按下的位置即抓取点，光标与推子从此 1:1。
+    /// </summary>
     private void OnChannelFaderDragStarted(VolumeChannel ch, Slider slider)
     {
-        if (ch.IsAnimating && DateTime.UtcNow < ch.BusyUntil)
-            return; // 保护期：等滑块到位
-        ch.IsAnimating = false; // 安全阀：超时强制解锁
-        ch.VolumeDisplay = slider.Value; // 以当前显示位置为新基准，撤动画瞬间不回跳
+        StopFaderAnimation(ch);
+        ch.VolumeDisplay = slider.Value; // 以当前显示位置为基准，撤动画瞬间不回跳
         slider.BeginAnimation(Slider.ValueProperty, null); // 终止动画
         ch.IsDragging = true;
         SetGrooveVisible(slider, true); // 拖动期间凹槽常亮，不随光标进出闪烁
     }
 
-    /// <summary>拖动：显示值直接跟随光标（零动画零延迟），会话音量同步写入。</summary>
+    /// <summary>
+    /// 拖动：只镜像原生拖拽产生的滑块值（每帧一次，取该帧最终值），同步显示与会话音量。
+    /// </summary>
     private void OnChannelFaderDragDelta(VolumeChannel ch, Slider slider, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        if (!ch.IsDragging || ch.MirrorPending)
+            return;
+        ch.MirrorPending = true; // 一帧内只同步一次；本处理器比原生拖拽先跑，需等它写完值
+        Dispatcher.BeginInvoke(DispatcherPriority.Render, () =>
+        {
+            ch.MirrorPending = false;
+            if (ch.IsDragging)
+                MirrorFaderValue(ch, slider);
+        });
+    }
+
+    private void OnChannelFaderDragCompleted(VolumeChannel ch, Slider slider)
     {
         if (!ch.IsDragging)
             return;
-        var target = ValueAtMouse(ch, slider);
-        ch.FaderTarget = target;
-        ch.VolumeDisplay = target;
-        var v = (float)(target / 100.0);
+        MirrorFaderValue(ch, slider); // 定格到滑块真实值
+        ch.IsDragging = false;
+        if (slider.Value > 0.5)
+            ch.RestoreVolume = slider.Value; // 松手才记录；为 0 不记录
+    }
+
+    /// <summary>把滑块当前值同步到显示与会话音量（拖动期间滑块由 Track 原生拖拽驱动）。</summary>
+    private static void MirrorFaderValue(VolumeChannel ch, Slider slider)
+    {
+        ch.FaderTarget = slider.Value;
+        ch.VolumeDisplay = slider.Value;
+        var v = (float)(slider.Value / 100.0);
         var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
         if (sess is { Mute: true } && v > 0.005f)
         {
@@ -603,34 +649,14 @@ public partial class MainWindow : Window
         WriteChannelVolume(ch.InstanceId, v);
     }
 
-    private void OnChannelFaderDragCompleted(VolumeChannel ch, Slider slider)
-    {
-        if (!ch.IsDragging)
-            return;
-        ch.IsDragging = false;
-        ch.VolumeDisplay = ch.FaderTarget; // 定格
-        if (ch.FaderTarget > 0.005)
-            ch.RestoreVolume = ch.FaderTarget; // 松手才记录；为 0 不记录
-    }
-
-    private double ValueAtMouse(VolumeChannel ch, Slider slider)
-    {
-        if (!_trackByInstance.TryGetValue(ch.InstanceId, out var track) || track.ActualHeight < 1)
-            return slider.Value;
-        var pos = System.Windows.Input.Mouse.GetPosition(track);
-        return Math.Clamp((1.0 - pos.Y / track.ActualHeight) * 100.0, 0, 100);
-    }
-
-    /// <summary>静音切换：意图严格交替；滑动期间（保护期）点击忽略，超时安全阀防卡死。</summary>
+    /// <summary>静音切换：意图严格交替（连点即交替）；用户操作立即接管在跑的动效。</summary>
     private void OnChannelMuteClick(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is not VolumeChannel ch)
             return;
         if (ch.IsDragging)
             return;
-        if (ch.IsAnimating && DateTime.UtcNow < ch.BusyUntil)
-            return; // 滑块到位前处于保护期
-        ch.IsAnimating = false; // 安全阀：超时强制解锁
+        StopFaderAnimation(ch); // 用户操作优先：立即接管动效
         ch.MuteIntent = !ch.MuteIntent;
         if (ch.MuteIntent)
         {
@@ -736,6 +762,41 @@ public partial class MainWindow : Window
             RaiseDragDone(target);
             await System.Threading.Tasks.Task.Delay(1800);
             DumpFaders(sliders, "D结束");
+
+            // 恢复配置后测真实拖动（会话音量回到用户值，便于观察）
+            App.Engine.ApplyConfig(ConfigStore.Clone(App.Config));
+            await System.Threading.Tasks.Task.Delay(600);
+            sliders = new List<Slider>();
+            CollectSliders(VolumeList, sliders);
+            target = sliders.Count > 0 ? sliders[0] : target;
+
+            L("阶段F：滚轮后 120ms 内立刻合成拖动（保护窗口内）");
+            RaiseWheel(target, 120);
+            await System.Threading.Tasks.Task.Delay(120);
+            RaiseDragStart(target);
+            for (int i = 1; i <= 10; i++)
+            {
+                RaiseDragDelta(target, -4);
+                await System.Threading.Tasks.Task.Delay(40);
+                DumpFaders(sliders, $"F{i}");
+            }
+            RaiseDragDone(target);
+            await System.Threading.Tasks.Task.Delay(1400);
+            DumpFaders(sliders, "F结束");
+
+            L("阶段G：滚轮后等 1200ms 再合成拖动（保护窗口外）");
+            RaiseWheel(target, 120);
+            await System.Threading.Tasks.Task.Delay(1200);
+            RaiseDragStart(target);
+            for (int i = 1; i <= 10; i++)
+            {
+                RaiseDragDelta(target, -4);
+                await System.Threading.Tasks.Task.Delay(40);
+                DumpFaders(sliders, $"G{i}");
+            }
+            RaiseDragDone(target);
+            await System.Threading.Tasks.Task.Delay(1400);
+            DumpFaders(sliders, "G结束");
         }
         catch (Exception ex)
         {
