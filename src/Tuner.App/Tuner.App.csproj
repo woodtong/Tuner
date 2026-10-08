@@ -8,8 +8,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AssemblyName>Tuner</AssemblyName>
-    <Version>0.1.0-mu</Version>
+    <Version>0.1.0</Version>
     <Product>Tuner</Product>
+    <Description>Tuner — Windows 应用分组音频闪避工具</Description>
   </PropertyGroup>
 
   <ItemGroup>
