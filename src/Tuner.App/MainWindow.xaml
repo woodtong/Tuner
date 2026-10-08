@@ -629,15 +629,30 @@
                             <StackPanel>
                                 <TextBlock Text="音量渐变" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" />
+                                <TextBlock Text="闪避的「压低」和「恢复」是两个独立过程，可以分别控制快慢"
+                                           Style="{StaticResource Hint}" Margin="0,6,0,0" />
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="230" />
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="渐变时长 ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" x:Name="SetFade" Style="{StaticResource Tb}" Width="80" />
-                                    <TextBlock Grid.Column="2" Text="全量程（100%→0%）渐变耗时，默认约 1200"
+                                    <TextBlock Text="闪避开始（压低）ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" x:Name="SetFadeOut" Style="{StaticResource Tb}" Width="80" />
+                                    <TextBlock Grid.Column="2" ToolTip="闪避开始时长"
+                                               Text="触发源开始出声/播放时，把被闪避应用的音量从原始值压到闪避目标值的耗时。越短压得越急（如 200～400），能更快让出声音"
+                                               Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
+                                </Grid>
+                                <Grid Margin="0,10,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="230" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="闪避结束（恢复）ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                    <TextBox Grid.Column="1" x:Name="SetFadeIn" Style="{StaticResource Tb}" Width="80" />
+                                    <TextBlock Grid.Column="2" ToolTip="闪避结束时长"
+                                               Text="触发源停止出声/停止播放后，把音量从闪避目标值恢复回原始值的耗时。越长越平顺（默认约 1200），过短会显得突兀"
                                                Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
                                 </Grid>
                             </StackPanel>

@@ -54,6 +54,18 @@ public static class ConfigStore
         config.Rules ??= new List<DuckingRuleConfig>();
         config.Settings ??= new EngineSettings();
 
+        // 渐变时长迁移：旧配置只有单一 fadeDurationMs → 两个方向都取该值；
+        // 新配置缺失/非法时落默认（开始 400 急压，结束 1200 平顺）
+        var s = config.Settings;
+        var legacyFade = Math.Max(0, s.FadeDurationMs ?? 0);
+        if (s.FadeOutDurationMs <= 0)
+            s.FadeOutDurationMs = legacyFade > 0 ? legacyFade : 400;
+        if (s.FadeInDurationMs <= 0)
+            s.FadeInDurationMs = legacyFade > 0 ? legacyFade : 1200;
+        s.FadeOutDurationMs = Math.Clamp(s.FadeOutDurationMs, 50, 10_000);
+        s.FadeInDurationMs = Math.Clamp(s.FadeInDurationMs, 50, 10_000);
+        s.FadeDurationMs = null; // 已迁移，保存时不再写旧字段
+
         foreach (var g in config.Groups)
         {
             g.Id ??= "";

@@ -895,7 +895,8 @@ public partial class MainWindow : Window
             return null;
         var cfg = ConfigStore.Clone(App.Config);
         cfg.Settings.UseMediaSessionStatus = false;
-        cfg.Settings.FadeDurationMs = 300;
+        cfg.Settings.FadeOutDurationMs = 300;
+        cfg.Settings.FadeInDurationMs = 300;
         cfg.Settings.ActivePeakThreshold = 0f;   // 探针专用：让触发组恒判为出声
         cfg.Settings.InactivePeakThreshold = 0f;
         cfg.Settings.InactiveHoldMs = 100;
@@ -1297,20 +1298,24 @@ public partial class MainWindow : Window
     {
         var s = App.Config.Settings;
         SetUseSmtc.IsChecked = s.UseMediaSessionStatus;
-        SetFade.Text = s.FadeDurationMs.ToString();
+        SetFadeOut.Text = s.FadeOutDurationMs.ToString();
+        SetFadeIn.Text = s.FadeInDurationMs.ToString();
         SetPoll.Text = s.PollIntervalMs.ToString();
     }
 
     private bool TryParseSettings()
     {
         // 峰值阈值/低电平保持/静音宽限为"未接入 SMTC 应用"的兜底参数，保留在配置文件中，界面不再暴露
-        if (!int.TryParse(SetFade.Text, out var fade))
+        if (!int.TryParse(SetFadeOut.Text, out var fadeOut))
+            return false;
+        if (!int.TryParse(SetFadeIn.Text, out var fadeIn))
             return false;
         if (!int.TryParse(SetPoll.Text, out var poll))
             return false;
         var s = App.Config.Settings;
         s.UseMediaSessionStatus = SetUseSmtc.IsChecked == true;
-        s.FadeDurationMs = Math.Clamp(fade, 50, 10_000);
+        s.FadeOutDurationMs = Math.Clamp(fadeOut, 50, 10_000);
+        s.FadeInDurationMs = Math.Clamp(fadeIn, 50, 10_000);
         s.PollIntervalMs = Math.Clamp(poll, 10, 5_000);
         return true;
     }

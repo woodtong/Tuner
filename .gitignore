@@ -7,3 +7,6 @@ dist/
 ui-preview/
 *.log
 .mimosa/
+
+# Python
+__pycache__/

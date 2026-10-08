@@ -22,8 +22,14 @@ public sealed class EngineSettings
     /// <summary>峰值低于退出阈值持续该时长后才算停止出声，防止断续声音导致音量抽搐。</summary>
     public int InactiveHoldMs { get; set; } = 250;
 
-    /// <summary>完整量程渐变时长（如 100%→0% 约 1.2 秒）。</summary>
-    public int FadeDurationMs { get; set; } = 1200;
+    /// <summary>闪避开始（压低）：触发闪避时，音量从原始值压到闪避目标值的耗时。越短反应越急，压低了才不盖住触发源。</summary>
+    public int FadeOutDurationMs { get; set; }
+
+    /// <summary>闪避结束（恢复）：触发源停止出声/停止播放后，音量从闪避目标值恢复回原始值的耗时。越长越平顺。</summary>
+    public int FadeInDurationMs { get; set; }
+
+    /// <summary>旧字段（v0.1-nu 起拆分为开始/结束两个独立时长），仅用于旧配置迁移，保存时不再输出。</summary>
+    public int? FadeDurationMs { get; set; }
 
     /// <summary>静音宽限（音频流已关闭）：触发组静音且音频流已关闭（真正停止/退出）时，保持规则生效的时长。</summary>
     public int SilenceGraceMs { get; set; } = 1500;

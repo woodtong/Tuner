@@ -9,8 +9,8 @@
 
 从 [Releases](https://github.com/woodtong/Tuner/releases) 下载（Windows 10/11 x64，解压即用，自带 .NET 8 运行时，免安装、免管理员）：
 
-- `Tuner-v0.1-win-x64.zip` — 主程序（托盘应用）
-- `Tuner-Console-v0.1-win-x64.zip` — 控制台诊断工具（可选：实时表格 / `--selftest` 自测 / `--setvol`）
+- `Tuner-v0.2-alpha-win-x64.zip` — 主程序（托盘应用）
+- `Tuner-Console-v0.2-alpha-win-x64.zip` — 控制台诊断工具（可选：实时表格 / `--selftest` 自测 / `--setvol`）
 
 ## 界面预览
 
@@ -33,7 +33,7 @@
 
 ## 版本
 
-MVP 首个公开版本为 **v0.1**（2026-10-08）。此后迭代在数字版本 **0.1** 下用希腊字母预发布标签推进（alpha → beta → gamma …），仅在用户明确指示时递增数字版本。
+MVP 首个公开版本为 **v0.1**（2026-10-08）。当前数字版本 **0.2**，预发布标签继续按希腊字母序列推进（alpha → beta → gamma …），仅在用户明确指示时递增数字版本。
 
 | 版本 | 内容 |
 |---|---|
@@ -47,6 +47,7 @@ MVP 首个公开版本为 **v0.1**（2026-10-08）。此后迭代在数字版本
 | v0.1-lambda (2026-10-07) | UI 风格统一（参照标准调音台）：导航加图标；实时状态通道色条（出声点亮）；徽章降噪；音量页重排为 MASTER+应用通道并列的竖推子调音台；修复多处溢出裁切 |
 | v0.1-mu (2026-10-07) | 按用户批注整改实时状态页：**应用图标**（exe 图标提取）、删 PID/分组徽章/原始音量；**顶栏设备切换器**（点击枚举全部输出设备即点即切，IPolicyConfig 双角色，切换自动重绑会话） |
 | **v0.1 (2026-10-08)** | **MVP 定版 / 首个公开版本**：调音台交互稳定性专项修复——推子"一闪一闪"（显示被滞后快照回写拽回）、拖动回弹（保护窗口吞掉按下事件 + 原生拖拽与绝对定位两个写者互抢 + 过期动画写回旧目标）、静音意图驱动（显示唯一判断=音量==0）、滚轮按 delta 累计精确 1%/格 |
+| v0.2-alpha (2026-10-08) | **自研应用图标**（调音台三推子，exe/托盘/窗口统一，含生成脚本 tools/make_app_icon.py）；**闪避开始/结束时长解耦**：压低与恢复两个独立设置（旧"渐变时长"自动迁移），引擎按闪避阶段取渐变速率；修复设置页勾选框黑字不可见（补全局深色样式） |
 
 ## 目录结构
 
@@ -95,7 +96,7 @@ dotnet run --project src/Tuner.Console -c Release -- --setvol qqmusic 61
 1. 托盘双击/右键打开主界面 →「分组」页：新建分组，把进程名加进去（可从"运行中的应用"直接选，即预注册）；
    默认组承接所有未匹配应用；填 `system sounds` 可匹配系统提示音。
 2. 「规则」页：新增规则——当【触发组】出声 → 【目标组】音量渐变到 N%，可配优先级。
-3. 「设置」页：进入/退出阈值（默认 5%/2%）、低电平保持时长（防断续声音抽搐）、渐变时长（默认 500ms）。
+3. 「设置」页：优先使用系统媒体状态判定（推荐）；**闪避开始/结束时长**（压低与恢复独立调节，默认 400/1200ms）；轮询间隔。峰值阈值等兜底参数在配置文件中调整。
 4. 「应用并保存」立即生效并持久化；托盘右键退出时还原全部被修改的音量。
 
 ## 步骤 2/3 验证记录（2026-10-06~07）
@@ -140,9 +141,9 @@ WPF 应用冒烟：启动绑定设备、枚举 6 个会话、优雅退出还原�
 dotnet publish src/Tuner.App -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
   -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:DebugSymbols=false `
-  -o dist/Tuner-v0.1-win-x64
+  -o dist/Tuner-v0.2-alpha-win-x64
 
-# 控制台诊断：同参数，输出到 dist/Tuner-Console-v0.1-win-x64
+# 控制台诊断：同参数，输出到 dist/Tuner-Console-v0.2-alpha-win-x64
 ```
 
 产物：`Tuner.exe`（约 78MB，自带 .NET 8 桌面运行时，免安装）。版本号在 `Tuner.App.csproj` 的 `<Version>`。

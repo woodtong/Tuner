@@ -81,7 +81,7 @@ if (intervalMs < 0)
 
 Console.WriteLine($"Tuner 控制台原型 v{version} — 音频会话识别 + 分组闪避引擎{(selftest ? "（自测模式）" : "")}");
 Console.WriteLine(
-    $"配置: {(selftest ? "内嵌测试配置" : configPath ?? "（空配置，无闪避规则）")} | 轮询 {intervalMs}ms | 迟滞 {config.Settings.ActivePeakThreshold:P0}/{config.Settings.InactivePeakThreshold:P0} | 渐变 {config.Settings.FadeDurationMs}ms | Ctrl+C 退出");
+    $"配置: {(selftest ? "内嵌测试配置" : configPath ?? "（空配置，无闪避规则）")} | 轮询 {intervalMs}ms | 迟滞 {config.Settings.ActivePeakThreshold:P0}/{config.Settings.InactivePeakThreshold:P0} | 渐变 出{config.Settings.FadeOutDurationMs}/入{config.Settings.FadeInDurationMs}ms | Ctrl+C 退出");
 Console.WriteLine();
 
 var cts = new CancellationTokenSource();

@@ -273,8 +273,7 @@ public sealed class DuckingEngine : IDisposable
                 }
             }
 
-            // 3) 逐会话挑选生效规则并渐变
-            float maxStep = FadeTickMs / (float)Math.Max(1, settings.FadeDurationMs);
+            // 3) 逐会话挑选生效规则并渐变（压低走"闪避开始"时长，恢复走"闪避结束"时长）
             foreach (var t in _tracked.Values)
             {
                 var rule = EvaluateWinner(t, activeRules, sounding);
@@ -285,7 +284,7 @@ public sealed class DuckingEngine : IDisposable
                     {
                         // 刚结束闪避时渐变可能尚未走完，此时音量是中间值；保留原锚点防止"原始音量"被逐渐污染
                         var sinceUnduck = (now - t.UnduckAt).TotalMilliseconds;
-                        if (sinceUnduck >= settings.FadeDurationMs)
+                        if (sinceUnduck >= settings.FadeInDurationMs)
                             t.OriginalVolume = ReadVolume(t); // 记录用户原始音量
                         t.Ducked = true;
                         stateChange = true;
@@ -307,6 +306,10 @@ public sealed class DuckingEngine : IDisposable
 
                 if (t.CurrentVolume < 0)
                     t.CurrentVolume = ReadVolume(t);
+                // 闪避阶段（规则生效）走"开始"时长，恢复阶段走"结束"时长——按阶段而非数值方向，
+                // 因为目标音量可能高于当前音量（用户原音量比闪避目标还低）
+                var fadeMs = t.Ducked ? settings.FadeOutDurationMs : settings.FadeInDurationMs;
+                var maxStep = FadeTickMs / (float)Math.Max(1, fadeMs);
                 var next = MoveToward(t.CurrentVolume, target, maxStep);
                 if (Math.Abs(next - t.CurrentVolume) > 0.0015)
                     t.Control?.SetVolume(next);
