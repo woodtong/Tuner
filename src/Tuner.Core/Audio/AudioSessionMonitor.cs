@@ -132,6 +132,13 @@ public sealed class AudioSessionMonitor : IDisposable
         }
     }
 
+    /// <summary>按 InstanceId 查单个音量控制句柄；无此会话返回 null。（引擎每拍增量补挂用，免建整表）</summary>
+    public ISessionVolumeControl? TryGetControl(string instanceId)
+    {
+        lock (_gate)
+            return _tracked.TryGetValue(instanceId, out var t) ? t.Control : null;
+    }
+
     public AudioSessionMonitor(int pollIntervalMs = 100)
     {
         if (pollIntervalMs < 10)

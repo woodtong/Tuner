@@ -73,6 +73,87 @@
         </Setter>
     </Style>
 
+    <!-- 滑块开关（流块）：启停类开关用（规则启停等）。槽内圆钮左右换位，开=绿；换位带滑动过渡 -->
+    <Style x:Key="Switch" TargetType="CheckBox">
+        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="CheckBox">
+                    <StackPanel Orientation="Horizontal" Background="Transparent">
+                        <Border x:Name="Track" Width="40" Height="22" CornerRadius="11"
+                                Background="#242A34" BorderBrush="{StaticResource FieldBorder}"
+                                BorderThickness="1" VerticalAlignment="Center">
+                            <Ellipse x:Name="Knob" Width="15" Height="15" Fill="{StaticResource TextSecondary}"
+                                     HorizontalAlignment="Left" Margin="3,0,0,0" />
+                        </Border>
+                        <ContentPresenter x:Name="Text" Margin="8,0,0,0" VerticalAlignment="Center"
+                                          RecognizesAccessKey="True" />
+                    </StackPanel>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="Track" Property="BorderBrush" Value="{StaticResource FieldBorderHover}" />
+                        </Trigger>
+                        <Trigger Property="IsChecked" Value="True">
+                            <!-- Margin Setter 兜底：载入时已勾选（如程序置位）不走 EnterActions，直接落位 -->
+                            <Setter TargetName="Knob" Property="Margin" Value="20,0,0,0" />
+                            <Setter TargetName="Knob" Property="Fill" Value="{StaticResource Green}" />
+                            <Setter TargetName="Track" Property="Background" Value="#1B3A2E" />
+                            <Setter TargetName="Track" Property="BorderBrush" Value="{StaticResource Green}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ThicknessAnimation Storyboard.TargetName="Knob" Storyboard.TargetProperty="Margin"
+                                                            To="20,0,0,0" Duration="0:0:0.16">
+                                            <ThicknessAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </ThicknessAnimation.EasingFunction>
+                                        </ThicknessAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ThicknessAnimation Storyboard.TargetName="Knob" Storyboard.TargetProperty="Margin"
+                                                            To="3,0,0,0" Duration="0:0:0.14">
+                                            <ThicknessAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </ThicknessAnimation.EasingFunction>
+                                        </ThicknessAnimation>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsEnabled" Value="False">
+                            <Setter Property="Opacity" Value="0.5" />
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- 提示气泡（深色全局：默认白底在深色界面突兀） -->
+    <Style TargetType="ToolTip">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ToolTip">
+                    <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource FieldBorder}"
+                            BorderThickness="1" CornerRadius="7" Padding="12,9" Margin="0,4,8,8">
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.18" />
+                        </Border.Effect>
+                        <ContentPresenter TextElement.Foreground="{StaticResource TextSecondary}"
+                                          TextElement.FontSize="12" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <!-- 卡片 -->
     <Style x:Key="Card" TargetType="Border">
         <Setter Property="Background" Value="{StaticResource CardBg}" />

@@ -134,11 +134,24 @@ public partial class App : Application
 
         if (e.Args.Contains("--screenshot"))
         {
-            // 截图模式：展示窗口并自动遍历页签渲染 PNG（供 UI 检查），完成后退出
+            // 截图模式：展示窗口并自动遍历页签渲染 PNG（供 UI 检查），完成后退出。
+            // --shot-size WxH 可指定窗口尺寸（如 800x580，即最小尺寸）验证布局适应性
             var idx = Array.IndexOf(e.Args, "--shot-dir");
             var dir = idx >= 0 && idx + 1 < e.Args.Length ? e.Args[idx + 1] : "ui-preview";
             Log($"截图模式：输出到 {Path.GetFullPath(dir)}");
             var win = _mainWindow!;
+            var sIdx = Array.IndexOf(e.Args, "--shot-size");
+            if (sIdx >= 0 && sIdx + 1 < e.Args.Length)
+            {
+                var parts = e.Args[sIdx + 1].Split('x');
+                if (parts.Length == 2
+                    && double.TryParse(parts[0], out var w) && double.TryParse(parts[1], out var h))
+                {
+                    win.Width = w;
+                    win.Height = h;
+                    Log($"截图模式：窗口尺寸 {w}x{h}");
+                }
+            }
             var timer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1200) };
             timer.Tick += (_, _) =>
             {

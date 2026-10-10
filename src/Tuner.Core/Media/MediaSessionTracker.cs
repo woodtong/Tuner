@@ -145,12 +145,13 @@ public sealed class MediaSessionTracker : IDisposable
     /// </summary>
     public bool? IsPlaying(string processName)
     {
+        var p = processName.ToLowerInvariant(); // 只小写一次（引擎每拍逐会话调用）
         lock (_gate)
         {
             var anyMatched = false;
             foreach (var (aumid, status) in _statusByAumid)
             {
-                if (!Matches(processName, aumid))
+                if (!Matches(p, aumid))
                     continue;
                 anyMatched = true;
                 if (status == "Playing")
@@ -160,15 +161,15 @@ public sealed class MediaSessionTracker : IDisposable
         }
     }
 
-    private static bool Matches(string processName, string aumid)
+    /// <summary>进程名须已小写；别名表值本身即小写，直接比较。</summary>
+    private static bool Matches(string p, string aumid)
     {
-        var p = processName.ToLowerInvariant();
         var a = aumid.ToLowerInvariant();
         if (a.Contains(p) || p.Contains(a))
             return true;
         if (Aliases.TryGetValue(p, out var aliases))
             foreach (var alias in aliases)
-                if (a.Contains(alias.ToLowerInvariant()))
+                if (a.Contains(alias))
                     return true;
         return false;
     }

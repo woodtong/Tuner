@@ -28,6 +28,7 @@ public partial class MainWindow : Window
 {
     private bool _loadingUi;
     private bool _dirty;
+    private readonly DispatcherTimer _autoSaveTimer;
 
     // 分组配色（按配置顺序取色，默认组固定灰蓝）
     private static readonly string[] Palette =
@@ -67,13 +68,31 @@ public partial class MainWindow : Window
         RefreshGroupColors();
         RefreshGroupTab();
         RefreshRuleTab();
+        _loadingUi = true;
         LoadSettingsTab();
+        _loadingUi = false;
         SetSaveStatus(null);
 
         var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(250) };
-        timer.Tick += (_, _) => { RefreshStatus(); RefreshVolumes(); };
+        timer.Tick += (_, _) =>
+        {
+            if (!IsVisible)
+            {
+                EnforceMuteIntents(); // 托盘常驻：只维持静音意图钉零，跳过全部界面刷新
+                return;
+            }
+            RefreshStatus();
+            RefreshVolumes();
+        };
         timer.Start();
-        App.Engine.EngineStateChanged += () => Dispatcher.BeginInvoke(() => RefreshStatus());
+        App.Engine.EngineStateChanged += () =>
+        {
+            if (IsVisible)
+                Dispatcher.BeginInvoke(() => RefreshStatus());
+        };
+
+        _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(800) };
+        _autoSaveTimer.Tick += (_, _) => AutoSaveNow();
     }
 
     protected override void OnClosing(CancelEventArgs e)
@@ -84,6 +103,8 @@ public partial class MainWindow : Window
             Hide(); // 关闭窗口 = 最小化到托盘，退出请用托盘菜单
             return;
         }
+        if (_dirty)
+            AutoSaveNow(); // 真正退出前把防抖窗口内未落盘的修改补存
         base.OnClosing(e);
     }
 
@@ -109,28 +130,31 @@ public partial class MainWindow : Window
         private string _channel = "";
         private double _peakPercent;
 
-        public string Channel { get => _channel; set { _channel = value; Pc(); } }
-        public double PeakPercent { get => _peakPercent; set { _peakPercent = value; Pc(); } }
+        public string Channel { get => _channel; set { if (value == _channel) return; _channel = value; Pc(); } }
+        public double PeakPercent { get => _peakPercent; set { if (value == _peakPercent) return; _peakPercent = value; Pc(); } }
 
         private double _stripOpacity = 0.25;
         /// <summary>通道色条透明度：出声时点亮。</summary>
-        public double StripOpacity { get => _stripOpacity; set { _stripOpacity = value; Pc(); } }
+        public double StripOpacity { get => _stripOpacity; set { if (value == _stripOpacity) return; _stripOpacity = value; Pc(); } }
 
         private BitmapImage? _icon;
         /// <summary>应用图标。</summary>
-        public BitmapImage? Icon { get => _icon; set { _icon = value; Pc(); } }
+        public BitmapImage? Icon { get => _icon; set { if (ReferenceEquals(value, _icon)) return; _icon = value; Pc(); } }
 
-        public string Process { get => _process; set { _process = value; Pc(); } }
-        public string PidText { get => _pidText; set { _pidText = $"PID {value}"; Pc(); } }
-        public string GroupName { get => _groupName; set { _groupName = value; Pc(); } }
-        public Brush GroupBrush { get => _groupBrush; set { _groupBrush = value; Pc(); } }
-        public Brush SpeakingBrush { get => _speakingBrush; set { _speakingBrush = value; Pc(); } }
-        public Visibility DuckVisibility { get => _duckVisibility; set { _duckVisibility = value; Pc(); } }
-        public string DuckText { get => _duckText; set { _duckText = value; Pc(); } }
-        public double VolumePercent { get => _volumePercent; set { _volumePercent = value; Pc(); } }
-        public string VolumeText { get => _volumeText; set { _volumeText = value; Pc(); } }
-        public Brush VolBrush { get => _volBrush; set { _volBrush = value; Pc(); } }
-        public string OriginalText { get => _originalText; set { _originalText = value; Pc(); } }
+        /// <summary>已解码图标对应的 PNG 源（引用不变则不重复解码）。</summary>
+        public byte[]? IconPngSource;
+
+        public string Process { get => _process; set { if (value == _process) return; _process = value; Pc(); } }
+        public string PidText { get => _pidText; set { var t = $"PID {value}"; if (t == _pidText) return; _pidText = t; Pc(); } }
+        public string GroupName { get => _groupName; set { if (value == _groupName) return; _groupName = value; Pc(); } }
+        public Brush GroupBrush { get => _groupBrush; set { if (ReferenceEquals(value, _groupBrush)) return; _groupBrush = value; Pc(); } }
+        public Brush SpeakingBrush { get => _speakingBrush; set { if (ReferenceEquals(value, _speakingBrush)) return; _speakingBrush = value; Pc(); } }
+        public Visibility DuckVisibility { get => _duckVisibility; set { if (value == _duckVisibility) return; _duckVisibility = value; Pc(); } }
+        public string DuckText { get => _duckText; set { if (value == _duckText) return; _duckText = value; Pc(); } }
+        public double VolumePercent { get => _volumePercent; set { if (value == _volumePercent) return; _volumePercent = value; Pc(); } }
+        public string VolumeText { get => _volumeText; set { if (value == _volumeText) return; _volumeText = value; Pc(); } }
+        public Brush VolBrush { get => _volBrush; set { if (ReferenceEquals(value, _volBrush)) return; _volBrush = value; Pc(); } }
+        public string OriginalText { get => _originalText; set { if (value == _originalText) return; _originalText = value; Pc(); } }
 
         public event PropertyChangedEventHandler? PropertyChanged;
         private void Pc() => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(null));
@@ -148,6 +172,21 @@ public partial class MainWindow : Window
 
     private SolidColorBrush GroupBrush(string groupId) =>
         _groupColors.GetValueOrDefault(groupId, DefaultGroupBrush);
+
+    /// <summary>窗口不可见时也必须维持：意图静音的通道实际音量钉零（驱动静音回读旧值的对策）。</summary>
+    private void EnforceMuteIntents()
+    {
+        if (_volumeById.Count == 0)
+            return;
+        foreach (var row in _volumeById.Values)
+        {
+            if (!row.MuteIntent)
+                continue;
+            var s = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == row.InstanceId);
+            if (s is { Volume: > 0.005f })
+                App.Monitor.SetSessionVolume(row.InstanceId, 0f);
+        }
+    }
 
     private void RefreshStatus()
     {
@@ -191,7 +230,11 @@ public partial class MainWindow : Window
             row.DuckVisibility = e is { Ducked: true } ? Visibility.Visible : Visibility.Collapsed;
             row.DuckText = $"闪避中 → {(int)Math.Round((e?.TargetVolume ?? 0) * 100)}%";
             if (e is { Ducked: true }) ducking++;
-            row.Icon = ProcessIconService.ToBitmap(s.IconPng);
+            if (!ReferenceEquals(row.IconPngSource, s.IconPng))
+            {
+                row.IconPngSource = s.IconPng; // PNG 引用稳定（会话期间不变），换源才重新解码
+                row.Icon = ProcessIconService.ToBitmap(s.IconPng);
+            }
         }
 
         StatTotal.Text = sessions.Count.ToString();
@@ -261,11 +304,11 @@ public partial class MainWindow : Window
         private Brush _groupBrush = IdleBrush;
         private double _peakPercent;
 
-        public string Name { get => _name; set { _name = value; Pc(); } }
-        public string PidText { get => _pidText; set { _pidText = value; Pc(); } }
-        public string GroupName { get => _groupName; set { _groupName = value; Pc(); } }
-        public Brush GroupBrush { get => _groupBrush; set { _groupBrush = value; Pc(); } }
-        public double PeakPercent { get => _peakPercent; set { _peakPercent = value; Pc(); } }
+        public string Name { get => _name; set { if (value == _name) return; _name = value; Pc(); } }
+        public string PidText { get => _pidText; set { if (value == _pidText) return; _pidText = value; Pc(); } }
+        public string GroupName { get => _groupName; set { if (value == _groupName) return; _groupName = value; Pc(); } }
+        public Brush GroupBrush { get => _groupBrush; set { if (ReferenceEquals(value, _groupBrush)) return; _groupBrush = value; Pc(); } }
+        public double PeakPercent { get => _peakPercent; set { if (value == _peakPercent) return; _peakPercent = value; Pc(); } }
 
         private BitmapImage? _icon;
         public BitmapImage? Icon { get => _icon; set { _icon = value; Pc(); } }
@@ -1188,19 +1231,25 @@ public partial class MainWindow : Window
         }
     }
 
-    /// <summary>切换选择器类型时重填取值下拉。</summary>
+    /// <summary>切换选择器类型时重填取值下拉（保留刚选的类型，否则会被强制改回分组）。</summary>
     private void OnRuleSelectorTypeChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_loadingUi)
             return;
         _loadingUi = true;
         if (sender == RuleTriggerType)
-            SetSelector(RuleTriggerType, RuleTriggerValue, null);
+            SetSelector(RuleTriggerType, RuleTriggerValue, RefOfCurrentType(RuleTriggerType));
         else if (sender == RuleTargetType)
-            SetSelector(RuleTargetType, RuleTargetValue, null);
+            SetSelector(RuleTargetType, RuleTargetValue, RefOfCurrentType(RuleTargetType));
         _loadingUi = false;
         ApplyRuleEdits();
     }
+
+    /// <summary>按类型下拉当前选中项构造空值引用：应用=空进程名，分组=空 GroupId，取值下拉各自落到首项。</summary>
+    private static RuleRef RefOfCurrentType(ComboBox type) =>
+        type.SelectedIndex == 1
+            ? new RuleRef { Type = "app", ProcessName = "" }
+            : new RuleRef { Type = "group", GroupId = "" };
 
     private void OnRuleSelectorChanged(object sender, SelectionChangedEventArgs e) => ApplyRuleEdits();
 
@@ -1303,6 +1352,9 @@ public partial class MainWindow : Window
         SetPoll.Text = s.PollIntervalMs.ToString();
     }
 
+    /// <summary>设置页字段变更：数值解析与钳制延后到自动保存时统一做（TryParseSettings）。</summary>
+    private void OnSettingsFieldChanged(object sender, RoutedEventArgs e) => MarkDirty();
+
     private bool TryParseSettings()
     {
         // 峰值阈值/低电平保持/静音宽限为"未接入 SMTC 应用"的兜底参数，保留在配置文件中，界面不再暴露
@@ -1320,40 +1372,54 @@ public partial class MainWindow : Window
         return true;
     }
 
-    // ---------- 保存 ----------
+    // ---------- 自动保存 ----------
+    // 任何修改（MarkDirty）后 800ms 防抖自动保存并即时生效；
+    // 设置项数字非法时不落盘，修正后随下一次修改或重试自动保存。
 
     private void MarkDirty()
     {
         if (_loadingUi)
             return;
         _dirty = true;
-        SetSaveStatus("● 有未保存的修改");
+        SetSaveStatus("● 有未保存的修改…");
+        _autoSaveTimer.Stop();
+        _autoSaveTimer.Start();
+    }
+
+    private void AutoSaveNow()
+    {
+        _autoSaveTimer.Stop();
+        if (!_dirty)
+            return;
+        if (!TryParseSettings())
+        {
+            SetSaveStatus("设置里有无效数字，修正后自动保存");
+            SaveStatus.Foreground = MakeBrush("#D97706");
+            return; // 保持 _dirty，后续修改会再次触发
+        }
+        try
+        {
+            ConfigStore.Save(ConfigStore.DefaultPath, App.Config);
+            App.Engine.ApplyConfig(ConfigStore.Clone(App.Config)); // 深拷贝后生效，避免引擎与 UI 共享可变集合
+        }
+        catch (Exception ex)
+        {
+            SetSaveStatus("自动保存失败: " + ex.Message);
+            SaveStatus.Foreground = MakeBrush("#DC2626");
+            return;
+        }
+        _dirty = false;
+        SetSaveStatus($"✓ 已自动保存 {DateTime.Now:HH:mm:ss}");
+        SaveStatus.Foreground = MakeBrush("#16A34A");
+        App.Log($"配置已自动保存（{App.Config.Groups.Count} 组 / {App.Config.Rules.Count} 条规则）");
     }
 
     private void SetSaveStatus(string? text)
     {
-        SaveStatus.Text = text ?? "就绪 · 修改后点击「应用并保存」立即生效";
+        SaveStatus.Text = text ?? "修改会自动保存并立即生效";
         SaveStatus.Foreground = _dirty
             ? MakeBrush("#D97706")
             : new SolidColorBrush(Color.FromRgb(0x6B, 0x72, 0x80));
-    }
-
-    private void OnApplySave(object sender, RoutedEventArgs e)
-    {
-        if (!TryParseSettings())
-        {
-            SetSaveStatus("设置里有无效数字，未保存");
-            SaveStatus.Foreground = MakeBrush("#DC2626");
-            return;
-        }
-        ConfigStore.Save(ConfigStore.DefaultPath, App.Config);
-        App.Engine.ApplyConfig(ConfigStore.Clone(App.Config)); // 深拷贝后生效，避免引擎与 UI 共享可变集合
-        App.Log($"配置已应用并保存（{App.Config.Groups.Count} 组 / {App.Config.Rules.Count} 条规则）");
-        _dirty = false;
-        SetSaveStatus($"✓ 已应用并保存 {DateTime.Now:HH:mm:ss}");
-        SaveStatus.Foreground = MakeBrush("#16A34A");
-        RefreshGroupTab();
-        RefreshRuleTab();
     }
 
     private void Tabs_SelectionChanged(object sender, SelectionChangedEventArgs e)

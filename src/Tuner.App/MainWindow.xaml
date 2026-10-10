@@ -98,25 +98,24 @@
                                                     <ColumnDefinition Width="4" />
                                                     <ColumnDefinition Width="30" />
                                                     <ColumnDefinition Width="16" />
-                                                    <ColumnDefinition Width="150" />
                                                     <ColumnDefinition Width="*" />
                                                     <ColumnDefinition Width="132" />
-                                                    <ColumnDefinition Width="112" />
-                                                    <ColumnDefinition Width="192" />
+                                                    <ColumnDefinition Width="100" />
+                                                    <ColumnDefinition Width="170" />
                                                 </Grid.ColumnDefinitions>
                                                 <!-- 通道色条：出声时点亮为分组色 -->
                                                 <Border Grid.Column="0" Margin="0,0,0,0" Background="{Binding GroupBrush}"
                                                         Opacity="{Binding StripOpacity}" />
-                                                <Grid Grid.Column="1" Grid.ColumnSpan="7" Margin="12,9">
+                                                <Grid Grid.Column="1" Grid.ColumnSpan="6" Margin="12,9">
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="30" />
                                                     <ColumnDefinition Width="16" />
                                                     <ColumnDefinition Width="46" />
-                                                    <ColumnDefinition Width="200" />
                                                     <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="10" />
                                                     <ColumnDefinition Width="132" />
-                                                    <ColumnDefinition Width="112" />
-                                                    <ColumnDefinition Width="192" />
+                                                    <ColumnDefinition Width="100" />
+                                                    <ColumnDefinition Width="170" />
                                                 </Grid.ColumnDefinitions>
 
                                                 <TextBlock Grid.Column="0" Text="{Binding Channel}" FontFamily="Consolas"
@@ -191,6 +190,7 @@
                             <TextBlock Text="音量" Margin="9,0,0,0" />
                         </StackPanel>
                     </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -205,10 +205,16 @@
                     <Border Grid.Row="1" Style="{StaticResource Card}" Padding="14,12" VerticalAlignment="Top">
                         <StackPanel>
                             <Grid Margin="0,0,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
                                 <TextBlock Text="调音台 · MASTER + 应用通道" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" />
-                                <TextBlock Text="MASTER=默认播放设备；被闪避的应用由规则接管，此时调整将更新其恢复目标"
-                                           Style="{StaticResource Hint}" HorizontalAlignment="Right" />
+                                <TextBlock Grid.Column="1" Text="MASTER=默认播放设备；被闪避的应用由规则接管，此时调整将更新其恢复目标"
+                                           Style="{StaticResource Hint}" HorizontalAlignment="Right"
+                                           Margin="16,0,0,0" MaxWidth="400"
+                                           TextAlignment="Right" />
                             </Grid>
                             <ScrollViewer x:Name="ChannelsScroller"
                                           HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
@@ -308,6 +314,7 @@
                         </StackPanel>
                     </Border>
                 </Grid>
+                </ScrollViewer>
             </TabItem>
 
             <!-- ═══ 分组 ═══ -->
@@ -318,6 +325,7 @@
                             <TextBlock Text="分组" Margin="9,0,0,0" />
                         </StackPanel>
                     </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="280" />
@@ -361,80 +369,137 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
 
-                            <StackPanel Grid.Row="0">
-                                <TextBlock Text="组名" Style="{StaticResource Label}" />
-                                <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
-                                    <TextBox x:Name="GroupNameBox" Style="{StaticResource Tb}" Width="260"
-                                             LostFocus="OnGroupNameChanged" />
-                                    <CheckBox x:Name="DefaultCheck" Content="设为默认组" Margin="16,0,0,0"
-                                              VerticalAlignment="Center"
-                                              ToolTip="未命中任何分组规则的进程自动归入默认组"
-                                              Checked="OnDefaultChanged" Unchecked="OnDefaultChanged" />
-                                </StackPanel>
-                            </StackPanel>
-
-                            <Grid Grid.Row="1" Margin="0,18,0,6">
+                            <!-- 组名 + 默认组（? 图标悬停看说明） -->
+                            <Grid Grid.Row="0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="进程匹配" FontSize="12.5" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center" />
-                                <TextBlock Grid.Column="1" Text="按进程名匹配，不区分大小写；填 system sounds 可匹配系统提示音"
-                                           Style="{StaticResource Hint}" HorizontalAlignment="Right" MaxWidth="360"
-                                           TextWrapping="Wrap" TextAlignment="Right" />
+                                <StackPanel>
+                                    <TextBlock Text="组名" Style="{StaticResource Label}" />
+                                    <TextBox x:Name="GroupNameBox" Style="{StaticResource Tb}" Margin="0,6,0,0"
+                                             HorizontalAlignment="Stretch" MaxWidth="320"
+                                             LostFocus="OnGroupNameChanged" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0"
+                                            VerticalAlignment="Center">
+                                    <CheckBox x:Name="DefaultCheck" Content="设为默认组"
+                                              VerticalAlignment="Center"
+                                              Checked="OnDefaultChanged" Unchecked="OnDefaultChanged" />
+                                    <Border Width="17" Height="17" CornerRadius="9" Margin="8,0,0,0"
+                                            BorderBrush="{StaticResource FieldBorder}" BorderThickness="1"
+                                            Background="Transparent" VerticalAlignment="Center" Cursor="Hand"
+                                            ToolTipService.InitialShowDelay="150">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="BorderBrush" Value="{StaticResource FieldBorderHover}" />
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="?" FontSize="11" Foreground="{StaticResource TextFaint}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        <Border.ToolTip>
+                                            <ToolTip>
+                                                <TextBlock MaxWidth="430" LineHeight="17"
+                                                           Foreground="{StaticResource TextSecondary}" FontSize="12">
+                                                    <Run Text="默认组是兜底分组：进程名未命中任何分组的应用，会自动归入默认组（左侧列表带「默认」徽章，计数为「承接未匹配应用」）。" />
+                                                    <LineBreak />
+                                                    <Run Text="规则以分组为对象：把规则目标设为默认组，等于作用于全部其余应用，不用逐一列举。" />
+                                                    <LineBreak />
+                                                    <Run Text="注意：默认组若同时被用作规则的触发源，则任何未分类应用出声都会触发该规则。" />
+                                                    <LineBreak />
+                                                    <Run Text="至少保留一个默认组；默认组不可删除，需先把其他分组设为默认。" />
+                                                </TextBlock>
+                                            </ToolTip>
+                                        </Border.ToolTip>
+                                    </Border>
+                                </StackPanel>
                             </Grid>
 
-                            <TextBlock Grid.Row="2" x:Name="GroupProcEmpty" Text="（尚未添加进程）"
-                                       Style="{StaticResource Hint}" Margin="0,4,0,8" />
-                            <ItemsControl Grid.Row="2" x:Name="GroupProcesses" MaxHeight="150"
-                                          ScrollViewer.VerticalScrollBarVisibility="Auto">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Background="{StaticResource PageBg}" CornerRadius="5"
-                                                Padding="9,4" Margin="0,0,6,6" HorizontalAlignment="Left">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="{Binding}" FontSize="12.5"
-                                                           Foreground="{StaticResource TextPrimary}" />
-                                                <Button Content="✕" Style="{StaticResource BtnDanger}" FontSize="10.5"
-                                                        Padding="5,0" Margin="8,0,0,0" BorderThickness="0"
-                                                        Background="Transparent" Tag="{Binding}"
-                                                        Click="OnProcRemoveItem"
-                                                        ToolTip="从本分组移除该进程" />
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                            <!-- 区块一：进程匹配（已加入的进程） -->
+                            <Border Grid.Row="1" Background="{StaticResource PageBg}"
+                                    BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
+                                    CornerRadius="8" Padding="14,12" Margin="0,16,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="进程匹配" FontSize="12.5" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimary}" />
+                                    <TextBlock Text="按进程名匹配，不区分大小写；填 system sounds 可匹配系统提示音"
+                                               Style="{StaticResource Hint}" Margin="0,4,0,10" />
+                                    <TextBlock x:Name="GroupProcEmpty" Text="（尚未添加进程）"
+                                               Style="{StaticResource Hint}" Margin="0,2,0,2" />
+                                    <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto">
+                                        <ItemsControl x:Name="GroupProcesses">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <WrapPanel />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Background="{StaticResource CardBg}"
+                                                            BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
+                                                            CornerRadius="5" Padding="9,4" Margin="0,0,6,6">
+                                                        <StackPanel Orientation="Horizontal">
+                                                            <TextBlock Text="{Binding}" FontSize="12.5"
+                                                                       Foreground="{StaticResource TextPrimary}" />
+                                                            <Button Content="✕" Style="{StaticResource BtnDanger}" FontSize="10.5"
+                                                                    Padding="5,0" Margin="8,0,0,0" BorderThickness="0"
+                                                                    Background="Transparent" Tag="{Binding}"
+                                                                    Click="OnProcRemoveItem"
+                                                                    ToolTip="从本分组移除该进程" />
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                </StackPanel>
+                            </Border>
 
-                            <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,2,0,0">
-                                <TextBox x:Name="NewProcBox" Style="{StaticResource Tb}" Width="220"
-                                         VerticalContentAlignment="Center"
-                                         KeyDown="OnProcBoxKeyDown" />
-                                <Button Content="添加" Style="{StaticResource Btn}" Margin="8,0,0,0"
-                                        Click="OnProcAdd" />
-                            </StackPanel>
+                            <!-- 区块二：添加操作 -->
+                            <Border Grid.Row="2" Background="{StaticResource PageBg}"
+                                    BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
+                                    CornerRadius="8" Padding="14,12" Margin="0,10,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="添加进程" FontSize="12.5" FontWeight="SemiBold"
+                                               Foreground="{StaticResource TextPrimary}" />
+                                    <Grid Margin="0,10,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBox x:Name="NewProcBox" Style="{StaticResource Tb}"
+                                                 VerticalContentAlignment="Center"
+                                                 KeyDown="OnProcBoxKeyDown" />
+                                        <Button Grid.Column="1" Content="添加" Style="{StaticResource Btn}" Margin="8,0,0,0"
+                                                Click="OnProcAdd" />
+                                    </Grid>
+                                    <TextBlock Text="从运行中的应用添加（预注册）" FontSize="11"
+                                               Foreground="{StaticResource TextFaint}" Margin="0,12,0,0" />
+                                    <Grid Margin="0,6,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <ComboBox x:Name="RunningProcs" Style="{StaticResource Combo}" MaxWidth="280" />
+                                        <Button Grid.Column="1" Content="刷新" Style="{StaticResource Btn}" Margin="8,0,0,0"
+                                                Click="OnRefreshRunning" />
+                                        <Button Grid.Column="2" Content="添加选中" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0"
+                                                Click="OnProcAddRunning"
+                                                ToolTip="该应用的音频会话一旦出现，立即按本分组规则处理" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
 
-                            <TextBlock Grid.Row="4" Text="从运行中的应用添加（预注册）" FontSize="12.5" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimary}" Margin="0,18,0,6" />
-
-                            <StackPanel Grid.Row="5" Orientation="Horizontal">
-                                <ComboBox x:Name="RunningProcs" Style="{StaticResource Combo}" Width="220" />
-                                <Button Content="刷新" Style="{StaticResource Btn}" Margin="8,0,0,0"
-                                        Click="OnRefreshRunning" />
-                                <Button Content="添加选中" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0"
-                                        Click="OnProcAddRunning"
-                                        ToolTip="该应用的音频会话一旦出现，立即按本分组规则处理" />
-                            </StackPanel>
-
-                            <Grid Grid.Row="7">
+                            <Grid Grid.Row="4">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
@@ -447,6 +512,7 @@
                         </Grid>
                     </Border>
                 </Grid>
+                </ScrollViewer>
             </TabItem>
 
             <!-- ═══ 规则 ═══ -->
@@ -459,8 +525,8 @@
                     </TabItem.Header>
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="330" />
-                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" MaxWidth="335" />
+                        <ColumnDefinition Width="1.35*" />
                     </Grid.ColumnDefinitions>
 
                     <DockPanel Grid.Column="0" Margin="0,0,12,0">
@@ -479,7 +545,8 @@
                                                    Foreground="{StaticResource TextPrimary}"
                                                    VerticalAlignment="Center" Margin="0,0,8,0" />
                                         <CheckBox Grid.Column="1" IsChecked="{Binding Rule.Enabled}"
-                                                  VerticalAlignment="Center" Checked="OnRuleToggle"
+                                                  Style="{StaticResource Switch}" VerticalAlignment="Center"
+                                                  Checked="OnRuleToggle"
                                                   Unchecked="OnRuleToggle" ToolTip="启用 / 停用此规则" />
                                     </Grid>
                                 </DataTemplate>
@@ -501,12 +568,12 @@
                             </Grid.RowDefinitions>
 
                             <TextBlock Grid.Row="0" FontSize="13.5" FontWeight="SemiBold"
-                                       Foreground="{StaticResource TextPrimary}"
+                                       Foreground="{StaticResource TextPrimary}" TextWrapping="Wrap"
                                        Text="当【触发】出声或在播时，【目标】音量渐变到目标值" />
 
                             <Grid Grid.Row="1" Margin="0,16,0,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
@@ -517,14 +584,14 @@
                                     <ComboBoxItem>应用</ComboBoxItem>
                                 </ComboBox>
                                 <ComboBox Grid.Column="2" x:Name="RuleTriggerValue" Style="{StaticResource Combo}"
-                                          Width="210" HorizontalAlignment="Left" Margin="8,0,0,0" IsEditable="True"
+                                          HorizontalAlignment="Stretch" MaxWidth="320" MinWidth="110" Margin="8,0,0,0" IsEditable="True"
                                           SelectionChanged="OnRuleSelectorChanged"
                                           ToolTip="分组=按分组成员匹配；应用=精确到单个进程（可直接输入进程名，无需已运行）" />
                             </Grid>
 
                             <Grid Grid.Row="2" Margin="0,12,0,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
@@ -535,13 +602,13 @@
                                     <ComboBoxItem>应用</ComboBoxItem>
                                 </ComboBox>
                                 <ComboBox Grid.Column="2" x:Name="RuleTargetValue" Style="{StaticResource Combo}"
-                                          Width="210" HorizontalAlignment="Left" Margin="8,0,0,0" IsEditable="True"
+                                          HorizontalAlignment="Stretch" MaxWidth="320" MinWidth="110" Margin="8,0,0,0" IsEditable="True"
                                           SelectionChanged="OnRuleSelectorChanged" />
                             </Grid>
 
                             <Grid Grid.Row="3" Margin="0,12,0,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="目标音量 %" Style="{StaticResource Label}" VerticalAlignment="Center" />
@@ -555,7 +622,7 @@
 
                             <Grid Grid.Row="4" Margin="0,12,0,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="优先级" Style="{StaticResource Label}" VerticalAlignment="Center" />
@@ -570,19 +637,21 @@
 
                             <Grid Grid.Row="5" Margin="0,16,0,0">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="110" />
-                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="判定方式" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                <ComboBox Grid.Column="1" x:Name="RuleDetectionMode" Style="{StaticResource Combo}" Width="150"
+                                <ComboBox Grid.Column="1" x:Name="RuleDetectionMode" Style="{StaticResource Combo}"
+                                          HorizontalAlignment="Stretch" MaxWidth="220" MinWidth="96" Margin="0,0,0,0"
                                           SelectedIndex="0" SelectionChanged="OnRuleFieldChanged"
                                           ToolTip="状态判定=SMTC 播放状态/会话 Active（推荐，不看峰值，无宽限）；声音判定=峰值迟滞+宽限">
                                     <ComboBoxItem>状态判定</ComboBoxItem>
                                     <ComboBoxItem>声音判定</ComboBoxItem>
                                 </ComboBox>
                                 <CheckBox Grid.Column="2" x:Name="RuleEnabled" Content="启用此规则"
-                                          VerticalAlignment="Center" HorizontalAlignment="Right"
+                                          Style="{StaticResource Switch}" Margin="14,0,0,0"
+                                          VerticalAlignment="Center"
                                           Checked="OnRuleFieldChanged" Unchecked="OnRuleFieldChanged" />
                             </Grid>
 
@@ -592,7 +661,7 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock VerticalAlignment="Center" Style="{StaticResource Hint}" Margin="0,0,16,0"
-                                           Text="规则修改后点击右下角「应用并保存」立即生效并持久化。" />
+                                           Text="规则修改会自动保存并立即生效。" />
                                 <Button Grid.Column="1" Content="删除规则" Style="{StaticResource BtnDanger}"
                                         VerticalAlignment="Center" Click="OnRuleDelete" />
                             </Grid>
@@ -617,7 +686,8 @@
                                 <TextBlock Text="出声判定" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" />
                                 <CheckBox x:Name="SetUseSmtc" Content="优先使用系统媒体播放状态判定（推荐：歌间静音不误判，停止/暂停立即恢复）"
-                                          Margin="0,14,0,0" HorizontalAlignment="Left" />
+                                          Margin="0,14,0,0" HorizontalAlignment="Left"
+                                          Checked="OnSettingsFieldChanged" Unchecked="OnSettingsFieldChanged" />
                                 <TextBlock Text="未接入系统媒体会话的应用（部分游戏、老播放器）自动回退为峰值判定，"
                                            Style="{StaticResource Hint}" Margin="0,10,0,0" />
                                 <TextBlock Text="其进入/退出阈值、低电平保持与静音宽限等兜底参数在配置文件中调整"
@@ -638,7 +708,8 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="闪避开始（压低）ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" x:Name="SetFadeOut" Style="{StaticResource Tb}" Width="80" />
+                                    <TextBox Grid.Column="1" x:Name="SetFadeOut" Style="{StaticResource Tb}" Width="80"
+                                             TextChanged="OnSettingsFieldChanged" />
                                     <TextBlock Grid.Column="2" ToolTip="闪避开始时长"
                                                Text="触发源开始出声/播放时，把被闪避应用的音量从原始值压到闪避目标值的耗时。越短压得越急（如 200～400），能更快让出声音"
                                                Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
@@ -650,7 +721,8 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="闪避结束（恢复）ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" x:Name="SetFadeIn" Style="{StaticResource Tb}" Width="80" />
+                                    <TextBox Grid.Column="1" x:Name="SetFadeIn" Style="{StaticResource Tb}" Width="80"
+                                             TextChanged="OnSettingsFieldChanged" />
                                     <TextBlock Grid.Column="2" ToolTip="闪避结束时长"
                                                Text="触发源停止出声/停止播放后，把音量从闪避目标值恢复回原始值的耗时。越长越平顺（默认约 1200），过短会显得突兀"
                                                Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
@@ -669,7 +741,8 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Text="轮询间隔 ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                    <TextBox Grid.Column="1" x:Name="SetPoll" Style="{StaticResource Tb}" Width="80" />
+                                    <TextBox Grid.Column="1" x:Name="SetPoll" Style="{StaticResource Tb}" Width="80"
+                                             TextChanged="OnSettingsFieldChanged" />
                                     <TextBlock Grid.Column="2" Text="会话峰值轮询频率，重启应用后生效"
                                                Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
                                 </Grid>
@@ -684,8 +757,6 @@
         <DockPanel Grid.Row="2" Margin="0,12,0,0" LastChildFill="False">
             <TextBlock x:Name="SaveStatus" VerticalAlignment="Center" FontSize="12"
                        Foreground="{StaticResource TextSecondary}" />
-            <Button DockPanel.Dock="Right" Content="应用并保存" Style="{StaticResource BtnPrimary}"
-                    Padding="22,8" Click="OnApplySave" />
         </DockPanel>
     </Grid>
 </Window>
