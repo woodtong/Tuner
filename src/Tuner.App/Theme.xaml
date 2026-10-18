@@ -2,14 +2,16 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
 
-    <!-- ═══ 调色板（调音台深色风格）═══
-         颜色与画刷成对定义：样式引用画刷，悬停过渡动效引用颜色（ColorAnimation 只认 Color）。
-         画刷全部冻结：渲染免跟踪，且动画作用于冻结值时系统自动按元素克隆，不会串色。 -->
-    <Color x:Key="CardBgColor">#1B2028</Color>
-    <Color x:Key="HoverSoftColor">#232936</Color>
-    <Color x:Key="PressedBgColor">#141821</Color>
-    <Color x:Key="CardBorderColor">#2A303B</Color>
-    <Color x:Key="FieldBorderColor">#3A4150</Color>
+    <!-- ═══ 调色板（分层材质：深窗口底 → 悬浮面板 → 面上抬升块 → 井内凹陷）═══
+         颜色与画刷成对定义：样式引用画刷，过渡动效引用颜色。画刷全部冻结。
+         层级：PageBg(窗口) < CardBg(面板) < ItemBg(面板上的块/行) < FaderGroove(井) -->
+    <Color x:Key="CardBgColor">#171C24</Color>
+    <Color x:Key="ItemBgColor">#1F2530</Color>
+    <Color x:Key="ItemHoverColor">#262E3B</Color>
+    <Color x:Key="HoverSoftColor">#262E3B</Color>
+    <Color x:Key="PressedBgColor">#161B23</Color>
+    <Color x:Key="CardBorderColor">#242B37</Color>
+    <Color x:Key="FieldBorderColor">#374050</Color>
     <Color x:Key="FieldBorderHoverColor">#4A5468</Color>
     <Color x:Key="AccentColor">#E8A33D</Color>
     <Color x:Key="AccentHoverColor">#F0B258</Color>
@@ -20,8 +22,11 @@
     <Color x:Key="ScrollThumbColor">#3E4655</Color>
     <Color x:Key="ScrollThumbHoverColor">#55607A</Color>
 
-    <SolidColorBrush x:Key="PageBg" Color="#12151B" po:Freeze="True" />
+    <!-- 窗口底：最深；内容面板悬浮其上 -->
+    <SolidColorBrush x:Key="PageBg" Color="#0E1218" po:Freeze="True" />
     <SolidColorBrush x:Key="CardBg" Color="{StaticResource CardBgColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="ItemBg" Color="{StaticResource ItemBgColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="ItemHover" Color="{StaticResource ItemHoverColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="HoverSoft" Color="{StaticResource HoverSoftColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="PressedBg" Color="{StaticResource PressedBgColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="CardBorder" Color="{StaticResource CardBorderColor}" po:Freeze="True" />
@@ -70,8 +75,8 @@
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
                     <StackPanel Orientation="Horizontal" Background="Transparent">
-                        <Border x:Name="Box" Width="16" Height="16" CornerRadius="4"
-                                Background="{StaticResource CardBg}"
+                        <Border x:Name="Box" Width="16" Height="16" CornerRadius="4.5"
+                                Background="{StaticResource ItemBg}"
                                 BorderBrush="{StaticResource FieldBorder}" BorderThickness="1"
                                 VerticalAlignment="Center">
                             <Path x:Name="Check" Data="M3.5,8.5 L6.5,11.5 L12.5,4.5"
@@ -134,14 +139,14 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <ThicknessAnimation Storyboard.TargetName="Knob" Storyboard.TargetProperty="Margin"
-                                                            To="20,0,0,0" Duration="0:0:0.16">
+                                                            To="20,0,0,0" Duration="0:0:0.18">
                                             <ThicknessAnimation.EasingFunction>
                                                 <CubicEase EasingMode="EaseOut" />
                                             </ThicknessAnimation.EasingFunction>
                                         </ThicknessAnimation>
                                         <ColorAnimation Storyboard.TargetName="Track"
                                                         Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource SwitchOnColor}" Duration="0:0:0.16" />
+                                                        To="{StaticResource SwitchOnColor}" Duration="0:0:0.18" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -149,14 +154,14 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <ThicknessAnimation Storyboard.TargetName="Knob" Storyboard.TargetProperty="Margin"
-                                                            To="3,0,0,0" Duration="0:0:0.14">
+                                                            To="3,0,0,0" Duration="0:0:0.15">
                                             <ThicknessAnimation.EasingFunction>
                                                 <CubicEase EasingMode="EaseOut" />
                                             </ThicknessAnimation.EasingFunction>
                                         </ThicknessAnimation>
                                         <ColorAnimation Storyboard.TargetName="Track"
                                                         Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource SwitchTrackColor}" Duration="0:0:0.14" />
+                                                        To="{StaticResource SwitchTrackColor}" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -170,15 +175,15 @@
         </Setter>
     </Style>
 
-    <!-- 提示气泡（深色全局：默认白底在深色界面突兀） -->
+    <!-- 提示气泡：悬浮材质（投影 + 受光顶缘） -->
     <Style TargetType="ToolTip">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
-                    <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource FieldBorder}"
-                            BorderThickness="1" CornerRadius="7" Padding="12,9" Margin="0,4,8,8">
+                    <Border Background="{StaticResource ItemBg}" BorderBrush="{StaticResource FieldBorder}"
+                            BorderThickness="1" CornerRadius="8" Padding="12,9" Margin="0,4,8,8">
                         <Border.Effect>
-                            <DropShadowEffect BlurRadius="12" ShadowDepth="1" Opacity="0.18" />
+                            <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.3" />
                         </Border.Effect>
                         <ContentPresenter TextElement.Foreground="{StaticResource TextSecondary}"
                                           TextElement.FontSize="12" />
@@ -188,9 +193,9 @@
         </Setter>
     </Style>
 
-    <!-- 卡片 -->
+    <!-- 卡片（面板上的抬升块）：表面色差代替描边，仅留极淡发丝线 -->
     <Style x:Key="Card" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource CardBg}" />
+        <Setter Property="Background" Value="{StaticResource ItemBg}" />
         <Setter Property="BorderBrush" Value="{StaticResource CardBorder}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="10" />
@@ -198,7 +203,7 @@
 
     <!-- 按钮（次要）：悬停底色/描边平滑过渡（0.12s），按下即落 -->
     <Style x:Key="Btn" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource CardBg}" />
+        <Setter Property="Background" Value="{StaticResource ItemBg}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}" />
         <Setter Property="Padding" Value="12,6" />
@@ -209,7 +214,7 @@
                 <ControlTemplate TargetType="Button">
                     <Border x:Name="Bd" Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
-                            CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            CornerRadius="7" Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -219,7 +224,7 @@
                                     <Storyboard>
                                         <ColorAnimation Storyboard.TargetName="Bd"
                                                         Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource HoverSoftColor}" Duration="0:0:0.12" />
+                                                        To="{StaticResource ItemHoverColor}" Duration="0:0:0.12" />
                                         <ColorAnimation Storyboard.TargetName="Bd"
                                                         Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
                                                         To="{StaticResource FieldBorderHoverColor}" Duration="0:0:0.12" />
@@ -231,7 +236,7 @@
                                     <Storyboard>
                                         <ColorAnimation Storyboard.TargetName="Bd"
                                                         Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource CardBgColor}" Duration="0:0:0.15" />
+                                                        To="{StaticResource ItemBgColor}" Duration="0:0:0.15" />
                                         <ColorAnimation Storyboard.TargetName="Bd"
                                                         Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
                                                         To="{StaticResource FieldBorderColor}" Duration="0:0:0.15" />
@@ -278,7 +283,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="6"
+                    <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="7"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
@@ -336,9 +341,9 @@
         <Setter Property="BorderBrush" Value="{StaticResource DangerBorder}" />
     </Style>
 
-    <!-- 输入框 -->
+    <!-- 输入框：井内凹陷 -->
     <Style x:Key="Tb" TargetType="TextBox">
-        <Setter Property="Background" Value="{StaticResource CardBg}" />
+        <Setter Property="Background" Value="#131820" />
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Setter Property="Padding" Value="8,6" />
@@ -348,7 +353,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
                     <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="6">
+                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="7">
                         <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -380,8 +385,8 @@
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Border x:Name="Bd" Background="{StaticResource CardBg}" BorderBrush="{StaticResource FieldBorder}"
-                                            BorderThickness="1" CornerRadius="6" Padding="0,6">
+                                    <Border x:Name="Bd" Background="{StaticResource ItemBg}" BorderBrush="{StaticResource FieldBorder}"
+                                            BorderThickness="1" CornerRadius="7" Padding="0,6">
                                         <Path Data="M0,0 L4,4 8,0" Stroke="{StaticResource TextSecondary}"
                                               StrokeThickness="1.5" HorizontalAlignment="Right"
                                               VerticalAlignment="Center" Margin="0,0,10,0" />
@@ -402,11 +407,11 @@
                                  Visibility="Hidden" />
                         <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
                                AllowsTransparency="True" PopupAnimation="Fade" StaysOpen="False">
-                            <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}"
-                                    BorderThickness="1" CornerRadius="8" Margin="0,4,8,8"
+                            <Border Background="{StaticResource ItemBg}" BorderBrush="{StaticResource FieldBorder}"
+                                    BorderThickness="1" CornerRadius="9" Margin="0,4,8,8"
                                     MinWidth="{TemplateBinding ActualWidth}" MaxHeight="260" Padding="4">
                                 <Border.Effect>
-                                    <DropShadowEffect BlurRadius="14" ShadowDepth="1" Opacity="0.14" />
+                                    <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.3" />
                                 </Border.Effect>
                                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                                     <ItemsPresenter />
@@ -432,13 +437,13 @@
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ComboBoxItem">
-                                <Border x:Name="Bd" Background="Transparent" CornerRadius="5"
+                                <Border x:Name="Bd" Background="Transparent" CornerRadius="6"
                                         Padding="9,6" Margin="0,1">
                                     <ContentPresenter />
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSoft}" />
+                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource ItemHover}" />
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSoft}" />
@@ -453,13 +458,13 @@
         </Setter>
     </Style>
 
-    <!-- 列表卡片项：悬停底色/描边平滑过渡，选中即时 -->
+    <!-- 列表卡片项：表面色差（抬升块），悬停过渡，选中着色胶囊（macOS 侧栏式） -->
     <Style x:Key="CardItem" TargetType="ListBoxItem">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="Bd" Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}"
-                            BorderThickness="1" CornerRadius="8" Padding="11,9" Margin="0,0,0,7">
+                    <Border x:Name="Bd" Background="{StaticResource ItemBg}" BorderBrush="{StaticResource CardBorder}"
+                            BorderThickness="1" CornerRadius="9" Padding="11,9" Margin="0,0,0,7">
                         <ContentPresenter />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -469,10 +474,7 @@
                                     <Storyboard>
                                         <ColorAnimation Storyboard.TargetName="Bd"
                                                         Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource HoverSoftColor}" Duration="0:0:0.12" />
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
-                                                        To="{StaticResource FieldBorderHoverColor}" Duration="0:0:0.12" />
+                                                        To="{StaticResource ItemHoverColor}" Duration="0:0:0.12" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -481,10 +483,7 @@
                                     <Storyboard>
                                         <ColorAnimation Storyboard.TargetName="Bd"
                                                         Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource CardBgColor}" Duration="0:0:0.15" />
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
-                                                        To="{StaticResource CardBorderColor}" Duration="0:0:0.15" />
+                                                        To="{StaticResource ItemBgColor}" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -505,25 +504,24 @@
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
     </Style>
 
-    <!-- 导航（左侧栏式）：悬停底色平滑过渡，选中即时落位 -->
+    <!-- 导航（macOS 侧栏式）：浮于窗口底，胶囊选中态（着色填充，无强调条），
+         悬停底色平滑过渡 -->
     <Style TargetType="TabItem">
         <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
-                    <Border x:Name="Bd" BorderThickness="3,0,0,0" BorderBrush="Transparent"
-                            Background="Transparent" CornerRadius="0,6,6,0"
-                            Padding="12,9" Margin="0,0,10,4">
+                    <Border x:Name="Bd" CornerRadius="7"
+                            Background="Transparent" Padding="12,9" Margin="0,0,0,2">
                         <ContentPresenter x:Name="Header" ContentSource="Header"
                                           TextElement.FontSize="13.5"
                                           TextElement.Foreground="{TemplateBinding Foreground}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Accent}" />
                             <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSoft}" />
-                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                            <Setter Property="Foreground" Value="{StaticResource Accent}" />
                             <Setter TargetName="Header" Property="TextElement.FontWeight" Value="SemiBold" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
@@ -552,6 +550,9 @@
             </Setter.Value>
         </Setter>
     </Style>
+
+    <!-- 内容区：抬升的悬浮面板（静止剪影投影 + 受光顶缘渐变描边 + 圆角 12）；
+         页签浮在窗口底上。剪影层自身不重绘，内容重绘不触发投影重算 -->
     <Style TargetType="TabControl">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -563,11 +564,24 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Border Grid.Column="0" BorderBrush="{StaticResource CardBorder}"
-                                BorderThickness="0,0,1,0" Margin="0,0,16,0">
-                            <StackPanel IsItemsHost="True" Orientation="Vertical" Margin="0,4,0,0" />
-                        </Border>
-                        <ContentPresenter Grid.Column="1" ContentSource="SelectedContent" Margin="2,0,0,0" />
+                        <StackPanel Grid.Column="0" IsItemsHost="True" Orientation="Vertical"
+                                    Margin="2,10,14,10" />
+                        <Grid Grid.Column="1">
+                            <Border CornerRadius="12" Background="#14000000" Margin="0,3,6,-3">
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="18" ShadowDepth="2" Direction="270" Opacity="0.5" />
+                                </Border.Effect>
+                            </Border>
+                            <Border CornerRadius="12" Background="{StaticResource CardBg}" BorderThickness="1">
+                                <Border.BorderBrush>
+                                    <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                        <GradientStop Color="#22FFFFFF" Offset="0" />
+                                        <GradientStop Color="#00FFFFFF" Offset="1" />
+                                    </LinearGradientBrush>
+                                </Border.BorderBrush>
+                                <ContentPresenter ContentSource="SelectedContent" Margin="16,14" />
+                            </Border>
+                        </Grid>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
@@ -680,16 +694,16 @@
         </Setter>
     </Style>
 
-    <!-- ContextMenu / MenuItem（深色，全局） -->
+    <!-- ContextMenu / MenuItem（深色悬浮材质，全局） -->
     <Style TargetType="ContextMenu">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
-                    <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource FieldBorder}"
-                            BorderThickness="1" CornerRadius="8" Padding="5" Margin="0,4,8,8">
+                    <Border Background="{StaticResource ItemBg}" BorderBrush="{StaticResource FieldBorder}"
+                            BorderThickness="1" CornerRadius="9" Padding="5" Margin="0,4,8,8">
                         <Border.Effect>
-                            <DropShadowEffect BlurRadius="14" ShadowDepth="1" Opacity="0.14" />
+                            <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.3" />
                         </Border.Effect>
                         <StackPanel IsItemsHost="True" />
                     </Border>
@@ -704,7 +718,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="MenuItem">
-                    <Border x:Name="Bd" Background="Transparent" CornerRadius="5" Padding="10,7" Margin="0,1">
+                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="10,7" Margin="0,1">
                         <ContentPresenter ContentSource="Header" VerticalAlignment="Center" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -722,7 +736,7 @@
 
     <!-- 按钮（扁平无悬停变换，静音键用） -->
     <Style x:Key="BtnFlat" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource CardBg}" />
+        <Setter Property="Background" Value="{StaticResource ItemBg}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}" />
         <Setter Property="Padding" Value="12,6" />
@@ -733,7 +747,7 @@
                 <ControlTemplate TargetType="Button">
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
-                            CornerRadius="6" Padding="{TemplateBinding Padding}">
+                            CornerRadius="7" Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                 </ControlTemplate>

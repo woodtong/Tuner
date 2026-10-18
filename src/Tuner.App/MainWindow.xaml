@@ -10,19 +10,19 @@
     <Window.Resources>
         <ContextMenu x:Key="DeviceMenu" Placement="Bottom" />
     </Window.Resources>
-    <Grid Margin="20,14,20,14">
+    <Grid Margin="20,14,20,12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- 顶栏 -->
-        <DockPanel Grid.Row="0" Margin="0,0,0,12" LastChildFill="False">
+        <!-- 顶栏（浮于窗口底，内容面板悬浮其下） -->
+        <DockPanel Grid.Row="0" Margin="2,0,2,14" LastChildFill="False">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Tuner" FontSize="21" FontWeight="Bold" Foreground="{StaticResource TextPrimary}" />
-                <TextBlock Text="分组音频闪避" FontSize="13" Foreground="{StaticResource TextSecondary}"
-                           VerticalAlignment="Bottom" Margin="10,0,0,3" />
+                <TextBlock Text="Tuner" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" />
+                <TextBlock Text="分组音频闪避" FontSize="12.5" Foreground="{StaticResource TextFaint}"
+                           VerticalAlignment="Bottom" Margin="9,0,0,3" />
             </StackPanel>
             <controls:LedMeter DockPanel.Dock="Right" x:Name="MasterMeter" Width="110" Height="8" Segments="14"
                                VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="设备总峰值" />
@@ -56,42 +56,44 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="2,0,0,10">
-                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
-                                CornerRadius="7" Padding="12,5" Margin="0,0,8,0">
+                    <!-- 统计条：一条内嵌井，三项统计以发丝线分隔 -->
+                    <Border Grid.Row="0" Background="{StaticResource ItemBg}" CornerRadius="9"
+                            Padding="14,8" Margin="2,0,0,10" HorizontalAlignment="Left">
+                        <StackPanel Orientation="Horizontal">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="会话" Style="{StaticResource Label}" />
-                                <TextBlock x:Name="StatTotal" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"
-                                           Margin="7,0,0,0" />
+                                <Ellipse Width="7" Height="7" Fill="{StaticResource TextSecondary}" VerticalAlignment="Center" />
+                                <TextBlock Text="会话" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="7,0,0,0" />
+                                <TextBlock x:Name="StatTotal" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}" Margin="7,0,0,0"
+                                           VerticalAlignment="Center" />
                             </StackPanel>
-                        </Border>
-                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
-                                CornerRadius="7" Padding="12,5" Margin="0,0,8,0">
+                            <Rectangle Width="1" Fill="{StaticResource CardBorder}" Margin="14,1" />
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="7" Height="7" Fill="{StaticResource Green}" VerticalAlignment="Center" />
-                                <TextBlock Text="出声中" Style="{StaticResource Label}" Margin="6,0,0,0" />
-                                <TextBlock x:Name="StatSpeaking" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"
-                                           Margin="7,0,0,0" />
+                                <TextBlock Text="出声中" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="7,0,0,0" />
+                                <TextBlock x:Name="StatSpeaking" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}" Margin="7,0,0,0"
+                                           VerticalAlignment="Center" />
                             </StackPanel>
-                        </Border>
-                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
-                                CornerRadius="7" Padding="12,5">
+                            <Rectangle Width="1" Fill="{StaticResource CardBorder}" Margin="14,1" />
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="7" Height="7" Fill="{StaticResource Amber}" VerticalAlignment="Center" />
-                                <TextBlock Text="闪避中" Style="{StaticResource Label}" Margin="6,0,0,0" />
-                                <TextBlock x:Name="StatDucking" FontWeight="Bold" Foreground="{StaticResource TextPrimary}"
-                                           Margin="7,0,0,0" />
+                                <TextBlock Text="闪避中" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="7,0,0,0" />
+                                <TextBlock x:Name="StatDucking" FontSize="14" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}" Margin="7,0,0,0"
+                                           VerticalAlignment="Center" />
                             </StackPanel>
-                        </Border>
-                    </StackPanel>
+                        </StackPanel>
+                    </Border>
 
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <ItemsControl x:Name="StatusList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource CardBg}" BorderBrush="{StaticResource CardBorder}"
-                                                BorderThickness="1" CornerRadius="8" Padding="0" Margin="0,0,4,8"
+                                        <!-- 抬升行：表面色差代替描边 -->
+                                        <Border Background="{StaticResource ItemBg}"
+                                                CornerRadius="9" Padding="0" Margin="0,0,4,8"
                                                 ClipToBounds="True">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -120,7 +122,7 @@
                                                 <Ellipse Grid.Column="1" Width="9" Height="9"
                                                          Fill="{Binding SpeakingBrush}" VerticalAlignment="Center" />
 
-                                                <Border Grid.Column="2" Width="30" Height="30" CornerRadius="6"
+                                                <Border Grid.Column="2" Width="30" Height="30" CornerRadius="7"
                                                         Background="{StaticResource PageBg}" VerticalAlignment="Center">
                                                     <Grid>
                                                         <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="16"
@@ -143,7 +145,7 @@
                                                 </StackPanel>
 
                                                 <Border Grid.Column="6" Background="{StaticResource AmberSoft}"
-                                                        BorderBrush="{StaticResource AmberBadgeBorder}" BorderThickness="1" CornerRadius="4"
+                                                        BorderBrush="{StaticResource AmberBadgeBorder}" BorderThickness="1" CornerRadius="5"
                                                         Padding="8,3" VerticalAlignment="Center" Margin="0,0,14,0"
                                                         Visibility="{Binding DuckVisibility}">
                                                     <TextBlock Text="{Binding DuckText}" FontSize="11" FontWeight="SemiBold"
@@ -215,10 +217,10 @@
                                           HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
                                           PreviewMouseWheel="OnChannelsMouseWheel">
                                 <StackPanel Orientation="Horizontal">
-                                    <!-- MASTER 通道（调音台主输出） -->
+                                    <!-- MASTER 通道（调音台主输出）：井内凹陷 + 琥珀描边点出主输出身份 -->
                                     <Border Width="112" Background="{StaticResource PageBg}"
                                             BorderBrush="{StaticResource Accent}" BorderThickness="1"
-                                            CornerRadius="8" Padding="10,10" Margin="0,0,10,4">
+                                            CornerRadius="9" Padding="10,10" Margin="0,0,10,4">
                                         <StackPanel>
                                             <!-- 与应用通道的图标区等高（34+8），保证下方各段跨通道对齐 -->
                                             <Border Height="42">
@@ -257,10 +259,10 @@
                                             <DataTemplate>
                                                 <Border Width="112" Background="{StaticResource PageBg}"
                                                         BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
-                                                        CornerRadius="8" Padding="10,10" Margin="0,0,10,4">
+                                                        CornerRadius="9" Padding="10,10" Margin="0,0,10,4">
                                                     <StackPanel>
-                                                        <Border Width="34" Height="34" CornerRadius="7"
-                                                                Background="{StaticResource CardBg}"
+                                                        <Border Width="34" Height="34" CornerRadius="8"
+                                                                Background="{StaticResource ItemBg}"
                                                                 HorizontalAlignment="Center" Margin="0,0,0,8">
                                                             <Grid>
                                                                 <TextBlock Text="&#xE7F4;" FontFamily="Segoe MDL2 Assets" FontSize="17"
@@ -444,7 +446,7 @@
                             <!-- 区块一：进程匹配（已加入的进程） -->
                             <Border Grid.Row="1" Background="{StaticResource PageBg}"
                                     BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
-                                    CornerRadius="8" Padding="14,12" Margin="0,16,0,0">
+                                    CornerRadius="9" Padding="14,12" Margin="0,16,0,0">
                                 <StackPanel>
                                     <TextBlock Text="进程匹配" FontSize="12.5" FontWeight="SemiBold"
                                                Foreground="{StaticResource TextPrimary}" />
@@ -461,9 +463,8 @@
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Background="{StaticResource CardBg}"
-                                                            BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
-                                                            CornerRadius="5" Padding="9,4" Margin="0,0,6,6">
+                                                    <Border Background="{StaticResource ItemHover}"
+                                                            CornerRadius="6" Padding="9,4" Margin="0,0,6,6">
                                                         <StackPanel Orientation="Horizontal">
                                                             <TextBlock Text="{Binding}" FontSize="12.5"
                                                                        Foreground="{StaticResource TextPrimary}" />
@@ -484,7 +485,7 @@
                             <!-- 区块二：添加操作 -->
                             <Border Grid.Row="2" Background="{StaticResource PageBg}"
                                     BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
-                                    CornerRadius="8" Padding="14,12" Margin="0,10,0,0">
+                                    CornerRadius="9" Padding="14,12" Margin="0,10,0,0">
                                 <StackPanel>
                                     <TextBlock Text="添加进程" FontSize="12.5" FontWeight="SemiBold"
                                                Foreground="{StaticResource TextPrimary}" />
@@ -699,7 +700,8 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel MaxWidth="680" HorizontalAlignment="Left">
 
-                        <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,12">
+                        <!-- 单卡分组式设置（系统设置风格）：三组分区以发丝线分隔 -->
+                        <Border Style="{StaticResource Card}" Padding="22">
                             <StackPanel>
                                 <TextBlock Text="出声判定" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" />
@@ -710,13 +712,11 @@
                                            Style="{StaticResource Hint}" Margin="0,10,0,0" />
                                 <TextBlock Text="其进入/退出阈值、低电平保持与静音宽限等兜底参数在配置文件中调整"
                                            Style="{StaticResource Hint}" />
-                        </StackPanel>
-                    </Border>
 
-                        <Border Style="{StaticResource Card}" Padding="20" Margin="0,0,0,12">
-                            <StackPanel>
+                                <Rectangle Height="1" Fill="{StaticResource CardBorder}" Margin="0,18,0,0" />
+
                                 <TextBlock Text="音量渐变" FontSize="13.5" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextPrimary}" />
+                                           Foreground="{StaticResource TextPrimary}" Margin="0,18,0,0" />
                                 <TextBlock Text="闪避的「压低」和「恢复」是两个独立过程，可以分别控制快慢"
                                            Style="{StaticResource Hint}" Margin="0,6,0,0" />
                                 <Grid Margin="0,12,0,0">
@@ -745,13 +745,11 @@
                                                Text="触发源停止出声/停止播放后，把音量从闪避目标值恢复回原始值的耗时。越长越平顺（默认约 1200），过短会显得突兀"
                                                Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
                                 </Grid>
-                            </StackPanel>
-                        </Border>
 
-                        <Border Style="{StaticResource Card}" Padding="20">
-                            <StackPanel>
+                                <Rectangle Height="1" Fill="{StaticResource CardBorder}" Margin="0,18,0,0" />
+
                                 <TextBlock Text="性能" FontSize="13.5" FontWeight="SemiBold"
-                                           Foreground="{StaticResource TextPrimary}" />
+                                           Foreground="{StaticResource TextPrimary}" Margin="0,18,0,0" />
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="230" />
@@ -772,7 +770,7 @@
         </TabControl>
 
         <!-- 底栏 -->
-        <DockPanel Grid.Row="2" Margin="0,12,0,0" LastChildFill="False">
+        <DockPanel Grid.Row="2" Margin="2,12,2,0" LastChildFill="False">
             <TextBlock x:Name="VersionText" DockPanel.Dock="Right" VerticalAlignment="Center" FontSize="12"
                        FontFamily="Consolas" Foreground="{StaticResource TextFaint}" Margin="12,0,0,0" />
             <TextBlock x:Name="SaveStatus" VerticalAlignment="Center" FontSize="12"

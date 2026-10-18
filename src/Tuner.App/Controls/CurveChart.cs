@@ -56,11 +56,11 @@ public sealed class CurveChart : FrameworkElement
     /// <summary>控制点被编辑（拖动/新增/删除）后触发。</summary>
     public event Action? CurveEdited;
 
-    private static readonly Brush PlotBg = Freeze(new SolidColorBrush(Color.FromRgb(0x12, 0x15, 0x1B)));
-    private static readonly Brush GridBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x23, 0x29, 0x36)));
+    private static readonly Brush PlotBg = Freeze(new SolidColorBrush(Color.FromRgb(0x10, 0x15, 0x1D)));
+    private static readonly Brush GridBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x26, 0x2E, 0x3B)));
     private static readonly Brush AccentBrushC = Freeze(new SolidColorBrush(Color.FromRgb(0xE8, 0xA3, 0x3D)));
     private static readonly Brush FaintBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x7E, 0x88, 0x9D)));
-    private static readonly Pen PlotBorderPen = FreezePen(new Pen(Freeze(new SolidColorBrush(Color.FromRgb(0x2A, 0x30, 0x3B))), 1));
+    private static readonly Pen PlotBorderPen = FreezePen(new Pen(Freeze(new SolidColorBrush(Color.FromRgb(0x24, 0x2B, 0x37))), 1));
     private static readonly Pen GridPen = FreezePen(new Pen(GridBrush, 1));
     private static readonly Pen CurvePen = FreezePen(new Pen(AccentBrushC, 2) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round });
     private static readonly Pen PointRimPen = FreezePen(new Pen(PlotBg, 1.5));
