@@ -1,25 +1,53 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
 
-    <!-- 调色板（调音台深色风格） -->
-    <SolidColorBrush x:Key="PageBg" Color="#12151B" />
-    <SolidColorBrush x:Key="CardBg" Color="#1B2028" />
-    <SolidColorBrush x:Key="CardBorder" Color="#2A303B" />
-    <SolidColorBrush x:Key="TextPrimary" Color="#E8ECF4" />
-    <SolidColorBrush x:Key="TextSecondary" Color="#98A2B3" />
-    <SolidColorBrush x:Key="TextFaint" Color="#626B7E" />
-    <SolidColorBrush x:Key="Accent" Color="#E8A33D" />
-    <SolidColorBrush x:Key="AccentHover" Color="#F0B258" />
-    <SolidColorBrush x:Key="AccentSoft" Color="#332B1C" />
-    <SolidColorBrush x:Key="FieldBorder" Color="#3A4150" />
-    <SolidColorBrush x:Key="FieldBorderHover" Color="#4A5468" />
-    <SolidColorBrush x:Key="Green" Color="#34D399" />
-    <SolidColorBrush x:Key="IdleDot" Color="#3A4150" />
-    <SolidColorBrush x:Key="Amber" Color="#F5B942" />
-    <SolidColorBrush x:Key="AmberSoft" Color="#331B1E" />
-    <SolidColorBrush x:Key="AmberText" Color="#F8A0A0" />
-    <SolidColorBrush x:Key="Danger" Color="#F87171" />
-    <SolidColorBrush x:Key="HoverSoft" Color="#232936" />
+    <!-- ═══ 调色板（调音台深色风格）═══
+         颜色与画刷成对定义：样式引用画刷，悬停过渡动效引用颜色（ColorAnimation 只认 Color）。
+         画刷全部冻结：渲染免跟踪，且动画作用于冻结值时系统自动按元素克隆，不会串色。 -->
+    <Color x:Key="CardBgColor">#1B2028</Color>
+    <Color x:Key="HoverSoftColor">#232936</Color>
+    <Color x:Key="PressedBgColor">#141821</Color>
+    <Color x:Key="CardBorderColor">#2A303B</Color>
+    <Color x:Key="FieldBorderColor">#3A4150</Color>
+    <Color x:Key="FieldBorderHoverColor">#4A5468</Color>
+    <Color x:Key="AccentColor">#E8A33D</Color>
+    <Color x:Key="AccentHoverColor">#F0B258</Color>
+    <Color x:Key="AccentPressedColor">#B87F1F</Color>
+    <Color x:Key="AccentSoftColor">#332B1C</Color>
+    <Color x:Key="SwitchTrackColor">#242A34</Color>
+    <Color x:Key="SwitchOnColor">#1B3A2E</Color>
+    <Color x:Key="ScrollThumbColor">#3E4655</Color>
+    <Color x:Key="ScrollThumbHoverColor">#55607A</Color>
+
+    <SolidColorBrush x:Key="PageBg" Color="#12151B" po:Freeze="True" />
+    <SolidColorBrush x:Key="CardBg" Color="{StaticResource CardBgColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="HoverSoft" Color="{StaticResource HoverSoftColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="PressedBg" Color="{StaticResource PressedBgColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="CardBorder" Color="{StaticResource CardBorderColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="TextPrimary" Color="#E8ECF4" po:Freeze="True" />
+    <SolidColorBrush x:Key="TextSecondary" Color="#98A2B3" po:Freeze="True" />
+    <SolidColorBrush x:Key="TextFaint" Color="#7E889D" po:Freeze="True" />
+    <SolidColorBrush x:Key="Accent" Color="{StaticResource AccentColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="AccentHover" Color="{StaticResource AccentHoverColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="AccentPressed" Color="{StaticResource AccentPressedColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="AccentSoft" Color="{StaticResource AccentSoftColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="FieldBorder" Color="{StaticResource FieldBorderColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="FieldBorderHover" Color="{StaticResource FieldBorderHoverColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Green" Color="#34D399" po:Freeze="True" />
+    <SolidColorBrush x:Key="Amber" Color="#F5B942" po:Freeze="True" />
+    <SolidColorBrush x:Key="AmberSoft" Color="#331B1E" po:Freeze="True" />
+    <SolidColorBrush x:Key="AmberBadgeBorder" Color="#5A2626" po:Freeze="True" />
+    <SolidColorBrush x:Key="AmberText" Color="#F8A0A0" po:Freeze="True" />
+    <SolidColorBrush x:Key="Danger" Color="#F87171" po:Freeze="True" />
+    <SolidColorBrush x:Key="DangerBorder" Color="#F3C9C9" po:Freeze="True" />
+    <SolidColorBrush x:Key="SwitchTrackBg" Color="{StaticResource SwitchTrackColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="SwitchOnBg" Color="{StaticResource SwitchOnColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="CheckOnBg" Color="#12241D" po:Freeze="True" />
+    <SolidColorBrush x:Key="ScrollThumbBg" Color="{StaticResource ScrollThumbColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="ScrollThumbHover" Color="{StaticResource ScrollThumbHoverColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="FaderGrooveBg" Color="#0C0F14" po:Freeze="True" />
+    <SolidColorBrush x:Key="FaderGrooveRim" Color="#04060A" po:Freeze="True" />
 
     <!-- 文本样式 -->
     <Style x:Key="Label" TargetType="TextBlock">
@@ -59,7 +87,7 @@
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Check" Property="Opacity" Value="1" />
                             <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource Green}" />
-                            <Setter TargetName="Box" Property="Background" Value="#12241D" />
+                            <Setter TargetName="Box" Property="Background" Value="{StaticResource CheckOnBg}" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource FieldBorderHover}" />
@@ -73,7 +101,8 @@
         </Setter>
     </Style>
 
-    <!-- 滑块开关（流块）：启停类开关用（规则启停等）。槽内圆钮左右换位，开=绿；换位带滑动过渡 -->
+    <!-- 滑块开关（流块）：启停类开关用（规则启停等）。槽内圆钮左右换位，开=绿；
+         换位与槽底变色均带过渡（Setter 兜底：载入时已勾选不走 EnterActions，直接落位） -->
     <Style x:Key="Switch" TargetType="CheckBox">
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Setter Property="FontSize" Value="12.5" />
@@ -84,7 +113,7 @@
                 <ControlTemplate TargetType="CheckBox">
                     <StackPanel Orientation="Horizontal" Background="Transparent">
                         <Border x:Name="Track" Width="40" Height="22" CornerRadius="11"
-                                Background="#242A34" BorderBrush="{StaticResource FieldBorder}"
+                                Background="{StaticResource SwitchTrackBg}" BorderBrush="{StaticResource FieldBorder}"
                                 BorderThickness="1" VerticalAlignment="Center">
                             <Ellipse x:Name="Knob" Width="15" Height="15" Fill="{StaticResource TextSecondary}"
                                      HorizontalAlignment="Left" Margin="3,0,0,0" />
@@ -97,10 +126,9 @@
                             <Setter TargetName="Track" Property="BorderBrush" Value="{StaticResource FieldBorderHover}" />
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
-                            <!-- Margin Setter 兜底：载入时已勾选（如程序置位）不走 EnterActions，直接落位 -->
                             <Setter TargetName="Knob" Property="Margin" Value="20,0,0,0" />
                             <Setter TargetName="Knob" Property="Fill" Value="{StaticResource Green}" />
-                            <Setter TargetName="Track" Property="Background" Value="#1B3A2E" />
+                            <Setter TargetName="Track" Property="Background" Value="{StaticResource SwitchOnBg}" />
                             <Setter TargetName="Track" Property="BorderBrush" Value="{StaticResource Green}" />
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
@@ -111,6 +139,9 @@
                                                 <CubicEase EasingMode="EaseOut" />
                                             </ThicknessAnimation.EasingFunction>
                                         </ThicknessAnimation>
+                                        <ColorAnimation Storyboard.TargetName="Track"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource SwitchOnColor}" Duration="0:0:0.16" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -123,6 +154,9 @@
                                                 <CubicEase EasingMode="EaseOut" />
                                             </ThicknessAnimation.EasingFunction>
                                         </ThicknessAnimation>
+                                        <ColorAnimation Storyboard.TargetName="Track"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource SwitchTrackColor}" Duration="0:0:0.14" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -162,7 +196,7 @@
         <Setter Property="CornerRadius" Value="10" />
     </Style>
 
-    <!-- 按钮（次要） -->
+    <!-- 按钮（次要）：悬停底色/描边平滑过渡（0.12s），按下即落 -->
     <Style x:Key="Btn" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource CardBg}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
@@ -180,12 +214,34 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverSoft}" />
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource FieldBorderHover}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource HoverSoftColor}" Duration="0:0:0.12" />
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource FieldBorderHoverColor}" Duration="0:0:0.12" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource CardBgColor}" Duration="0:0:0.15" />
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource FieldBorderColor}" Duration="0:0:0.15" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
-                    <Trigger Property="IsPressed" Value="True">
-                        <Setter TargetName="Bd" Property="Background" Value="#141821" />
-                    </Trigger>
+                        <Trigger Property="IsPressed" Value="True">
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource PressedBg}" />
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
                         </Trigger>
@@ -193,9 +249,25 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <!-- 按压缩放：模板级 Setter 无法指向 Freezable，用样式级触发器整体换 RenderTransform -->
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform />
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
-    <!-- 按钮（主要强调） -->
+    <!-- 按钮（主要强调）：悬停底色平滑过渡 -->
     <Style x:Key="BtnPrimary" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource Accent}" />
         <Setter Property="Foreground" Value="White" />
@@ -212,10 +284,27 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentHover}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource AccentHoverColor}" Duration="0:0:0.12" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource AccentColor}" Duration="0:0:0.15" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="#B87F1F" />
+                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentPressed}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
@@ -224,12 +313,27 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <ScaleTransform />
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="RenderTransform">
+                    <Setter.Value>
+                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- 按钮（危险操作，幽灵样式） -->
     <Style x:Key="BtnDanger" TargetType="Button" BasedOn="{StaticResource Btn}">
         <Setter Property="Foreground" Value="{StaticResource Danger}" />
-        <Setter Property="BorderBrush" Value="#F3C9C9" />
+        <Setter Property="BorderBrush" Value="{StaticResource DangerBorder}" />
     </Style>
 
     <!-- 输入框 -->
@@ -349,7 +453,7 @@
         </Setter>
     </Style>
 
-    <!-- 列表卡片项 -->
+    <!-- 列表卡片项：悬停底色/描边平滑过渡，选中即时 -->
     <Style x:Key="CardItem" TargetType="ListBoxItem">
         <Setter Property="Template">
             <Setter.Value>
@@ -360,7 +464,30 @@
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverSoft}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource HoverSoftColor}" Duration="0:0:0.12" />
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource FieldBorderHoverColor}" Duration="0:0:0.12" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource CardBgColor}" Duration="0:0:0.15" />
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource CardBorderColor}" Duration="0:0:0.15" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
                             <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Accent}" />
@@ -378,7 +505,7 @@
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
     </Style>
 
-    <!-- 导航（左侧栏式） -->
+    <!-- 导航（左侧栏式）：悬停底色平滑过渡，选中即时落位 -->
     <Style TargetType="TabItem">
         <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
         <Setter Property="Cursor" Value="Hand" />
@@ -401,7 +528,24 @@
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource HoverSoft}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource HoverSoftColor}" Duration="0:0:0.12" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Bd"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="Transparent" Duration="0:0:0.15" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -430,7 +574,7 @@
         </Setter>
     </Style>
 
-    <!-- 细滚动条（仅竖向，横向保持默认） -->
+    <!-- 细滚动条（仅竖向，横向保持默认）：滑块悬停提亮 -->
     <Style TargetType="ScrollBar">
         <Style.Triggers>
             <Trigger Property="Orientation" Value="Vertical">
@@ -450,7 +594,30 @@
                                         <Thumb>
                                             <Thumb.Template>
                                                 <ControlTemplate TargetType="Thumb">
-                    <Border Background="#3E4655" CornerRadius="4" Margin="2,0" />
+                                                    <Border x:Name="ThumbBd" Background="{StaticResource ScrollThumbBg}"
+                                                            CornerRadius="4" Margin="2,0" />
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Trigger.EnterActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard>
+                                                                        <ColorAnimation Storyboard.TargetName="ThumbBd"
+                                                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                                                        To="{StaticResource ScrollThumbHoverColor}" Duration="0:0:0.1" />
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </Trigger.EnterActions>
+                                                            <Trigger.ExitActions>
+                                                                <BeginStoryboard>
+                                                                    <Storyboard>
+                                                                        <ColorAnimation Storyboard.TargetName="ThumbBd"
+                                                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                                                        To="{StaticResource ScrollThumbColor}" Duration="0:0:0.12" />
+                                                                    </Storyboard>
+                                                                </BeginStoryboard>
+                                                            </Trigger.ExitActions>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Thumb.Template>
                                         </Thumb>
@@ -464,72 +631,6 @@
         </Style.Triggers>
     </Style>
 
-    <!-- 音量条 -->
-    <Style x:Key="Meter" TargetType="ProgressBar">
-        <Setter Property="Height" Value="6" />
-        <Setter Property="Maximum" Value="100" />
-        <Setter Property="Foreground" Value="{StaticResource Accent}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="ProgressBar">
-                    <Grid>
-                        <Border x:Name="PART_Track" Background="#242A34" CornerRadius="3" />
-                        <Border x:Name="PART_Indicator" Background="{TemplateBinding Foreground}"
-                                CornerRadius="3" HorizontalAlignment="Left" />
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <!-- 推子（滑杆） -->
-    <Style x:Key="Fader" TargetType="Slider">
-        <Setter Property="Height" Value="18" />
-        <Setter Property="Foreground" Value="{StaticResource Accent}" />
-        <Setter Property="Template">
-            <Setter.Value>
-                <ControlTemplate TargetType="Slider">
-                    <Grid VerticalAlignment="Center" Background="Transparent">
-                        <Border Height="4" CornerRadius="2" Background="#242A34" VerticalAlignment="Center" />
-                        <Track x:Name="PART_Track">
-                            <Track.DecreaseRepeatButton>
-                                <RepeatButton Command="Slider.DecreaseLarge" Focusable="False" IsTabStop="False">
-                                    <RepeatButton.Template>
-                                        <ControlTemplate TargetType="RepeatButton">
-                                            <Border Background="{StaticResource Accent}" Height="4" CornerRadius="2,0,0,2" />
-                                        </ControlTemplate>
-                                    </RepeatButton.Template>
-                                </RepeatButton>
-                            </Track.DecreaseRepeatButton>
-                            <Track.IncreaseRepeatButton>
-                                <RepeatButton Command="Slider.IncreaseLarge" Focusable="False" IsTabStop="False">
-                                    <RepeatButton.Template>
-                                        <ControlTemplate TargetType="RepeatButton">
-                                            <Border Background="Transparent" Height="4" />
-                                        </ControlTemplate>
-                                    </RepeatButton.Template>
-                                </RepeatButton>
-                            </Track.IncreaseRepeatButton>
-                            <Track.Thumb>
-                                <Thumb Width="24" Height="26" Cursor="Hand">
-                                    <Thumb.Template>
-                                        <ControlTemplate TargetType="Thumb">
-                                            <Grid Background="Transparent">
-                                                <Border Width="12" Height="16" Background="{StaticResource TextPrimary}"
-                                                        CornerRadius="3" HorizontalAlignment="Center"
-                                                        VerticalAlignment="Center" />
-                                            </Grid>
-                                        </ControlTemplate>
-                                    </Thumb.Template>
-                                </Thumb>
-                            </Track.Thumb>
-                        </Track>
-                    </Grid>
-                </ControlTemplate>
-            </Setter.Value>
-        </Setter>
-    </Style>
-
     <!-- 推子（纵向，调音台通道） -->
     <Style x:Key="FaderV" TargetType="Slider">
         <Setter Property="Width" Value="30" />
@@ -537,7 +638,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Slider">
                     <Grid Background="Transparent">
-                        <Border Width="4" CornerRadius="2" Background="#242A34" HorizontalAlignment="Center" />
+                        <Border Width="4" CornerRadius="2" Background="{StaticResource SwitchTrackBg}" HorizontalAlignment="Center" />
                         <Track x:Name="PART_Track" IsDirectionReversed="False">
                             <Track.DecreaseRepeatButton>
                                 <RepeatButton Command="Slider.DecreaseLarge" Focusable="False" IsTabStop="False">

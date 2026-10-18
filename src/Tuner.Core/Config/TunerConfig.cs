@@ -39,6 +39,15 @@ public sealed class EngineSettings
 
     /// <summary>会话峰值轮询间隔（毫秒）。</summary>
     public int PollIntervalMs { get; set; } = 100;
+
+    /// <summary>
+    /// 音量曲线（全局）："linear"=线性；"square"=平方；"log"=对数（等响度）；"custom"=自定义（CustomCurve 控制点）。
+    /// 界面上的音量百分比（混音台推子位置、规则目标音量）统一视为曲线上的位置，按曲线映射为实际振幅。
+    /// </summary>
+    public string VolumeCurve { get; set; } = "linear";
+
+    /// <summary>VolumeCurve=="custom" 时的自定义控制点（0..1 归一化，响度↔音量百分比映射）。</summary>
+    public List<CurvePoint> CustomCurve { get; set; } = new();
 }
 
 public sealed class AppGroupConfig
@@ -89,7 +98,7 @@ public sealed class DuckingRuleConfig
     /// </summary>
     public string DetectionMode { get; set; } = "sound";
 
-    /// <summary>闪避期间的目标音量（百分比，0..100）。</summary>
+    /// <summary>闪避期间的目标音量（百分比＝音量曲线上的位置，0..100，按曲线映射为实际振幅）。</summary>
     public float TargetVolumePercent { get; set; } = 20f;
 
     /// <summary>同一会话被多条规则命中时，优先级高者胜；同级时应用级规则优先于分组级。</summary>

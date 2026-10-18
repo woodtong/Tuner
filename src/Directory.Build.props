@@ -1,0 +1,12 @@
+<Project>
+
+  <!-- 公共工程属性：版本号/目标框架等只在这里改一次，四个工程同步生效 -->
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>0.2.0-gamma</Version>
+    <Product>Tuner</Product>
+  </PropertyGroup>
+
+</Project>

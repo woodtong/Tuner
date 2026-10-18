@@ -19,6 +19,9 @@ public sealed class AudioSessionMonitor : IDisposable
     private readonly object _pendingGate = new();
     private readonly Dictionary<string, float> _pendingSessionVolumes = new();
     private readonly Dictionary<string, bool> _pendingSessionMutes = new();
+    // 无待写项时与空字典共享，免逐拍拷贝分配（消费方只读，安全）
+    private static readonly Dictionary<string, float> EmptyPendingVolumes = new();
+    private static readonly Dictionary<string, bool> EmptyPendingMutes = new();
     private float? _pendingMasterVolume;
     private bool? _pendingMasterMute;
 
@@ -352,9 +355,13 @@ public sealed class AudioSessionMonitor : IDisposable
             _pendingMasterVolume = null;
             pendingMasterMute = _pendingMasterMute;
             _pendingMasterMute = null;
-            pendingVolumes = new Dictionary<string, float>(_pendingSessionVolumes);
+            pendingVolumes = _pendingSessionVolumes.Count > 0
+                ? new Dictionary<string, float>(_pendingSessionVolumes)
+                : EmptyPendingVolumes;
             _pendingSessionVolumes.Clear();
-            pendingMutes = new Dictionary<string, bool>(_pendingSessionMutes);
+            pendingMutes = _pendingSessionMutes.Count > 0
+                ? new Dictionary<string, bool>(_pendingSessionMutes)
+                : EmptyPendingMutes;
             _pendingSessionMutes.Clear();
         }
 

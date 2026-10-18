@@ -2,15 +2,10 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <AssemblyName>Tuner</AssemblyName>
     <ApplicationIcon>app.ico</ApplicationIcon>
-    <Version>0.2.0-beta</Version>
-    <Product>Tuner</Product>
     <Description>Tuner — Windows 应用分组音频闪避工具</Description>
   </PropertyGroup>
 

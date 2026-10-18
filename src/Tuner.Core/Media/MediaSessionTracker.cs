@@ -161,15 +161,18 @@ public sealed class MediaSessionTracker : IDisposable
         }
     }
 
-    /// <summary>进程名须已小写；别名表值本身即小写，直接比较。</summary>
+    /// <summary>
+    /// 进程名须已小写；别名表值本身即小写。与 AUMID 的包含比较全部走 OrdinalIgnoreCase，
+    /// 不再对 AUMID 逐次 ToLower（引擎每拍逐会话调用，零分配）。
+    /// </summary>
     private static bool Matches(string p, string aumid)
     {
-        var a = aumid.ToLowerInvariant();
-        if (a.Contains(p) || p.Contains(a))
+        if (aumid.Contains(p, StringComparison.OrdinalIgnoreCase) ||
+            p.Contains(aumid, StringComparison.OrdinalIgnoreCase))
             return true;
         if (Aliases.TryGetValue(p, out var aliases))
             foreach (var alias in aliases)
-                if (a.Contains(alias))
+                if (aumid.Contains(alias, StringComparison.OrdinalIgnoreCase))
                     return true;
         return false;
     }

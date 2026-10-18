@@ -9,8 +9,8 @@
 
 从 [Releases](https://github.com/woodtong/Tuner/releases) 下载（Windows 10/11 x64，解压即用，自带 .NET 8 运行时，免安装、免管理员）：
 
-- `Tuner-v0.2-beta-win-x64.zip` — 主程序（托盘应用）
-- `Tuner-Console-v0.2-beta-win-x64.zip` — 控制台诊断工具（可选：实时表格 / `--selftest` 自测 / `--setvol`）
+- `Tuner-v0.2-gamma-win-x64.zip` — 主程序（托盘应用）
+- `Tuner-Console-v0.2-gamma-win-x64.zip` — 控制台诊断工具（可选：实时表格 / `--selftest` 自测 / `--setvol`）
 
 ## 界面预览
 
@@ -49,6 +49,7 @@ MVP 首个公开版本为 **v0.1**（2026-10-08）。当前数字版本 **0.2**�
 | **v0.1 (2026-10-08)** | **MVP 定版 / 首个公开版本**：调音台交互稳定性专项修复——推子"一闪一闪"（显示被滞后快照回写拽回）、拖动回弹（保护窗口吞掉按下事件 + 原生拖拽与绝对定位两个写者互抢 + 过期动画写回旧目标）、静音意图驱动（显示唯一判断=音量==0）、滚轮按 delta 累计精确 1%/格 |
 | v0.2-alpha (2026-10-08) | **自研应用图标**（调音台三推子，exe/托盘/窗口统一，含生成脚本 tools/make_app_icon.py）；**闪避开始/结束时长解耦**：压低与恢复两个独立设置（旧"渐变时长"自动迁移），引擎按闪避阶段取渐变速率；修复设置页勾选框黑字不可见（补全局深色样式） |
 | v0.2-beta (2026-10-11) | **规则页"应用"方式可用**：修复触发/目标切到"应用"被立即弹回"分组"的问题（类型切换重填时保留所选类型）；**开关滑动动画**（启停圆钮平滑过渡）；**引擎性能重构**：规则预解析计划与进程名归一化/分组映射缓存（换配置才重建）、本拍选择器键复用免分配、音量控制句柄按 InstanceId 增量补挂；托盘常驻窗口隐藏时维持静音意图钉零；配置改为 800ms 防抖自动保存（替代手动保存按钮）；截图模式支持 `--shot-size` 指定窗口尺寸 |
+| v0.2-gamma (2026-10-18) | **音量曲线配置**（音量页，全局一份）：线性 / 平方 / **对数（等响度）** / **自定义** 四选——对数每 1% 恒定 0.4dB（全程 40dB），等格等响，解决线性"小音量段一拖就炸"的不适；**曲线图**实时显示响度↔音量百分比映射，「自定义」以切换前曲线为底稿生成 5 个控制点，直接在图上拖动编辑（双击空白加点 / 右键删点，端点仅可上下拖），分段线性插值即时生效；百分比统一解释为曲线上的位置（推子 / MASTER / 规则目标音量 / 实时状态页一致），切换只改调整手感、不动实际音量；**刷新与引擎零分配再优化**：实时/音量两页共用一次取样、静音意图检查常态零分配、引擎选择器评估预解析（SelectorPlan 换配置才重建）、监控待写表空时免逐拍拷贝、SMTC AUMID 匹配去逐次 ToLower；清理废弃样式（旧横向推子/进度条） |
 
 ## 目录结构
 
@@ -142,9 +143,9 @@ WPF 应用冒烟：启动绑定设备、枚举 6 个会话、优雅退出还原�
 dotnet publish src/Tuner.App -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
   -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:DebugSymbols=false `
-  -o dist/Tuner-v0.2-beta-win-x64
+  -o dist/Tuner-v0.2-gamma-win-x64
 
-# 控制台诊断：同参数，输出到 dist/Tuner-Console-v0.2-alpha-win-x64
+# 控制台诊断：同参数，输出到 dist/Tuner-Console-v0.2-gamma-win-x64
 ```
 
 产物：`Tuner.exe`（约 78MB，自带 .NET 8 桌面运行时，免安装）。版本号在 `Tuner.App.csproj` 的 `<Version>`。

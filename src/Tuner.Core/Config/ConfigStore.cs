@@ -22,11 +22,27 @@ public static class ConfigStore
 
     public static TunerConfig Load(string path)
     {
-        if (!File.Exists(path))
+        // 主文件缺失/损坏 → 回退上一次保存留下的 .bak → 仍没有则全新默认
+        if (!TryLoad(path, out var config) && !TryLoad(path + ".bak", out config))
             return CreateDefault();
-        var config = JsonSerializer.Deserialize<TunerConfig>(File.ReadAllText(path), Options) ?? CreateDefault();
         Normalize(config);
         return config;
+    }
+
+    private static bool TryLoad(string path, out TunerConfig config)
+    {
+        config = null!;
+        try
+        {
+            if (!File.Exists(path))
+                return false;
+            config = JsonSerializer.Deserialize<TunerConfig>(File.ReadAllText(path), Options) ?? null!;
+            return config is not null;
+        }
+        catch
+        {
+            return false; // JSON 损坏等读取异常：交给调用方回退备份
+        }
     }
 
     /// <summary>深拷贝配置（用于把 UI 编辑的配置交给引擎，避免共享可变集合）。</summary>
@@ -44,7 +60,15 @@ public static class ConfigStore
     {
         Normalize(config);
         Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(path))!);
-        File.WriteAllText(path, JsonSerializer.Serialize(config, Options));
+        // 原子落盘：先写临时文件再整体替换，写一半崩溃/断电不会留下截断的配置；
+        // 替换同时留 .bak 备份，主文件意外损坏时 Load 端可回退
+        var json = JsonSerializer.Serialize(config, Options);
+        var tmp = path + ".tmp";
+        File.WriteAllText(tmp, json);
+        if (File.Exists(path))
+            File.Replace(tmp, path, path + ".bak");
+        else
+            File.Move(tmp, path);
     }
 
     /// <summary>修复缺失字段：确保恰好一个默认组、去掉无效字符。</summary>
@@ -65,6 +89,12 @@ public static class ConfigStore
         s.FadeOutDurationMs = Math.Clamp(s.FadeOutDurationMs, 50, 10_000);
         s.FadeInDurationMs = Math.Clamp(s.FadeInDurationMs, 50, 10_000);
         s.FadeDurationMs = null; // 已迁移，保存时不再写旧字段
+
+        // 音量曲线：非法值回退线性；自定义点规整（custom 但点数不足同样回退线性）
+        s.VolumeCurve = VolumeCurve.Normalize(s.VolumeCurve);
+        s.CustomCurve = VolumeCurve.NormalizePoints(s.CustomCurve);
+        if (s.VolumeCurve == "custom" && s.CustomCurve.Count < 2)
+            s.VolumeCurve = "linear";
 
         foreach (var g in config.Groups)
         {

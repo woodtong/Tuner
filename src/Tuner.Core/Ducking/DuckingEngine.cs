@@ -59,6 +59,16 @@ public sealed class DuckingEngine : IDisposable
         public string TriggerGroupId = "", TargetGroupId = "";
     }
 
+    /// <summary>选择器"在播"评估项：由规则计划按键去重而来，换配置才重建（评估每拍进行，不再逐拍建表）。</summary>
+    private sealed class SelectorPlan
+    {
+        public string Key = "";
+        public bool IsApp;
+        public string NormApp = "";
+        public string GroupId = "";
+        public bool StateMode;
+    }
+
     /// <summary>引擎内部状态变化（出声切换、闪避切换、成员/分组变化），供 UI 刷新。</summary>
     public event Action? EngineStateChanged;
 
@@ -71,14 +81,21 @@ public sealed class DuckingEngine : IDisposable
     private readonly Dictionary<string, Tracked> _tracked = new();
     private readonly Dictionary<string, DateTime> _lastSounding = new(); // 分组最近一次真实出声时刻
     private readonly HashSet<string> _sounding = new(StringComparer.Ordinal); // 本拍生效选择器键（复用免分配）
+    // 每拍复用的遍历缓冲（引擎 50ms 一拍，避免逐拍分配）
+    private readonly HashSet<string> _seen = new(StringComparer.Ordinal);
+    private readonly List<string> _gone = new();
     private readonly MediaSessionTracker _mediaTracker = new();
     private TunerConfig _config;
 
     // 按 _config 引用缓存的规则计划与进程→分组映射（换配置才重建）
     private TunerConfig? _planFor;
     private List<RulePlan>? _plan;
+    private List<SelectorPlan>? _selectors;
+    private HashSet<string>? _selectorKeys;
     private Dictionary<string, string>? _groupByProc;
     private string? _defaultGroupId;
+    private Dictionary<string, string>? _groupNames; // 分组 Id→名称（UI 快照用，换配置才重建）
+    private CurveSpec _globalCurve = CurveSpec.Linear; // 全局音量曲线（换配置才重建）
 
     private Thread? _thread;
     private CancellationTokenSource? _cts;
@@ -97,10 +114,8 @@ public sealed class DuckingEngine : IDisposable
         {
             lock (_gate)
             {
-                var groupNames = new Dictionary<string, string>();
-                foreach (var g in _config.Groups)
-                    groupNames[g.Id] = g.Name;
-                return _tracked.Values.Select(t => ToState(t, groupNames)).ToArray();
+                EnsurePlan(_config); // 首拍未跑时也能给出正确分组名（幂等：引用相同即跳过）
+                return _tracked.Values.Select(t => ToState(t, _groupNames!)).ToArray();
             }
         }
     }
@@ -221,11 +236,12 @@ public sealed class DuckingEngine : IDisposable
             EnsurePlan(config);
             var plan = _plan!;
             _sounding.Clear();
-            EvaluateSelectors(plan, settings, now);
+            EvaluateSelectors(_selectors!, settings, now);
             var sounding = _sounding;
 
             // 1) 成员差量 + 归一名/分组缓存维护（仅在进程名或配置变化时重算）
-            var seen = new HashSet<string>();
+            var seen = _seen;
+            seen.Clear();
             foreach (var s in sessions)
             {
                 seen.Add(s.InstanceId);
@@ -252,7 +268,7 @@ public sealed class DuckingEngine : IDisposable
                     {
                         t.OriginalVolume = v;
                         t.Ducked = true;
-                        t.CurrentVolume = Math.Clamp(initRule.TargetVolumePercent / 100f, 0f, 1f);
+                        t.CurrentVolume = VolumeCurve.ToVolume(_globalCurve, initRule.TargetVolumePercent / 100f);
                         t.Control?.SetVolume(t.CurrentVolume);
                     }
                     _tracked[s.InstanceId] = t;
@@ -269,7 +285,11 @@ public sealed class DuckingEngine : IDisposable
                         stateChange = true;
                 }
             }
-            foreach (var gone in _tracked.Keys.Where(id => !seen.Contains(id)).ToArray())
+            _gone.Clear();
+            foreach (var id in _tracked.Keys)
+                if (!seen.Contains(id))
+                    _gone.Add(id);
+            foreach (var gone in _gone)
             {
                 _tracked.Remove(gone); // 会话消失，音量随会话终结，无需还原
                 stateChange = true;
@@ -319,7 +339,8 @@ public sealed class DuckingEngine : IDisposable
                         t.Ducked = true;
                         stateChange = true;
                     }
-                    target = Math.Clamp(rule.TargetVolumePercent / 100f, 0f, 1f);
+                    // 规则目标音量是曲线上的位置，按全局音量曲线换算为实际振幅
+                    target = VolumeCurve.ToVolume(_globalCurve, rule.TargetVolumePercent / 100f);
                     t.TargetVolume = target;
                 }
                 else
@@ -355,44 +376,26 @@ public sealed class DuckingEngine : IDisposable
     /// state（状态判定，默认）：SMTC 报告"播放中"→在播；已暂停/已停止→立即解除（无宽限）；
     ///   无 SMTC 信号的应用以会话 Active 兜底。不看峰值。
     /// sound（声音判定）：峰值迟滞（双阈值+低电平保持）+ 静音宽限。
+    /// 选择器列表为换配置时按键去重的预解析结果，本方法每拍调用、零分配。
     /// </summary>
-    private void EvaluateSelectors(List<RulePlan> plan, EngineSettings settings, DateTime now)
+    private void EvaluateSelectors(List<SelectorPlan> selectors, EngineSettings settings, DateTime now)
     {
-        // 同一选择器可能被多条规则共用：按键去重，只评估一次
-        var byKey = new Dictionary<string, (RulePlan P, bool Trig)>(StringComparer.Ordinal);
-        foreach (var p in plan)
+        foreach (var sel in selectors)
         {
-            if (byKey.ContainsKey(p.TriggerKey))
-                byKey[p.TriggerKey] = (p, true);
-            else
-                byKey.Add(p.TriggerKey, (p, true));
-            if (byKey.ContainsKey(p.TargetKey))
-                byKey[p.TargetKey] = (p, false);
-            else
-                byKey.Add(p.TargetKey, (p, false));
-        }
-
-        foreach (var (key, (p, trig)) in byKey)
-        {
-            bool isApp = trig ? p.TriggerIsApp : p.TargetIsApp;
-            string normApp = trig ? p.TriggerNormApp : p.TargetNormApp;
-            string groupId = trig ? p.TriggerGroupId : p.TargetGroupId;
-
             // 单遍扫描成员（不物化列表）：出声峰值命中 / SMTC 已知且在播 / 会话 Active
             // （SMTC 只在 state 模式下查询，与原实现一致）
-            bool stateMode = p.Rule.DetectionMode == "state";
             bool anyMember = false, anySpeaking = false, anyActive = false;
             bool anyKnown = false, anyPlaying = false;
             foreach (var t in _tracked.Values)
             {
-                if (isApp ? t.NormName != normApp : t.GroupId != groupId)
+                if (sel.IsApp ? t.NormName != sel.NormApp : t.GroupId != sel.GroupId)
                     continue;
                 anyMember = true;
                 if (t.Speaking)
                     anySpeaking = true;
                 if (t.Session.State == Audio.SessionState.Active)
                     anyActive = true;
-                if (stateMode && settings.UseMediaSessionStatus && !anyPlaying)
+                if (sel.StateMode && settings.UseMediaSessionStatus && !anyPlaying)
                 {
                     var playing = _mediaTracker.IsPlaying(t.Session.ProcessName);
                     if (playing is not null)
@@ -407,35 +410,42 @@ public sealed class DuckingEngine : IDisposable
             if (!anyMember)
                 continue; // 无成员：无从在播（键计时由下方清理）
 
-            if (stateMode)
+            if (sel.StateMode)
             {
                 // 应用自报了状态 → 以自报为准（暂停/停止立即解除）；未知 → 会话 Active 兜底
-                bool sound = anyKnown ? anyPlaying : anyActive;
-                if (sound)
-                    _sounding.Add(key);
+                if (anyKnown ? anyPlaying : anyActive)
+                    _sounding.Add(sel.Key);
                 continue; // 状态判定：无宽限、不看峰值
             }
 
             // sound 模式：峰值迟滞 + 静音宽限
             if (anySpeaking)
             {
-                _lastSounding[key] = now;
-                _sounding.Add(key);
+                _lastSounding[sel.Key] = now;
+                _sounding.Add(sel.Key);
                 continue;
             }
-            if (!_lastSounding.TryGetValue(key, out var lastSounding))
+            if (!_lastSounding.TryGetValue(sel.Key, out var lastSounding))
                 continue;
             double silenceMs = (now - lastSounding).TotalMilliseconds;
             int graceMs = anyActive
                 ? Math.Max(0, settings.StreamOpenSilenceGraceMs)
                 : Math.Max(0, settings.SilenceGraceMs);
             if (silenceMs < graceMs)
-                _sounding.Add(key);
+                _sounding.Add(sel.Key);
         }
 
-        // 清理不再被任何规则使用的选择器计时
-        foreach (var gone in _lastSounding.Keys.Where(k => !byKey.ContainsKey(k)).ToArray())
-            _lastSounding.Remove(gone);
+        // 清理不再被任何规则使用的选择器计时（复用缓冲，免逐拍分配）
+        if (_lastSounding.Count > 0)
+        {
+            _gone.Clear();
+            var keys = _selectorKeys!;
+            foreach (var k in _lastSounding.Keys)
+                if (!keys.Contains(k))
+                    _gone.Add(k);
+            foreach (var k in _gone)
+                _lastSounding.Remove(k);
+        }
     }
 
     /// <summary>会话是否命中计划中的选择器：应用模式按归一化进程名，分组模式按解析后的分组。</summary>
@@ -475,11 +485,12 @@ public sealed class DuckingEngine : IDisposable
             return;
 
         _plan = new List<RulePlan>();
+        var selectorByKey = new Dictionary<string, SelectorPlan>(StringComparer.Ordinal);
         foreach (var r in config.Rules)
         {
             if (!r.Enabled || r.Trigger is null || r.Target is null)
                 continue;
-            _plan.Add(new RulePlan
+            var p = new RulePlan
             {
                 Rule = r,
                 TriggerKey = SoundingKey(r, r.Trigger),
@@ -490,13 +501,20 @@ public sealed class DuckingEngine : IDisposable
                 TargetNormApp = ConfigStore.NormalizeProcessName(r.Target.ProcessName ?? ""),
                 TriggerGroupId = r.Trigger.GroupId ?? "",
                 TargetGroupId = r.Target.GroupId ?? "",
-            });
+            };
+            _plan.Add(p);
+            AddSelector(selectorByKey, p.TriggerKey, r.Trigger, r.DetectionMode);
+            AddSelector(selectorByKey, p.TargetKey, r.Target, r.DetectionMode);
         }
+        _selectors = selectorByKey.Values.ToList();
+        _selectorKeys = new HashSet<string>(selectorByKey.Keys, StringComparer.Ordinal);
 
         _groupByProc = new Dictionary<string, string>(StringComparer.Ordinal);
         _defaultGroupId = null;
+        _groupNames = new Dictionary<string, string>();
         foreach (var g in config.Groups)
         {
+            _groupNames[g.Id] = g.Name;
             _defaultGroupId ??= g.IsDefault ? g.Id : null;
             foreach (var p in g.ProcessNames)
             {
@@ -507,7 +525,24 @@ public sealed class DuckingEngine : IDisposable
             }
         }
 
+        _globalCurve = VolumeCurve.ResolveGlobal(config);
         _planFor = config;
+    }
+
+    /// <summary>登记一个选择器评估项；同一选择器被多条规则共用时只保留首个（评估一次，结果共享）。</summary>
+    private static void AddSelector(
+        Dictionary<string, SelectorPlan> byKey, string key, RuleRef selector, string detectionMode)
+    {
+        if (byKey.ContainsKey(key))
+            return;
+        byKey[key] = new SelectorPlan
+        {
+            Key = key,
+            IsApp = selector.Type == "app",
+            NormApp = ConfigStore.NormalizeProcessName(selector.ProcessName),
+            GroupId = selector.GroupId,
+            StateMode = detectionMode == "state",
+        };
     }
 
     /// <summary>刷新会话的归一化进程名与分组缓存（仅在进程名或配置变化时调用）。</summary>
