@@ -9,8 +9,8 @@
 
 从 [Releases](https://github.com/woodtong/Tuner/releases) 下载（Windows 10/11 x64，解压即用，自带 .NET 8 运行时，免安装、免管理员）：
 
-- `Tuner-v0.2-delta-win-x64.zip` — 主程序（托盘应用）
-- `Tuner-Console-v0.2-delta-win-x64.zip` — 控制台诊断工具（可选：实时表格 / `--selftest` 自测 / `--setvol`）
+- `Tuner-v0.1.1-win-x64.zip` — 主程序（托盘应用）
+- `Tuner-Console-v0.1.1-win-x64.zip` — 控制台诊断工具（可选：实时表格 / `--selftest` 自测 / `--setvol`）
 
 ## 界面预览
 
@@ -33,10 +33,11 @@
 
 ## 版本
 
-MVP 首个公开版本为 **v0.1**（2026-10-08）。当前数字版本 **0.2**，预发布标签继续按希腊字母序列推进（alpha → beta → gamma …），仅在用户明确指示时递增数字版本。
+MVP 首个公开版本为 **v0.1**（2026-10-08）。当前版本 **v0.1.1**（2026-10-18）：自 v0.1 以来的全部迭代合并为首个补丁版发布，**替代 v0.1**（旧版已下架，请下载 v0.1.1）。开发期间的内部迭代曾以 0.2 线预发布标签记录，公开发布统一为 0.1.x，下方版本历史保留各轮迭代的完整记录。
 
 | 版本 | 内容 |
 |---|---|
+| **v0.1.1 (2026-10-18)** | **当前发布版**：v0.1 以来的全部迭代合并发布，替代 v0.1（旧版与 0.2 线预发布已下架）。内容要点：自研应用图标（调音台三推子）；闪避开始/结束时长解耦；规则触发/目标可选"应用"方式；配置 800ms 防抖自动保存；托盘常驻窗口隐藏时维持静音意图；**音量曲线**（线性/平方/对数等响度/自定义，音量页曲线图可视化编辑）；**引擎与界面性能优化**（规则预解析计划、按可见页签刷新、图标零重复解码）；**配置原子写入 + .bak 备份回退**；**界面整体重设计**（材质分层：悬浮内容面板 / 胶囊导航 / 表面色差层级）；主窗口代码按职责模块化拆分 |
 | v0.1-alpha (2026-10-06) | 控制台原型：会话识别 + 峰值检测 |
 | v0.1-beta (2026-10-07) | 完整闪避引擎 + WPF 托盘应用 |
 | v0.1-zeta (2026-10-07) | 调音台深色 UI（LED 分段电平表、通道条布局）+ **规则选择器**：触发/目标均支持 分组 或 单个应用 |
@@ -144,9 +145,9 @@ WPF 应用冒烟：启动绑定设备、枚举 6 个会话、优雅退出还原�
 dotnet publish src/Tuner.App -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
   -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:DebugSymbols=false `
-  -o dist/Tuner-v0.2-delta-win-x64
+  -o dist/Tuner-v0.1.1-win-x64
 
-# 控制台诊断：同参数，输出到 dist/Tuner-Console-v0.2-delta-win-x64
+# 控制台诊断：同参数，输出到 dist/Tuner-Console-v0.1.1-win-x64
 ```
 
 产物：`Tuner.exe`（约 78MB，自带 .NET 8 桌面运行时，免安装）。版本号统一在 `src/Directory.Build.props` 的 `<Version>`（四个工程共用）。

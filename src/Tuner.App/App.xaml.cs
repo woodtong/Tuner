@@ -174,16 +174,18 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         Log("—— 退出：停止引擎并还原音量 ——");
+        // 启动早期中止（单实例互斥/设备失败）时 Engine/Monitor 可能尚未创建，需判空
         try
         {
-            Engine.Dispose(); // 先停引擎（还原全部被修改的音量）
-            Log($"退出还原完成：{Engine.LastRestoreCount} 个会话");
+            Engine?.Dispose();
+            if (Engine is not null)
+                Log($"退出还原完成：{Engine.LastRestoreCount} 个会话");
         }
         catch (Exception ex)
         {
             Log("引擎停止异常: " + ex); // 完整堆栈便于定位
         }
-        try { Monitor.Dispose(); } catch { }
+        try { Monitor?.Dispose(); } catch { }
         _tray?.Dispose();
         _singleInstanceMutex?.Dispose();
         base.OnExit(e);
