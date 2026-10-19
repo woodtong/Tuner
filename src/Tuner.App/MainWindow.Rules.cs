@@ -51,9 +51,40 @@ public partial class MainWindow
         RulePriority.Text = r?.Priority.ToString() ?? "";
         RuleEnabled.IsChecked = r?.Enabled ?? false;
         _loadingUi = outer; // 恢复外层状态（可能被嵌套调用）
+        UpdateRuleMatchHints();
     }
 
-    /// <summary>按选择器类型填充"取值"下拉：分组模式列出分组，应用模式列出已知进程名（可编辑输入）。</summary>
+    /// <summary>应用模式下拉失配提示：输入的名字（含别名等价）在当前会话中都不存在时提醒，
+    /// 避免配了一个永远匹配不上的名字而毫无反馈（应用未运行也会提示，措辞已涵盖）。</summary>
+    private void UpdateRuleMatchHints()
+    {
+        SetSelectorHint(RuleTriggerHint, RuleTriggerType, RuleTriggerValue);
+        SetSelectorHint(RuleTargetHint, RuleTargetType, RuleTargetValue);
+    }
+
+    private static void SetSelectorHint(System.Windows.Controls.TextBlock hint, ComboBox type, ComboBox value)
+    {
+        var raw = value.Text ?? "";
+        if (type.SelectedIndex != 1 || raw.Trim().Length == 0)
+        {
+            hint.Visibility = Visibility.Collapsed;
+            return;
+        }
+        var name = raw.Trim();
+        var key = ConfigStore.NormalizeProcessName(name);
+        if (App.Monitor.CurrentSnapshot.Any(s => ConfigStore.NormalizeProcessName(s.ProcessName) == key))
+        {
+            hint.Visibility = Visibility.Collapsed;
+            return;
+        }
+        hint.Text = $"⚠ 当前没有名为「{name}」的音频会话（应用未运行，或名字与实际进程不符）";
+        hint.Foreground = MakeBrush("#D97706");
+        hint.Visibility = Visibility.Visible;
+    }
+
+    /// <summary>按选择器类型填充"取值"下拉：分组模式列出分组，应用模式列出当前真实存在的应用（纯扫描）。
+    /// 已配置但当前不在列表里的名字如实保留在输入框中（应用未运行），不再强制跳到列表首项——
+    /// 那会让"已关闭的应用"的规则在随便改个别的字段时被静默改写成别的应用。</summary>
     private void SetSelector(ComboBox type, ComboBox value, RuleRef? sel)
     {
         bool isApp = sel?.Type == "app";
@@ -61,10 +92,11 @@ public partial class MainWindow
         if (isApp)
         {
             var names = AppNames();
+            var configured = sel?.ProcessName ?? "";
             value.ItemsSource = names;
-            value.Text = sel?.ProcessName ?? "";
-            if (names.Count > 0 && !names.Contains(sel?.ProcessName ?? "", StringComparer.OrdinalIgnoreCase))
-                value.SelectedIndex = 0;
+            value.SelectedItem = names.FirstOrDefault(n =>
+                string.Equals(n, configured, StringComparison.OrdinalIgnoreCase));
+            value.Text = configured;
         }
         else
         {
@@ -108,11 +140,12 @@ public partial class MainWindow
         };
     }
 
-    /// <summary>已知应用名：实时会话 + 各分组配置 + 既有规则引用，供应用模式下拉与手输提示。</summary>
+    /// <summary>应用模式下拉的数据源：只列当前真实存在的音频会话（扫描结果）。
+    /// 列表里出现的每一个条目都可信、都能命中；配置里手输过的名字绝不混入——
+    /// 无效名字的可选性正是"看起来识别过、实际永不匹配"的静默失效来源。
+    /// 尚未出过声的应用不在列表中，可用输入框手输，失配时下方有提示。</summary>
     private List<string> AppNames() =>
         App.Monitor.CurrentSnapshot.Select(s => s.ProcessName)
-            .Concat(App.Config.Groups.SelectMany(g => g.ProcessNames))
-            .Concat(App.Config.Rules.SelectMany(r => new[] { r.Trigger?.ProcessName ?? "", r.Target?.ProcessName ?? "" }))
             .Where(n => n.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
@@ -181,6 +214,7 @@ public partial class MainWindow
         _loadingUi = true;
         RuleList.Items.Refresh();
         _loadingUi = false;
+        UpdateRuleMatchHints();
         MarkDirty();
     }
 }

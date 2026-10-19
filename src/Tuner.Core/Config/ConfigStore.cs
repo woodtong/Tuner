@@ -124,11 +124,17 @@ public static class ConfigStore
         }
     }
 
-    /// <summary>进程名归一化：小写、去 .exe 后缀、去空白。</summary>
-    public static string NormalizeProcessName(string name) =>
-        name.Trim().ToLowerInvariant().EndsWith(".exe")
-            ? name.Trim().ToLowerInvariant()[..^4]
-            : name.Trim().ToLowerInvariant();
+    /// <summary>
+    /// 进程名归一化：小写、去 .exe 后缀、去空白，并经别名表折叠（哔哩哔哩↔bilibili 等）。
+    /// 仅用于匹配比较；显示与保存一律用原始名。
+    /// </summary>
+    public static string NormalizeProcessName(string name)
+    {
+        var n = name.Trim().ToLowerInvariant();
+        if (n.EndsWith(".exe"))
+            n = n[..^4];
+        return ProcessNameAlias.Canonical(n);
+    }
 
     /// <summary>选择器稳定键（宽限计时等按选择器维度记账）。</summary>
     public static string RefKey(RuleRef r) =>

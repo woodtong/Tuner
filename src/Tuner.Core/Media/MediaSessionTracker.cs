@@ -1,3 +1,4 @@
+using Tuner.Core.Config;
 using Windows.Media.Control;
 
 namespace Tuner.Core.Media;
@@ -20,13 +21,14 @@ public sealed class MediaSessionTracker : IDisposable
     private CancellationTokenSource? _cts;
     private volatile bool _eventsAttached;
 
-    // 进程名 → SMTC AUMID 的已知别名（两侧小写比较），覆盖 AUMID 与进程名互不包含的常见应用
+    // 进程名 → SMTC AUMID 的已知别名（两侧小写比较）。进程名中英文互认已由 ProcessNameAlias
+    // 在入口折叠，这里只补 AUMID 形态与进程名互不包含的应用（如 msedge ↔ MicrosoftEdge…）。
     private static readonly Dictionary<string, string[]> Aliases = new(StringComparer.OrdinalIgnoreCase)
     {
         ["哔哩哔哩"] = new[] { "bilibili" },
-        ["bilibili"] = new[] { "哔哩哔哩", "bilibili" },
+        ["bilibili"] = new[] { "哔哩哔哩" },
         ["网易云音乐"] = new[] { "cloudmusic" },
-        ["cloudmusic"] = new[] { "网易云音乐", "cloudmusic" },
+        ["cloudmusic"] = new[] { "网易云音乐" },
         ["msedge"] = new[] { "microsoftedge" },
     };
 
@@ -145,7 +147,7 @@ public sealed class MediaSessionTracker : IDisposable
     /// </summary>
     public bool? IsPlaying(string processName)
     {
-        var p = processName.ToLowerInvariant(); // 只小写一次（引擎每拍逐会话调用）
+        var p = ProcessNameAlias.Canonical(processName.ToLowerInvariant()); // 只小写+折叠一次（引擎每拍逐会话调用）
         lock (_gate)
         {
             var anyMatched = false;

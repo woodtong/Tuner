@@ -202,5 +202,7 @@ public partial class MainWindow : Window
             RefreshVisiblePage();
         if (Tabs.SelectedItem is TabItem { Header: "分组" })
             RefreshGroupDetail();
+        if (Tabs.SelectedItem is TabItem { Header: "规则" })
+            UpdateRuleMatchHints(); // 会话随时间变化，切回规则页时重算失配提示
     }
 }
