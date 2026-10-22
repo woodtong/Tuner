@@ -14,7 +14,8 @@ public partial class MainWindow
         public required DuckingRuleConfig Rule { get; init; }
         public string Sentence =>
             (Rule.Enabled ? "" : "（已停用）") + Label(Rule.Trigger) + " 出声 → " + Label(Rule.Target) +
-            $" 渐变到 {Rule.TargetVolumePercent:F0}%" + (Rule.DetectionMode == "state" ? "［状态判定］" : "［声音判定］");
+            $" 渐变到 {Rule.TargetVolumePercent:F0}%" + (Rule.DetectionMode == "state" ? "［状态判定］" : "［声音判定］") +
+            (Rule.Condition == "device" && Rule.DeviceCondition.Length > 0 ? $"［仅 {Rule.DeviceCondition}］" : "");
 
         /// <summary>失配提醒：启用规则的触发/目标当前匹配不上任何会话（或引用已删除的分组）时随行出现。</summary>
         public string WarnText { get; init; } = "";
@@ -50,7 +51,7 @@ public partial class MainWindow
                 if (name.Length == 0)
                     return $"{role}应用名为空，规则永不生效";
                 var key = ConfigStore.NormalizeProcessName(name);
-                if (!App.Monitor.CurrentSnapshot.Any(s => ConfigStore.NormalizeProcessName(s.ProcessName) == key))
+                if (!App.AllSessions.Any(s => ConfigStore.NormalizeProcessName(s.ProcessName) == key))
                     return $"⚠ {role}应用「{name}」当前没有音频会话（未运行，或名字与实际进程不符）";
             }
             else if (App.Config.Groups.All(g => g.Id != sel.GroupId))
@@ -85,9 +86,42 @@ public partial class MainWindow
         RuleDetectionMode.SelectedIndex = r?.DetectionMode == "sound" ? 1 : 0;
         RuleVolume.Text = r is null ? "" : $"{r.TargetVolumePercent:F0}";
         RulePriority.Text = r?.Priority.ToString() ?? "";
+        // 规则级节奏覆盖：留空＝跟随全局；生效条件：设备条件显示设备下拉
+        RuleFadeOut.Text = r?.FadeOutMs?.ToString() ?? "";
+        RuleFadeIn.Text = r?.FadeInMs?.ToString() ?? "";
+        bool hasCond = r?.Condition == "device";
+        RuleCondType.SelectedIndex = hasCond ? 1 : 0;
+        FillRuleCondDevices();
+        RuleCondDevice.Text = r?.DeviceCondition ?? "";
+        RuleCondDevice.Visibility = hasCond ? Visibility.Visible : Visibility.Collapsed;
         RuleEnabled.IsChecked = r?.Enabled ?? false;
         _loadingUi = outer; // 恢复外层状态（可能被嵌套调用）
         UpdateRuleMatchHints();
+    }
+
+    /// <summary>设备条下拉：枚举当前渲染设备（友好名）+ 当前默认设备置顶，可手输任意子串。</summary>
+    private void FillRuleCondDevices()
+    {
+        var names = new List<string>();
+        var current = App.Monitor.DeviceName;
+        if (current.Length > 0)
+            names.Add(current);
+        try
+        {
+            foreach (var n in App.Monitor.EnumerateRenderDevices().Values.Where(n => n != current))
+                names.Add(n);
+        }
+        catch { /* 枚举失败：只留当前设备，可手输 */ }
+        RuleCondDevice.ItemsSource = names;
+    }
+
+    /// <summary>生效条件类型切换：仅"指定输出设备"时显示设备下拉。</summary>
+    private void OnRuleCondTypeChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loadingUi)
+            return;
+        RuleCondDevice.Visibility = RuleCondType.SelectedIndex == 1 ? Visibility.Visible : Visibility.Collapsed;
+        ApplyRuleEdits();
     }
 
     /// <summary>应用模式下拉失配提示：输入的名字（含别名等价）在当前会话中都不存在时提醒，
@@ -108,7 +142,7 @@ public partial class MainWindow
         }
         var name = raw.Trim();
         var key = ConfigStore.NormalizeProcessName(name);
-        if (App.Monitor.CurrentSnapshot.Any(s => ConfigStore.NormalizeProcessName(s.ProcessName) == key))
+        if (App.AllSessions.Any(s => ConfigStore.NormalizeProcessName(s.ProcessName) == key))
         {
             hint.Visibility = Visibility.Collapsed;
             return;
@@ -181,7 +215,7 @@ public partial class MainWindow
     /// 无效名字的可选性正是"看起来识别过、实际永不匹配"的静默失效来源。
     /// 尚未出过声的应用不在列表中，可用输入框手输，失配时下方有提示。</summary>
     private List<string> AppNames() =>
-        App.Monitor.CurrentSnapshot.Select(s => s.ProcessName)
+        App.AllSessions.Select(s => s.ProcessName)
             .Where(n => n.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
@@ -246,6 +280,24 @@ public partial class MainWindow
             r.TargetVolumePercent = Math.Clamp(vol, 0f, 100f);
         if (int.TryParse(RulePriority.Text, out var prio))
             r.Priority = prio;
+        // 规则级节奏覆盖：空/非法＝跟随全局（null）
+        r.FadeOutMs = int.TryParse(RuleFadeOut.Text.Trim(), out var fo) && fo > 0
+            ? Math.Clamp(fo, 50, 10_000) : null;
+        r.FadeInMs = int.TryParse(RuleFadeIn.Text.Trim(), out var fi) && fi > 0
+            ? Math.Clamp(fi, 50, 10_000) : null;
+        // 生效条件：仅设备条件一种；Normalize 兜底（空设备名→none）
+        if (RuleCondType.SelectedIndex == 1)
+        {
+            r.Condition = "device";
+            r.DeviceCondition = (RuleCondDevice.Text ?? "").Trim();
+            if (r.DeviceCondition.Length == 0)
+                r.Condition = "none";
+        }
+        else
+        {
+            r.Condition = "none";
+            r.DeviceCondition = "";
+        }
         r.Enabled = RuleEnabled.IsChecked == true;
         _loadingUi = true;
         RuleList.Items.Refresh();

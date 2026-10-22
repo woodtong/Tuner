@@ -2,6 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:controls="clr-namespace:Tuner.Controls"
+        xmlns:primitives="clr-namespace:System.Windows.Controls.Primitives;assembly=PresentationFramework"
         Title="Tuner — 分组音频闪避" Width="920" Height="866"
         MinWidth="800" MinHeight="580" WindowStartupLocation="CenterScreen"
         Background="{StaticResource PageBg}"
@@ -597,6 +598,8 @@
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
                                 <RowDefinition Height="*" />
                                 <RowDefinition Height="Auto" />
                             </Grid.RowDefinitions>
@@ -683,7 +686,51 @@
                                 </StackPanel>
                             </Grid>
 
-                            <Grid Grid.Row="5" Margin="0,16,0,0">
+                            <!-- 规则级闪避节奏覆盖：留空跟随设置页全局值 -->
+                            <Grid Grid.Row="5" Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="90" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="闪避节奏" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                           ToolTip="本规则专用的压低/恢复时长；留空＝跟随设置页的全局值。不同规则可有不同节奏（如视频压音乐快进快出、游戏压慢放慢收）" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <TextBox x:Name="RuleFadeOut" Style="{StaticResource Tb}" Width="64"
+                                             TextChanged="OnRuleFieldChanged" ToolTip="闪避开始（压低）毫秒" />
+                                    <TextBlock Text="压低 ms" Style="{StaticResource Hint}"
+                                               VerticalAlignment="Center" Margin="6,0,14,0" />
+                                    <TextBox x:Name="RuleFadeIn" Style="{StaticResource Tb}" Width="64"
+                                             TextChanged="OnRuleFieldChanged" ToolTip="闪避结束（恢复）毫秒" />
+                                    <TextBlock Text="恢复 ms" Style="{StaticResource Hint}"
+                                               VerticalAlignment="Center" Margin="6,0,14,0" />
+                                    <TextBlock Text="留空＝跟随全局" Style="{StaticResource Hint}"
+                                               VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- 生效条件（最小版：设备条件）——仅当前默认输出设备名包含指定文字时规则生效 -->
+                            <Grid Grid.Row="6" Margin="0,12,0,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="90" />
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="生效条件" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                           ToolTip="让规则只在特定输出设备上生效（如仅耳机启用、接音箱时自动失效）" />
+                                <ComboBox Grid.Column="1" x:Name="RuleCondType" Style="{StaticResource Combo}" Width="130"
+                                          SelectionChanged="OnRuleCondTypeChanged">
+                                    <ComboBoxItem>无条件</ComboBoxItem>
+                                    <ComboBoxItem>指定输出设备</ComboBoxItem>
+                                </ComboBox>
+                                <ComboBox Grid.Column="2" x:Name="RuleCondDevice" Style="{StaticResource Combo}"
+                                          IsEditable="True" Margin="8,0,0,0" HorizontalAlignment="Stretch"
+                                          MaxWidth="240" MinWidth="110" Visibility="Collapsed"
+                                          primitives:TextBoxBase.TextChanged="OnRuleFieldChanged"
+                                          SelectionChanged="OnRuleFieldChanged"
+                                          ToolTip="当前默认输出设备名包含该文字时规则才生效（子串匹配，不区分大小写，如&quot;耳机&quot;）" />
+                            </Grid>
+
+                            <Grid Grid.Row="7" Margin="0,16,0,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
@@ -703,7 +750,7 @@
                                           Checked="OnRuleFieldChanged" Unchecked="OnRuleFieldChanged" />
                             </Grid>
 
-                            <Grid Grid.Row="7">
+                            <Grid Grid.Row="9">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />

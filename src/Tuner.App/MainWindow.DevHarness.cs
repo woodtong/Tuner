@@ -37,7 +37,7 @@ public partial class MainWindow
             foreach (var s in sliders)
                 if (s.DataContext is VolumeChannel c && !originals.ContainsKey(c.InstanceId))
                 {
-                    var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == c.InstanceId);
+                    var sess = App.AllSessions.FirstOrDefault(x => x.InstanceId == c.InstanceId);
                     originals[c.InstanceId] = sess?.Volume ?? 0.5f;
                 }
             DumpFaders(sliders, "初始");
@@ -187,7 +187,7 @@ public partial class MainWindow
         {
             if (s.DataContext is not VolumeChannel ch)
                 continue;
-            var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
+            var sess = App.AllSessions.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
             bool bind = System.Windows.Data.BindingOperations.GetBindingExpression(s, Slider.ValueProperty) is not null;
             sb.Append($" | {ch.Name}: 显示={ch.VolumeDisplay:F0} 滑块={s.Value:F0} 实际={(sess is null ? -1 : sess.Volume * 100):F0} 目标={ch.FaderTarget:F0} drag={ch.IsDragging} anim={ch.IsAnimating} bind={bind}");
         }
@@ -248,7 +248,7 @@ public partial class MainWindow
         // 注意：探针模式下引擎持有的是隔离配置，这里按用户配置自行解析分组
         var targetGroup = ResolveProbeGroup(cfg, ch.Name);
         string? triggerGroup = null;
-        foreach (var s in App.Monitor.CurrentSnapshot)
+        foreach (var s in App.AllSessions)
         {
             var gid = ResolveProbeGroup(cfg, s.ProcessName);
             if (gid != targetGroup)

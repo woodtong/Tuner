@@ -42,6 +42,11 @@ public sealed class DuckingEngine : IDisposable
         public float CurrentVolume = -1f; // -1 = 未知
         public float? TargetVolume;       // 非 null = 正在闪避
 
+        // 当前生效的渐变节奏：来自正在命中的规则（含规则级覆盖），无规则时沿用上一条（恢复阶段），
+        // 会话创建时以全局设置为初值
+        public int ActiveFadeOut = 400;
+        public int ActiveFadeIn = 1200;
+
         // 归一化进程名/分组缓存：进程名不变就逐拍复用（引擎 50ms 一拍，重算纯属浪费）
         public string NormSource = "";   // 生成 NormName 时的原始进程名
         public string NormName = "";
@@ -58,6 +63,8 @@ public sealed class DuckingEngine : IDisposable
         public string TriggerNormApp = "", TargetNormApp = "";
         public string TriggerGroupId = "", TargetGroupId = "";
         public string Label = ""; // 诊断事件用：「触发 → 目标」可读描述
+        public string DeviceCond = ""; // 设备条件（已 trim；空=无条件），每拍与当前设备名比对
+        public bool ConditionOk = true;
     }
 
     /// <summary>选择器"在播"评估项：由规则计划按键去重而来，换配置才重建（评估每拍进行，不再逐拍建表）。</summary>
@@ -83,7 +90,8 @@ public sealed class DuckingEngine : IDisposable
 
     private const int FadeTickMs = 50;
 
-    private readonly AudioSessionMonitor _monitor;
+    private readonly AudioSessionMonitor _monitor;      // 默认播放设备（多媒体角色，主设备）
+    private readonly AudioSessionMonitor? _comms;       // 默认通信设备（可空；同一物理设备时靠 InstanceId 去重）
     private readonly object _gate = new();
     private readonly Dictionary<string, Tracked> _tracked = new();
     private readonly Dictionary<string, DateTime> _lastSounding = new(); // 分组最近一次真实出声时刻
@@ -116,9 +124,10 @@ public sealed class DuckingEngine : IDisposable
     private Thread? _thread;
     private CancellationTokenSource? _cts;
 
-    public DuckingEngine(AudioSessionMonitor monitor, TunerConfig config)
+    public DuckingEngine(AudioSessionMonitor monitor, TunerConfig config, AudioSessionMonitor? commsMonitor = null)
     {
         _monitor = monitor;
+        _comms = commsMonitor;
         _config = config;
         ConfigStore.Normalize(config); // 旧字段迁移（TriggerGroupId → Trigger 选择器）
     }
@@ -277,7 +286,7 @@ public sealed class DuckingEngine : IDisposable
     private bool Tick()
     {
         bool stateChange = false;
-        var sessions = _monitor.CurrentSnapshot;
+        var sessions = MergedSnapshot();
 
         lock (_gate)
         {
@@ -311,14 +320,16 @@ public sealed class DuckingEngine : IDisposable
                 if (_tracked.TryGetValue(s.InstanceId, out var t))
                 {
                     t.Session = s;
-                    t.Control ??= _monitor.TryGetControl(s.InstanceId);
+                    t.Control ??= _monitor.TryGetControl(s.InstanceId) ?? _comms?.TryGetControl(s.InstanceId);
                 }
                 else
                 {
                     t = new Tracked
                     {
                         Session = s,
-                        Control = _monitor.TryGetControl(s.InstanceId),
+                        Control = _monitor.TryGetControl(s.InstanceId) ?? _comms?.TryGetControl(s.InstanceId),
+                        ActiveFadeOut = Math.Max(50, settings.FadeOutDurationMs),
+                        ActiveFadeIn = Math.Max(50, settings.FadeInDurationMs),
                     };
                     RefreshNormAndGroup(t, config);
                     var v = ReadVolume(t);
@@ -390,7 +401,14 @@ public sealed class DuckingEngine : IDisposable
             if (_suspended)
                 return stateChange;
 
-            // 3) 逐会话挑选生效规则并渐变（压低走"闪避开始"时长，恢复走"闪避结束"时长）
+            // 设备条件预评估（每拍一次）：规则的 Condition=="device" 时与当前主设备名做子串比对
+            var deviceNameForCondition = _monitor.DeviceName;
+            foreach (var p in plan)
+                p.ConditionOk = p.DeviceCond.Length == 0 ||
+                                deviceNameForCondition.Contains(p.DeviceCond, StringComparison.OrdinalIgnoreCase);
+
+            // 3) 逐会话挑选生效规则并渐变（压低走"闪避开始"时长，恢复走"闪避结束"时长；
+            //    时长优先取规则级覆盖，恢复阶段沿用刚解除规则的覆盖值——不同规则可有不同节奏）
             _engagedNow.Clear();
             _engagedNew.Clear();
             foreach (var t in _tracked.Values)
@@ -404,12 +422,16 @@ public sealed class DuckingEngine : IDisposable
                     if (!t.Ducked)
                     {
                         // 刚结束闪避时渐变可能尚未走完，此时音量是中间值；保留原锚点防止"原始音量"被逐渐污染
+                        // （保护窗口用上一轮的恢复时长——含规则级覆盖）
                         var sinceUnduck = (now - t.UnduckAt).TotalMilliseconds;
-                        if (sinceUnduck >= settings.FadeInDurationMs)
+                        if (sinceUnduck >= t.ActiveFadeIn)
                             t.OriginalVolume = ReadVolume(t); // 记录用户原始音量
                         t.Ducked = true;
                         stateChange = true;
                     }
+                    // 规则级时长覆盖（留空跟随全局）；恢复阶段沿用上一条生效规则的值
+                    t.ActiveFadeOut = Math.Max(50, rule.FadeOutMs ?? settings.FadeOutDurationMs);
+                    t.ActiveFadeIn = Math.Max(50, rule.FadeInMs ?? settings.FadeInDurationMs);
                     // 规则目标音量是曲线上的位置，按全局音量曲线换算为实际振幅
                     target = VolumeCurve.ToVolume(_globalCurve, rule.TargetVolumePercent / 100f);
                     t.TargetVolume = target;
@@ -430,7 +452,7 @@ public sealed class DuckingEngine : IDisposable
                     t.CurrentVolume = ReadVolume(t);
                 // 闪避阶段（规则生效）走"开始"时长，恢复阶段走"结束"时长——按阶段而非数值方向，
                 // 因为目标音量可能高于当前音量（用户原音量比闪避目标还低）
-                var fadeMs = t.Ducked ? settings.FadeOutDurationMs : settings.FadeInDurationMs;
+                var fadeMs = t.Ducked ? t.ActiveFadeOut : t.ActiveFadeIn;
                 var maxStep = FadeTickMs / (float)Math.Max(1, fadeMs);
                 var next = MoveToward(t.CurrentVolume, target, maxStep);
                 if (Math.Abs(next - t.CurrentVolume) > 0.0015)
@@ -468,6 +490,26 @@ public sealed class DuckingEngine : IDisposable
                     Diagnostics?.Invoke($"规则解除：{p.Label}");
             }
         }
+    }
+
+    /// <summary>双设备会话合并：多媒体快照在前，通信快照补充（同一物理设备被设为双默认时按 InstanceId 去重）。</summary>
+    private IReadOnlyList<SoundSession> MergedSnapshot()
+    {
+        var primary = _monitor.CurrentSnapshot;
+        if (_comms is null)
+            return primary;
+        var extra = _comms.CurrentSnapshot;
+        if (extra.Count == 0)
+            return primary;
+        var merged = new List<SoundSession>(primary.Count + extra.Count);
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var s in primary)
+            if (seen.Add(s.InstanceId))
+                merged.Add(s);
+        foreach (var s in extra)
+            if (seen.Add(s.InstanceId))
+                merged.Add(s);
+        return merged;
     }
 
     /// <summary>
@@ -565,6 +607,8 @@ public sealed class DuckingEngine : IDisposable
         DuckingRuleConfig? winner = null;
         foreach (var p in plan)
         {
+            if (!p.ConditionOk)
+                continue; // 设备条件不满足：规则本轮不参与
             if (!sounding.Contains(p.TriggerKey))
                 continue;
             if (PlanMatches(p, true, t))
@@ -601,6 +645,7 @@ public sealed class DuckingEngine : IDisposable
                 TriggerGroupId = r.Trigger.GroupId ?? "",
                 TargetGroupId = r.Target.GroupId ?? "",
                 Label = "", // 分组名要等下方映射建好才能解析，循环结束后统一填
+                DeviceCond = r.Condition == "device" ? (r.DeviceCondition ?? "").Trim() : "",
             };
             _plan.Add(p);
             AddSelector(selectorByKey, p.TriggerKey, r.Trigger, r.DetectionMode);

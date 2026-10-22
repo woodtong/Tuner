@@ -121,6 +121,13 @@ public static class ConfigStore
                 r.Target.Type = "group";
             if (r.DetectionMode != "sound")
                 r.DetectionMode = "state"; // 默认状态判定
+            // 规则级时长覆盖：非法值归 null（跟随全局）；生效条件归一到 none/device
+            r.FadeOutMs = r.FadeOutMs is > 0 ? Math.Clamp(r.FadeOutMs.Value, 50, 10_000) : null;
+            r.FadeInMs = r.FadeInMs is > 0 ? Math.Clamp(r.FadeInMs.Value, 50, 10_000) : null;
+            r.Condition = r.Condition == "device" ? "device" : "none";
+            r.DeviceCondition = (r.DeviceCondition ?? "").Trim();
+            if (r.DeviceCondition.Length == 0)
+                r.Condition = "none"; // 设备条件为空视同无条件
         }
     }
 

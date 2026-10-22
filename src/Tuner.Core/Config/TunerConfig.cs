@@ -103,4 +103,16 @@ public sealed class DuckingRuleConfig
 
     /// <summary>同一会话被多条规则命中时，优先级高者胜；同级时应用级规则优先于分组级。</summary>
     public int Priority { get; set; }
+
+    /// <summary>规则级"闪避开始（压低）"时长覆盖（毫秒）；null = 跟随全局设置。</summary>
+    public int? FadeOutMs { get; set; }
+
+    /// <summary>规则级"闪避结束（恢复）"时长覆盖（毫秒）；null = 跟随全局设置。恢复阶段沿用刚解除规则的覆盖值。</summary>
+    public int? FadeInMs { get; set; }
+
+    /// <summary>生效条件："none"=无条件（默认）；"device"=仅当当前输出设备名包含 DeviceCondition 时生效。</summary>
+    public string Condition { get; set; } = "none";
+
+    /// <summary>Condition=="device" 时的设备名匹配文字（子串包含，不区分大小写，如"耳机"）。</summary>
+    public string DeviceCondition { get; set; } = "";
 }

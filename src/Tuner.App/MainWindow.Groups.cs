@@ -62,7 +62,7 @@ public partial class MainWindow
     {
         var inSelected = SelectedGroup?.ProcessNames.ToHashSet(StringComparer.OrdinalIgnoreCase)
                          ?? new HashSet<string>();
-        var running = App.Monitor.CurrentSnapshot
+        var running = App.AllSessions
             .Select(s => s.ProcessName)
             .Where(n => n.Length > 0 && n != "System Sounds" && !inSelected.Contains(n))
             .Distinct(StringComparer.OrdinalIgnoreCase)

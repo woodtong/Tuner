@@ -16,8 +16,45 @@ public partial class App : Application
 
     public static TunerConfig Config { get; private set; } = null!;
     public static AudioSessionMonitor Monitor { get; private set; } = null!;
+    /// <summary>默认通信设备监控（通话走独立耳机的场景）；与主监控同物理设备时会话按 InstanceId 去重。</summary>
+    public static AudioSessionMonitor CommsMonitor { get; private set; } = null!;
     public static DuckingEngine Engine { get; private set; } = null!;
     public static bool ForceExit { get; set; }
+
+    /// <summary>双设备全会话快照（多媒体在前，通信补充去重）——界面列表/扫描统一走这里。</summary>
+    public static IReadOnlyList<Core.Audio.SoundSession> AllSessions
+    {
+        get
+        {
+            var primary = Monitor.CurrentSnapshot;
+            var extra = CommsMonitor.CurrentSnapshot;
+            if (extra.Count == 0)
+                return primary;
+            var list = new List<Core.Audio.SoundSession>(primary.Count + extra.Count);
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var s in primary)
+                if (seen.Add(s.InstanceId))
+                    list.Add(s);
+            foreach (var s in extra)
+                if (seen.Add(s.InstanceId))
+                    list.Add(s);
+            return list;
+        }
+    }
+
+    /// <summary>会话音量写入按所属设备路由（两个监控的待写队列互不相通，跨设备写会静默丢失）。</summary>
+    public static void SetSessionVolume(string instanceId, float volume) =>
+        (CommsOwns(instanceId) ? CommsMonitor : Monitor).SetSessionVolume(instanceId, volume);
+
+    public static void SetSessionMute(string instanceId, bool mute) =>
+        (CommsOwns(instanceId) ? CommsMonitor : Monitor).SetSessionMute(instanceId, mute);
+
+    public static bool HasPendingVolumeWrite(string instanceId) =>
+        (CommsOwns(instanceId) ? CommsMonitor : Monitor).HasPendingVolumeWrite(instanceId);
+
+    private static bool CommsOwns(string instanceId) =>
+        !Monitor.CurrentSnapshot.Any(s => s.InstanceId == instanceId) &&
+        CommsMonitor.CurrentSnapshot.Any(s => s.InstanceId == instanceId);
 
     public static string LogPath { get; } =
         Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tuner", "app.log");
@@ -41,6 +78,7 @@ public partial class App : Application
         // 同步进内存诊断环（界面"事件日志"面板），分类按前缀归并
         var category = message.StartsWith("[引擎] ") ? "引擎"
             : message.StartsWith("[监控] ") ? "监控"
+            : message.StartsWith("[监控-通信] ") ? "监控"
             : "运行";
         Core.Diag.Record(category, message);
     }
@@ -67,8 +105,11 @@ public partial class App : Application
 
         Config = ConfigStore.Load(ConfigStore.DefaultPath);
         Monitor = new AudioSessionMonitor(Math.Max(10, Config.Settings.PollIntervalMs));
-        Engine = new DuckingEngine(Monitor, Config);
+        CommsMonitor = new AudioSessionMonitor(Math.Max(10, Config.Settings.PollIntervalMs),
+            NAudio.CoreAudioApi.Role.Communications);
+        Engine = new DuckingEngine(Monitor, Config, CommsMonitor);
         Monitor.Diagnostics += m => Log("[监控] " + m);
+        CommsMonitor.Diagnostics += m => Log("[监控-通信] " + m);
         Engine.Diagnostics += m => Log("[引擎] " + m);
         // 暂停状态变化：同步托盘勾选/悬停文字与主界面开关/徽章（事件可能来自托盘或设置页）
         Engine.SuspendedChanged += () =>
@@ -80,6 +121,7 @@ public partial class App : Application
         try
         {
             Monitor.Start();
+            CommsMonitor.Start();
             Engine.Start();
         }
         catch (Exception ex)
@@ -209,6 +251,7 @@ public partial class App : Application
             Log("引擎停止异常: " + ex); // 完整堆栈便于定位
         }
         try { Monitor?.Dispose(); } catch { }
+        try { CommsMonitor?.Dispose(); } catch { }
         _tray?.Dispose();
         _singleInstanceMutex?.Dispose();
         base.OnExit(e);

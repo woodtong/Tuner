@@ -2,6 +2,16 @@
 
 实现要点、踩坑记录与自测清单。README 只保留用户视角内容。
 
+## 2026-10-22 · 产品迭代第 2 批（todo 4-6，0.1.1-eta）
+
+- **todo4 通信设备覆盖（最小版）**：引擎并行监控多媒体+通信两台默认设备。`AudioSessionMonitor` 增加 Role 注入（构造参数），`OnDefaultDeviceChanged` 按 Role 过滤重绑；引擎合并双监控快照、按 `GetSessionInstanceIdentifier` 去重（同一物理设备设双默认时不重复）；App 层 `AllSessions` 聚合 + `SetSessionVolume/Mute/HasPending` 按会话所属设备路由（两监控的待写队列互不相通，跨设备写会静默丢失）。调音台 MASTER 仍指多媒体设备。README 已知限制第 1 条已过时，待发版时更新。
+- **todo5 规则级闪避时长**：`FadeOutMs/FadeInMs`（int?，留空跟随全局，50–10000 钳制）；Tracked 携带 ActiveFadeOut/In，恢复阶段沿用刚解除规则的覆盖值，锚点保护窗口同用规则级时长；规则页「闪避节奏」行。
+- **todo6 设备条件**：`Condition("none"|"device")+DeviceCondition`（子串、忽略大小写）；RulePlan 预解析 DeviceCond，每拍与当前设备名比对（ConditionOk），不满足则不参与裁决；规则页「生效条件」行（枚举设备下拉可手输，默认设备置顶），规则句追加［仅 X］。
+- **重要性能坑（本轮新知识）**：`MMDevice.FriendlyName` 是 COM 属性库查询，本机单次数十毫秒——引擎每拍读两次 DeviceName 把 50ms 节拍拖到 ~200ms，渐变速率掉到 1/4（端到端测试以"渐变斜率异常"暴露）。**监控层缓存设备名，只在重绑时读一次**。教训：凡进入引擎每拍路径的 COM 属性一律缓存。
+- 可编辑 ComboBox 无 TextChanged 事件，用附加事件 `primitives:TextBoxBase.TextChanged`（需 PresentationFramework 命名空间）。
+- 验证：临时端到端测试（已删）——双设备去重（4==4）✓、2500ms 慢渐变轨迹精确线性（0.5s=88%/1.1s=70%/2.6s=30%）✓、设备条件拦截高优先级规则（终值 30% 而非 60%）✓、恢复段同速率 ✓；`--selftest` 音源侧 ✓；`--smoke` ✓；截图子代理复核规则页新行渲染 ✓。
+- 打包 0.1.1-eta（字母 zeta→eta），zeta 制品已按 dist 管理规则删除。
+
 ## 2026-10-22 · UI 返工续（0.1.1-zeta 第二次原位替换，字母不变）
 
 用户复验反馈三处，全部修复：

@@ -178,14 +178,14 @@ public partial class MainWindow
                 // 意图静音：实际音量钉零 + 显示完全冻结
                 // （驱动在静音时回读的可能是静音前旧值，绝不能上屏）
                 if (s.Volume > 0.005f)
-                    App.Monitor.SetSessionVolume(row.InstanceId, 0f);
+                    App.SetSessionVolume(row.InstanceId, 0f);
                 continue;
             }
             if (row.IsAnimating && DateTime.UtcNow > row.BusyUntil)
                 StopFaderAnimation(row); // 超时安全阀：动画完成事件丢失时不永久冻结显示
             if (row.IsAnimating || row.IsDragging)
                 continue; // 动效/拖动期间显示由交互驱动，刷新不插手
-            if (App.Monitor.HasPendingVolumeWrite(row.InstanceId))
+            if (App.HasPendingVolumeWrite(row.InstanceId))
                 continue; // 音量写入还在队列里：快照必然滞后，不能用旧值把显示拽回去
 
             var newDisplay = Math.Round(PosOf(s.Volume));
@@ -404,7 +404,7 @@ public partial class MainWindow
     private static void WriteChannelVolume(string instanceId, float volume)
     {
         if (!App.Engine.IsVolumeControlled(instanceId))
-            App.Monitor.SetSessionVolume(instanceId, volume);
+            App.SetSessionVolume(instanceId, volume);
         App.Engine.SetUserVolume(instanceId, volume);
     }
 
@@ -423,10 +423,10 @@ public partial class MainWindow
         if (steps == 0)
             return;
         ch.FaderTarget = Math.Clamp(ch.FaderTarget + steps * 2, 0, 100);
-        var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
+        var sess = App.AllSessions.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
         if (sess is { Mute: true } && ch.FaderTarget > 0.5) // 位置抬离 0 即取消静音（阈值与曲线无关）
         {
-            App.Monitor.SetSessionMute(ch.InstanceId, false);
+            App.SetSessionMute(ch.InstanceId, false);
             ch.MuteIntent = false;
         }
         WriteChannelVolume(ch.InstanceId, VolOf(ch.FaderTarget));
@@ -488,10 +488,10 @@ public partial class MainWindow
     {
         ch.FaderTarget = slider.Value;
         ch.VolumeDisplay = slider.Value;
-        var sess = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
+        var sess = App.AllSessions.FirstOrDefault(x => x.InstanceId == ch.InstanceId);
         if (sess is { Mute: true } && slider.Value > 0.5) // 位置抬离 0 即取消静音（阈值与曲线无关）
         {
-            App.Monitor.SetSessionMute(ch.InstanceId, false);
+            App.SetSessionMute(ch.InstanceId, false);
             ch.MuteIntent = false;
         }
         WriteChannelVolume(ch.InstanceId, VolOf(slider.Value));
@@ -509,7 +509,7 @@ public partial class MainWindow
         if (ch.MuteIntent)
         {
             ch.FaderTarget = 0;
-            App.Monitor.SetSessionMute(ch.InstanceId, true);
+            App.SetSessionMute(ch.InstanceId, true);
             WriteChannelVolume(ch.InstanceId, 0f);
             ApplyFader(ch, 0, 500);
         }
@@ -517,7 +517,7 @@ public partial class MainWindow
         {
             var restorePos = Math.Clamp(ch.RestoreVolume, 1, 100); // 恢复值是曲线上的位置
             ch.FaderTarget = restorePos;
-            App.Monitor.SetSessionMute(ch.InstanceId, false);
+            App.SetSessionMute(ch.InstanceId, false);
             WriteChannelVolume(ch.InstanceId, VolOf(restorePos));
             ApplyFader(ch, restorePos, 500);
         }

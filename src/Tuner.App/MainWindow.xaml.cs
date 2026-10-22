@@ -156,9 +156,9 @@ public partial class MainWindow : Window
             return; // 无静音意图（常态）：零分配直接返回
         foreach (var id in intents)
         {
-            var s = App.Monitor.CurrentSnapshot.FirstOrDefault(x => x.InstanceId == id);
+            var s = App.AllSessions.FirstOrDefault(x => x.InstanceId == id);
             if (s is { Volume: > 0.005f })
-                App.Monitor.SetSessionVolume(id, 0f);
+                App.SetSessionVolume(id, 0f);
         }
     }
 
@@ -167,7 +167,7 @@ public partial class MainWindow : Window
         BuildRefreshInputs()
     {
         var states = App.Engine.CurrentStates.ToDictionary(s => s.InstanceId);
-        var sessions = App.Monitor.CurrentSnapshot
+        var sessions = App.AllSessions
             .OrderBy(s => GroupIndex(states.GetValueOrDefault(s.InstanceId)?.GroupId ?? ""))
             .ThenBy(s => s.ProcessName, StringComparer.OrdinalIgnoreCase)
             .ThenBy(s => s.Pid)

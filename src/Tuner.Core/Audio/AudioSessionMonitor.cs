@@ -8,12 +8,15 @@ namespace Tuner.Core.Audio;
 /// 监控默认播放设备上的全部音频会话：枚举、PID→进程映射、峰值/音量轮询。
 /// 新会话通过 IAudioSessionEvents.OnSessionCreated 实时感知（无需手动刷新）；
 /// 另以固定周期做全量对账，覆盖会话销毁、枚举滞后等事件不可靠的场景。
-/// 默认播放设备切换时自动重新绑定（IMMNotificationClient）。
+/// 默认设备切换时自动重新绑定（IMMNotificationClient）。
+/// 通过 role 参数可监控"默认通信设备"（通话走独立耳机的场景），与多媒体监控并行使用时
+/// 由上层按 InstanceId 去重（同一物理设备被设为双默认时会枚举出相同会话）。
 /// </summary>
 public sealed class AudioSessionMonitor : IDisposable
 {
     private readonly int _pollIntervalMs;
     private readonly int _fullReconcilePeriodTicks;
+    private readonly Role _role;
     private readonly object _gate = new();
     private readonly Dictionary<string, TrackedSession> _tracked = new();
     private readonly object _pendingGate = new();
@@ -46,8 +49,8 @@ public sealed class AudioSessionMonitor : IDisposable
     /// <summary>非致命诊断信息（轮询异常等，已去重）。</summary>
     public event Action<string>? Diagnostics;
 
-    /// <summary>默认播放设备名。</summary>
-    public string DeviceName => _device?.FriendlyName ?? string.Empty;
+    /// <summary>默认播放设备名（重绑时缓存一次；FriendlyName 是 COM 属性库查询，逐拍读会把节拍拖慢）。</summary>
+    public string DeviceName { get; private set; } = "";
 
     /// <summary>默认播放设备 ID（供设备切换器高亮当前项）。</summary>
     public string DeviceId { get; private set; } = "";
@@ -142,11 +145,12 @@ public sealed class AudioSessionMonitor : IDisposable
             return _tracked.TryGetValue(instanceId, out var t) ? t.Control : null;
     }
 
-    public AudioSessionMonitor(int pollIntervalMs = 100)
+    public AudioSessionMonitor(int pollIntervalMs = 100, Role role = Role.Multimedia)
     {
         if (pollIntervalMs < 10)
             throw new ArgumentOutOfRangeException(nameof(pollIntervalMs), "轮询间隔不能小于 10ms");
         _pollIntervalMs = pollIntervalMs;
+        _role = role;
         _fullReconcilePeriodTicks = Math.Max(1, 2000 / pollIntervalMs);
     }
 
@@ -216,12 +220,20 @@ public sealed class AudioSessionMonitor : IDisposable
             _device?.Dispose();
             _device = null;
 
-            var device = _enumerator.GetDefaultAudioEndpoint(DataFlow.Render, Role.Multimedia);
+            var device = _enumerator.GetDefaultAudioEndpoint(DataFlow.Render, _role);
             var manager = device.AudioSessionManager;
             manager.OnSessionCreated += OnSessionCreated;
             _device = device;
             _manager = manager;
             DeviceId = device.ID;
+            try
+            {
+                DeviceName = device.FriendlyName; // 只在重绑时查一次并缓存
+            }
+            catch
+            {
+                DeviceName = "";
+            }
             _tracked.Clear();
             _enumeratePending = true;
             DevicePeak = 0;
@@ -529,7 +541,8 @@ public sealed class AudioSessionMonitor : IDisposable
 
         public void OnDefaultDeviceChanged(DataFlow dataFlow, Role role, string deviceId)
         {
-            if (dataFlow == DataFlow.Render)
+            // 只响应对应角色的默认设备变化：多媒体监控与通信监控各自重绑，互不干扰
+            if (dataFlow == DataFlow.Render && role == _owner._role)
                 _owner._rebindPending = true;
         }
 
