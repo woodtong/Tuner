@@ -48,3 +48,4 @@ WPF 应用冒烟（`--smoke`）：启动绑定设备、枚举会话、优雅退�
 - 推子交互层为"单一数据源"架构：`VolumeDisplay`(DP) 是推子显示唯一来源，所有移动经 `ApplyFader`（动画可打断，AnimSeq 作废过期 Completed）；拖动走 Track 原生 + 每帧镜像。改动此处务必跑 `--probe`。
 - 配置持久化：原子写入（tmp + `File.Replace` + `.bak`）；加载端主文件损坏自动回退 `.bak` 再回退默认。
 - 版本号单一来源：`src/Directory.Build.props`。
+- **dist 制品管理（2026-10-22 用户定型）**：按版本号归档。正式版永久收在 `dist/Tuner-v<数字版本>/` 内（App 与 Console 各"目录 + zip"四件套，保留 `-win-x64` 命名，目录内＝exe + README.md，如 `dist/Tuner-v0.1.1/`）；当前字母工作版四件套平铺 dist 根、只留最新字母批次（推进即删旧字母、同版本重打包原位替换）；新正式版（如 v0.1.2）照抄该结构新建归档目录，旧正式版目录不动。dist/ 不入库（git 忽略）。
