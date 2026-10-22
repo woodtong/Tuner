@@ -393,7 +393,7 @@
                     </DockPanel>
 
                     <Border Grid.Column="1" Style="{StaticResource Card}" Padding="20">
-                        <Grid>
+                        <Grid MaxWidth="760" HorizontalAlignment="Center">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -589,8 +589,11 @@
                         </ListBox>
                     </DockPanel>
 
+                    <!-- 编辑面板内容限宽并居中：小窗自然铺满，宽窗口聚拢居中（避免内容贴左+右侧大片空白）；
+                         外包 ScrollViewer：最小窗口高度放不下全部字段时可滚动（此前下半段直接不可见） -->
                     <Border Grid.Column="1" Style="{StaticResource Card}" Padding="20">
-                        <Grid>
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <Grid MaxWidth="760" HorizontalAlignment="Center">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto" />
                                 <RowDefinition Height="Auto" />
@@ -608,6 +611,7 @@
                                        Foreground="{StaticResource TextPrimary}" TextWrapping="Wrap"
                                        Text="当【触发】出声或在播时，【目标】音量渐变到目标值" />
 
+                            <!-- 值下拉一律左对齐：Stretch+MaxWidth 组合会被居中排布，宽窗口时控件漂在列中间、两侧留大空洞 -->
                             <Grid Grid.Row="1" Margin="0,16,0,0">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
@@ -625,7 +629,7 @@
                                     <ComboBoxItem>应用</ComboBoxItem>
                                 </ComboBox>
                                 <ComboBox Grid.Row="0" Grid.Column="2" x:Name="RuleTriggerValue" Style="{StaticResource Combo}"
-                                          HorizontalAlignment="Stretch" MaxWidth="320" MinWidth="110" Margin="8,0,0,0" IsEditable="True"
+                                          HorizontalAlignment="Left" MaxWidth="360" MinWidth="110" Margin="8,0,0,0" IsEditable="True"
                                           SelectionChanged="OnRuleSelectorChanged"
                                           ToolTip="分组=按分组成员匹配；应用=精确到单个进程。列表只列当前真实存在的应用（中英文异名自动互认，如 bilibili/哔哩哔哩）；未运行的应用可直接输入进程名" />
                                 <TextBlock x:Name="RuleTriggerHint" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
@@ -650,7 +654,7 @@
                                     <ComboBoxItem>应用</ComboBoxItem>
                                 </ComboBox>
                                 <ComboBox Grid.Row="0" Grid.Column="2" x:Name="RuleTargetValue" Style="{StaticResource Combo}"
-                                          HorizontalAlignment="Stretch" MaxWidth="320" MinWidth="110" Margin="8,0,0,0" IsEditable="True"
+                                          HorizontalAlignment="Left" MaxWidth="360" MinWidth="110" Margin="8,0,0,0" IsEditable="True"
                                           SelectionChanged="OnRuleSelectorChanged" />
                                 <TextBlock x:Name="RuleTargetHint" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                                            Style="{StaticResource Hint}" FontSize="11" Margin="8,4,0,0" MaxWidth="430"
@@ -671,60 +675,72 @@
                                 </StackPanel>
                             </Grid>
 
+                            <!-- 提示文字独立成行（与控件同行的横向 StackPanel 放不下会把行尾文字硬裁掉） -->
                             <Grid Grid.Row="4" Margin="0,12,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="优先级" Style="{StaticResource Label}" VerticalAlignment="Center" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                    <TextBox x:Name="RulePriority" Style="{StaticResource Tb}" Width="80"
-                                             TextChanged="OnRuleFieldChanged" />
-                                    <TextBlock Text="同一目标被多条规则命中时，优先级高者生效"
-                                               Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="10,0,0,0"
-                                               MaxWidth="240" TextWrapping="Wrap" />
-                                </StackPanel>
+                                <TextBox Grid.Row="0" Grid.Column="1" x:Name="RulePriority" Style="{StaticResource Tb}"
+                                         Width="80" HorizontalAlignment="Left" TextChanged="OnRuleFieldChanged" />
+                                <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource Hint}" FontSize="11"
+                                           Margin="0,4,0,0" TextWrapping="Wrap"
+                                           Text="同一目标被多条规则命中时，优先级高者生效；同级时应用级优先于分组级" />
                             </Grid>
 
                             <!-- 规则级闪避节奏覆盖：留空跟随设置页全局值 -->
                             <Grid Grid.Row="5" Margin="0,12,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="闪避节奏" Style="{StaticResource Label}" VerticalAlignment="Center"
                                            ToolTip="本规则专用的压低/恢复时长；留空＝跟随设置页的全局值。不同规则可有不同节奏（如视频压音乐快进快出、游戏压慢放慢收）" />
-                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                <!-- WrapPanel：窄窗口放不下时"恢复"一组自动换行，绝不裁字 -->
+                                <WrapPanel Grid.Row="0" Grid.Column="1">
                                     <TextBox x:Name="RuleFadeOut" Style="{StaticResource Tb}" Width="64"
                                              TextChanged="OnRuleFieldChanged" ToolTip="闪避开始（压低）毫秒" />
                                     <TextBlock Text="压低 ms" Style="{StaticResource Hint}"
                                                VerticalAlignment="Center" Margin="6,0,14,0" />
-                                    <TextBox x:Name="RuleFadeIn" Style="{StaticResource Tb}" Width="64"
+                                    <TextBox x:Name="RuleFadeIn" Style="{StaticResource Tb}" Width="64" Margin="0,0,0,0"
                                              TextChanged="OnRuleFieldChanged" ToolTip="闪避结束（恢复）毫秒" />
                                     <TextBlock Text="恢复 ms" Style="{StaticResource Hint}"
-                                               VerticalAlignment="Center" Margin="6,0,14,0" />
-                                    <TextBlock Text="留空＝跟随全局" Style="{StaticResource Hint}"
-                                               VerticalAlignment="Center" />
-                                </StackPanel>
+                                               VerticalAlignment="Center" Margin="6,0,0,0" />
+                                </WrapPanel>
+                                <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource Hint}" FontSize="11"
+                                           Margin="0,4,0,0" TextWrapping="Wrap"
+                                           Text="留空＝跟随设置页的全局闪避时长" />
                             </Grid>
 
-                            <!-- 生效条件（最小版：设备条件）——仅当前默认输出设备名包含指定文字时规则生效 -->
+                            <!-- 生效条件（最小版：设备条件）——设备下拉独立一行占满，窄窗口放得下长设备名 -->
                             <Grid Grid.Row="6" Margin="0,12,0,0">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="90" />
-                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="生效条件" Style="{StaticResource Label}" VerticalAlignment="Center"
                                            ToolTip="让规则只在特定输出设备上生效（如仅耳机启用、接音箱时自动失效）" />
-                                <ComboBox Grid.Column="1" x:Name="RuleCondType" Style="{StaticResource Combo}" Width="130"
-                                          SelectionChanged="OnRuleCondTypeChanged">
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="RuleCondType" Style="{StaticResource Combo}"
+                                          Width="130" HorizontalAlignment="Left" SelectionChanged="OnRuleCondTypeChanged">
                                     <ComboBoxItem>无条件</ComboBoxItem>
                                     <ComboBoxItem>指定输出设备</ComboBoxItem>
                                 </ComboBox>
-                                <ComboBox Grid.Column="2" x:Name="RuleCondDevice" Style="{StaticResource Combo}"
-                                          IsEditable="True" Margin="8,0,0,0" HorizontalAlignment="Stretch"
-                                          MaxWidth="240" MinWidth="110" Visibility="Collapsed"
+                                <ComboBox Grid.Row="1" Grid.Column="1" x:Name="RuleCondDevice" Style="{StaticResource Combo}"
+                                          IsEditable="True" Margin="0,6,0,0" HorizontalAlignment="Stretch"
+                                          MaxWidth="360" Visibility="Collapsed"
                                           primitives:TextBoxBase.TextChanged="OnRuleFieldChanged"
                                           SelectionChanged="OnRuleFieldChanged"
                                           ToolTip="当前默认输出设备名包含该文字时规则才生效（子串匹配，不区分大小写，如&quot;耳机&quot;）" />
@@ -738,7 +754,7 @@
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Text="判定方式" Style="{StaticResource Label}" VerticalAlignment="Center" />
                                 <ComboBox Grid.Column="1" x:Name="RuleDetectionMode" Style="{StaticResource Combo}"
-                                          HorizontalAlignment="Stretch" MaxWidth="220" MinWidth="96" Margin="0,0,0,0"
+                                          HorizontalAlignment="Left" Width="220" MinWidth="96"
                                           SelectedIndex="0" SelectionChanged="OnRuleFieldChanged"
                                           ToolTip="状态判定=SMTC 播放状态/会话 Active（推荐，不看峰值，无宽限）；声音判定=峰值迟滞+宽限">
                                     <ComboBoxItem>状态判定</ComboBoxItem>
@@ -761,6 +777,7 @@
                                         VerticalAlignment="Center" Click="OnRuleDelete" />
                             </Grid>
                         </Grid>
+                        </ScrollViewer>
                     </Border>
                 </Grid>
             </TabItem>
@@ -774,7 +791,7 @@
                         </StackPanel>
                     </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel MaxWidth="680" HorizontalAlignment="Left">
+                    <StackPanel MaxWidth="680" HorizontalAlignment="Center">
 
                         <!-- 单卡分组式设置（系统设置风格）：分组以发丝线分隔 -->
                         <Border Style="{StaticResource Card}" Padding="22">
