@@ -161,10 +161,10 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// 「设为默认组」切换。原实现直接在 Unchecked 事件里回写 IsChecked 弹回勾选，
-    /// 会重入触发 Checked（无 _loadingUi 保护）→ 嵌套刷新列表，把复选框与配置搞失同步，
-    /// 表现为"关掉就打不开，切走再切回才恢复"。现改为：弹回勾选走 _loadingUi 抑制重入；
-    /// 状态与配置一致时直接返回（幂等）。
+    /// 「设为默认组」切换（2026-10-22 用户定稿逻辑）：
+    /// 默认组有且仅有一个——勾选某分组＝把默认组换成它（原默认组自动让位）；
+    /// 默认组自身**不允许取消勾选**，尝试取消时弹回并提示如何更换。
+    /// （此前两版静默弹回仍会让用户困惑"为什么勾不掉"，显式提示把规则说透。）
     /// </summary>
     private void OnDefaultChanged(object sender, RoutedEventArgs e)
     {
@@ -181,11 +181,13 @@ public partial class MainWindow
         else
         {
             if (!g.IsDefault)
-                return; // 本来就不是默认组（纯显示抖动），不处理
-            // 至少保留一个默认组：唯一默认组不可直接取消，弹回勾选（抑制事件重入）
+                return; // 纯显示抖动（非默认组的复选框本就不该有取消事件）
+            // 默认组不可取消：先弹回勾选（_loadingUi 抑制重入），再说明规则
             _loadingUi = true;
             DefaultCheck.IsChecked = true;
             _loadingUi = false;
+            MessageBox.Show("默认组有且仅有一个，不能取消。\r\n若需要更改默认组，请直接勾选对应分组。", "Tuner");
+            return;
         }
         _loadingUi = true;
         GroupList.Items.Refresh();

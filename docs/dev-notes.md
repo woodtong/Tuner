@@ -9,7 +9,7 @@
 - **导航改滑动胶囊（"轮子"）**：参考 cogent-gui `src/renderer/src/components/useSlideHighlight.ts`（滑动高亮轮子 v2：单色块跟随悬停平滑移动，离开列表回落选中项）移植到 WPF——TabControl 模板加 NavRoot/NavIndicator（单胶囊层），TabItem 模板瘦身为透明载体（不再各自画胶囊，多元素各画各的必然是闪现）。代码驱动：悬停滑到悬停项（悬停色）、离开导航/切换选中滑到选中项（选中色），位移/高度 200ms ease-out + 颜色 180ms（与 cogent 同参）；启动落位与窗口缩放走无动画校准。
 - **两个 WPF 冻结坑（本轮最重要的新知识）**：①模板里声明的 Freezable（TranslateTransform/内联画刷）随模板密封被**冻结**——Storyboard 触发器动画会自动克隆目标，但**代码里直接 BeginAnimation 会抛"已密封或已冻结"**（0xC000041D 静默崩溃，stderr 无输出）；解法＝代码里换自己 new 的可变实例再驱动。②Grid 子元素默认 VerticalAlignment=Stretch，**设了显式 Height 后按居中排列**，胶囊整体下偏 ~350px——指示器类元素必须显式 VerticalAlignment=Top。定位手段：App 挂 DispatcherUnhandledException 落 app.log（此前 UI 回调异常零堆栈）＋像素级截图扫描（采样琥珀色行区间，验证胶囊落在 1/3/5 项、间距 53px 均匀）。
 - **音量页"音量曲线"下拉闪**：列表项悬停从"底色 ColorAnimation"改为与导航同款的分层覆盖层+透明度动画（悬停层叠于选中层之上）；Popup 的 WPF 内置 Fade 动画与投影叠加有掉帧闪烁，改 PopupAnimation=None。
-- **分组页"设为默认组"关掉打不开**：原实现在 Unchecked 事件里直接回写 IsChecked 弹回 → 重入触发 Checked（无 _loadingUi 保护）→ 嵌套 Items.Refresh 把复选框与配置搞失同步。改为弹回走 _loadingUi 抑制重入 + 状态与配置一致时幂等返回。连带修复：删分组时只清了旧字段 TriggerGroupId/TargetGroupId，新选择器（Trigger/Target.GroupId）引用的规则没删，会留下"永不生效"规则——两个都查。
+- **分组页"设为默认组"定稿（2026-10-22 用户逻辑）**：默认组有且仅有一个——勾选＝换默认（原默认组让位），**默认组不可取消**，尝试取消弹回勾选并提示"默认组有且仅有一个，不能取消。若需要更改默认组，请直接勾选对应分组"。历程教训：最初版在 Unchecked 里裸回写 IsChecked 致重入失同步（"关掉打不开"）；第二版静默弹回修复了状态但用户仍困惑"为什么勾不掉"——**被拒绝的操作要显式说明规则，不要静默还原**。另连带修复：删分组时只清了旧字段 TriggerGroupId/TargetGroupId，新选择器引用的规则没删。
 - Git Bash 直接调 .NET exe 偶发 exit 127 且零输出（原因未明），用 PowerShell Start-Process -Wait -PassThru 拿真实退出码更可靠。
 
 ## 2026-10-22 · UI 柔化返工（0.1.1-zeta 原位替换，希腊字母不变）

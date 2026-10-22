@@ -437,6 +437,8 @@
                                             <ToolTip>
                                                 <TextBlock MaxWidth="430" LineHeight="17"
                                                            Foreground="{StaticResource TextSecondary}" FontSize="12">
+                                                    <Run Text="默认组有且仅有一个：默认组不能被取消勾选（尝试取消会有提示），更换默认组请在目标分组上直接勾选。" />
+                                                    <LineBreak />
                                                     <Run Text="默认组是兜底分组：进程名未命中任何分组的应用，会自动归入默认组（左侧列表带「默认」徽章，计数为「承接未匹配应用」）。" />
                                                     <LineBreak />
                                                     <Run Text="规则以分组为对象：把规则目标设为默认组，等于作用于全部其余应用，不用逐一列举。" />
