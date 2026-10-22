@@ -626,7 +626,7 @@
                                  Foreground="{TemplateBinding Foreground}" FontSize="{TemplateBinding FontSize}"
                                  Visibility="Hidden" />
                         <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
-                               AllowsTransparency="True" PopupAnimation="Fade" StaysOpen="False">
+                               AllowsTransparency="True" PopupAnimation="None" StaysOpen="False">
                             <Border Background="{StaticResource ItemBg}" BorderBrush="{StaticResource FieldBorder}"
                                     BorderThickness="1" CornerRadius="9" Margin="0,4,8,8"
                                     MinWidth="{TemplateBinding ActualWidth}" MaxHeight="260" Padding="4">
@@ -657,14 +657,17 @@
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ComboBoxItem">
-                                <Border x:Name="Bd" CornerRadius="6" Padding="9,6" Margin="0,1">
-                                    <Border.Background>
-                                        <SolidColorBrush Color="Transparent" />
-                                    </Border.Background>
+                                <!-- 与导航同款分层：底板透明 + 选中层 + 悬停层（悬停叠于选中之上），各自透明度渐变 -->
+                                <Border x:Name="Bd" CornerRadius="6" Padding="9,6" Margin="0,1" Background="Transparent">
                                     <Grid>
                                         <Border x:Name="SelOv" CornerRadius="6" Opacity="0" IsHitTestVisible="False">
                                             <Border.Background>
                                                 <SolidColorBrush Color="{StaticResource AccentSoftColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                        <Border x:Name="HoverOv" CornerRadius="6" Opacity="0" IsHitTestVisible="False">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{StaticResource ItemHoverColor}" />
                                             </Border.Background>
                                         </Border>
                                         <ContentPresenter />
@@ -675,18 +678,16 @@
                                         <Trigger.EnterActions>
                                             <BeginStoryboard>
                                                 <Storyboard>
-                                                    <ColorAnimation Storyboard.TargetName="Bd"
-                                                                    Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                                    To="{StaticResource ItemHoverColor}" Duration="0:0:0.1" />
+                                                    <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
+                                                                     To="1" Duration="0:0:0.12" />
                                                 </Storyboard>
                                             </BeginStoryboard>
                                         </Trigger.EnterActions>
                                         <Trigger.ExitActions>
                                             <BeginStoryboard>
                                                 <Storyboard>
-                                                    <ColorAnimation Storyboard.TargetName="Bd"
-                                                                    Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                                    To="Transparent" Duration="0:0:0.15" />
+                                                    <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
+                                                                     To="0" Duration="0:0:0.15" />
                                                 </Storyboard>
                                             </BeginStoryboard>
                                         </Trigger.ExitActions>
@@ -796,71 +797,27 @@
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
     </Style>
 
-    <!-- 导航（macOS 侧栏式）：胶囊选中态。选中层与悬停层分离（旧版悬停退出动画会把
-         选中胶囊一起淡没——本版修复），悬停层叠于选中层之上 -->
+    <!-- 导航（macOS 侧栏式）：选中/悬停胶囊由 TabControl 模板里的 NavIndicator 滑动指示器统一承担
+         （参考 cogent-gui useSlideHighlight：单个色块在条目间平滑滑动，鼠标离开回落到选中项），
+         条目自身只保留文字颜色变化，不再各自画胶囊——多元素各画各的必然是"闪现"而非"滑动" -->
     <Style TargetType="TabItem">
         <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
-                    <Grid>
-                        <Border x:Name="SelOv" CornerRadius="7" Margin="0,0,0,2" Opacity="0" IsHitTestVisible="False">
-                            <Border.Background>
-                                <SolidColorBrush Color="{StaticResource AccentSoftColor}" />
-                            </Border.Background>
-                        </Border>
-                        <Border x:Name="HoverOv" CornerRadius="7" Margin="0,0,0,2" Opacity="0" IsHitTestVisible="False">
-                            <Border.Background>
-                                <SolidColorBrush Color="{StaticResource HoverSoftColor}" />
-                            </Border.Background>
-                        </Border>
-                        <Border x:Name="Bd" CornerRadius="7" Background="Transparent" Padding="12,9" Margin="0,0,0,2">
-                            <ContentPresenter x:Name="Header" ContentSource="Header"
-                                              TextElement.FontSize="13.5"
-                                              TextElement.Foreground="{TemplateBinding Foreground}" />
-                        </Border>
-                    </Grid>
+                    <Border x:Name="Bd" CornerRadius="7" Background="Transparent" Padding="12,9" Margin="0,0,0,2">
+                        <ContentPresenter x:Name="Header" ContentSource="Header"
+                                          TextElement.FontSize="13.5"
+                                          TextElement.Foreground="{TemplateBinding Foreground}" />
+                    </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="SelOv" Property="Opacity" Value="1" />
                             <Setter Property="Foreground" Value="{StaticResource Accent}" />
                             <Setter TargetName="Header" Property="TextElement.FontWeight" Value="SemiBold" />
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="SelOv" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.18" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="SelOv" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.18" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.14" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.18" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -869,7 +826,9 @@
     </Style>
 
     <!-- 内容区：抬升的悬浮面板（静止剪影投影 + 受光顶缘渐变描边 + 圆角 12）；
-         页签浮在窗口底上。剪影层自身不重绘，内容重绘不触发投影重算 -->
+         页签浮在窗口底上。剪影层自身不重绘，内容重绘不触发投影重算。
+         NavRoot 内：NavIndicator（滑动胶囊，底层）+ 条目宿主（上层，背景透明可透出胶囊）；
+         胶囊的位置/高度/颜色动画由 MainWindow 代码驱动（模板 FindName 取件） -->
     <Style TargetType="TabControl">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderThickness" Value="0" />
@@ -881,8 +840,18 @@
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" IsItemsHost="True" Orientation="Vertical"
-                                    Margin="2,10,14,10" />
+                        <Grid x:Name="NavRoot" Grid.Column="0">
+                            <Border x:Name="NavIndicator" CornerRadius="7" IsHitTestVisible="False"
+                                    VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                                <Border.RenderTransform>
+                                    <TranslateTransform />
+                                </Border.RenderTransform>
+                                <Border.Background>
+                                    <SolidColorBrush Color="{StaticResource AccentSoftColor}" />
+                                </Border.Background>
+                            </Border>
+                            <StackPanel IsItemsHost="True" Orientation="Vertical" Margin="2,10,14,10" />
+                        </Grid>
                         <Grid Grid.Column="1">
                             <Border CornerRadius="12" Background="#14000000" Margin="0,3,6,-3">
                                 <Border.Effect>

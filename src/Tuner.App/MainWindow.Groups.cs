@@ -98,7 +98,10 @@ public partial class MainWindow
         if (MessageBox.Show($"确定删除分组「{g.Name}」？关联的规则也会一并删除。", "Tuner",
                 MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
             return;
-        App.Config.Rules.RemoveAll(r => r.TriggerGroupId == g.Id || r.TargetGroupId == g.Id);
+        // 新旧两种选择器字段都要查（旧 TriggerGroupId/TargetGroupId 仅为迁移遗留，但配置里可能仍在）
+        App.Config.Rules.RemoveAll(r =>
+            r.Trigger?.GroupId == g.Id || r.Target?.GroupId == g.Id ||
+            r.TriggerGroupId == g.Id || r.TargetGroupId == g.Id);
         App.Config.Groups.Remove(g);
         RefreshGroupTab();
         RefreshRuleTab();
@@ -157,19 +160,32 @@ public partial class MainWindow
         MarkDirty();
     }
 
+    /// <summary>
+    /// 「设为默认组」切换。原实现直接在 Unchecked 事件里回写 IsChecked 弹回勾选，
+    /// 会重入触发 Checked（无 _loadingUi 保护）→ 嵌套刷新列表，把复选框与配置搞失同步，
+    /// 表现为"关掉就打不开，切走再切回才恢复"。现改为：弹回勾选走 _loadingUi 抑制重入；
+    /// 状态与配置一致时直接返回（幂等）。
+    /// </summary>
     private void OnDefaultChanged(object sender, RoutedEventArgs e)
     {
         if (_loadingUi || SelectedGroup is not { } g)
             return;
         if (DefaultCheck.IsChecked == true)
         {
+            if (g.IsDefault)
+                return; // 已是默认组，无事发生
             foreach (var other in App.Config.Groups)
                 other.IsDefault = false;
             g.IsDefault = true;
         }
-        else if (g.IsDefault)
+        else
         {
-            DefaultCheck.IsChecked = true; // 至少保留一个默认组
+            if (!g.IsDefault)
+                return; // 本来就不是默认组（纯显示抖动），不处理
+            // 至少保留一个默认组：唯一默认组不可直接取消，弹回勾选（抑制事件重入）
+            _loadingUi = true;
+            DefaultCheck.IsChecked = true;
+            _loadingUi = false;
         }
         _loadingUi = true;
         GroupList.Items.Refresh();

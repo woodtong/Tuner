@@ -62,6 +62,8 @@ public partial class App : Application
 
         base.OnStartup(e);
         Log("—— 启动 ——" + (e.Args.Length > 0 ? "（参数: " + string.Join(' ', e.Args) + "）" : ""));
+        // UI 线程未处理异常至少留痕（不吞异常，崩溃照常发生，但 app.log 里有完整堆栈可查）
+        DispatcherUnhandledException += (_, ex) => Log("未处理异常（UI 线程）: " + ex.Exception);
 
         Config = ConfigStore.Load(ConfigStore.DefaultPath);
         Monitor = new AudioSessionMonitor(Math.Max(10, Config.Settings.PollIntervalMs));
