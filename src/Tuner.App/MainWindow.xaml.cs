@@ -106,6 +106,14 @@ public partial class MainWindow : Window
             });
         };
 
+        // 诊断事件 → 面板实时追加（事件可能在任意线程产生；_diagPanelOpen 是普通字段，跨线程读安全）
+        Core.Diag.Changed += () =>
+        {
+            if (!IsVisible || !_diagPanelOpen)
+                return;
+            Dispatcher.BeginInvoke(RefreshDiagBox);
+        };
+
         _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(800) };
         _autoSaveTimer.Tick += (_, _) => AutoSaveNow();
     }
@@ -203,6 +211,6 @@ public partial class MainWindow : Window
         if (Tabs.SelectedItem is TabItem { Header: "分组" })
             RefreshGroupDetail();
         if (Tabs.SelectedItem is TabItem { Header: "规则" })
-            UpdateRuleMatchHints(); // 会话随时间变化，切回规则页时重算失配提示
+            RefreshRuleTab(); // 会话随时间变化：切回规则页时重算失配提醒（同时保持选择不变）
     }
 }

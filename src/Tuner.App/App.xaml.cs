@@ -38,6 +38,11 @@ public partial class App : Application
                 // 日志失败不影响主流程
             }
         }
+        // 同步进内存诊断环（界面"事件日志"面板），分类按前缀归并
+        var category = message.StartsWith("[引擎] ") ? "引擎"
+            : message.StartsWith("[监控] ") ? "监控"
+            : "运行";
+        Core.Diag.Record(category, message);
     }
 
     protected override void OnStartup(StartupEventArgs e)
@@ -63,6 +68,12 @@ public partial class App : Application
         Engine = new DuckingEngine(Monitor, Config);
         Monitor.Diagnostics += m => Log("[监控] " + m);
         Engine.Diagnostics += m => Log("[引擎] " + m);
+        // 暂停状态变化：同步托盘勾选/悬停文字与主界面开关/徽章（事件可能来自托盘或设置页）
+        Engine.SuspendedChanged += () =>
+        {
+            _tray?.SyncSuspendState(Engine.Suspended);
+            _mainWindow?.Dispatcher.BeginInvoke(() => _mainWindow.SyncSuspendUi(Engine.Suspended));
+        };
 
         try
         {
@@ -100,9 +111,13 @@ public partial class App : Application
         }
 
         var smoke = e.Args.Contains("--smoke");
-        if (!e.Args.Contains("--minimized") || smoke)
+        var minimized = e.Args.Contains("--minimized") && !smoke;
+        if (!minimized)
             _mainWindow.Show();
-        _tray.ShowBalloon("Tuner 已启动", "正在监控音频会话并执行分组闪避。关闭窗口即最小化到托盘。");
+        else
+            Log("静默启动（--minimized）：不弹窗口，驻留托盘");
+        if (!minimized)
+            _tray.ShowBalloon("Tuner 已启动", "正在监控音频会话并执行分组闪避。关闭窗口即最小化到托盘。");
 
         if (smoke)
         {
@@ -170,6 +185,12 @@ public partial class App : Application
         _mainWindow.WindowState = WindowState.Normal;
         _mainWindow.Activate();
     }
+
+    /// <summary>暂停/恢复全部闪避规则（托盘菜单、设置页开关共用入口；true=暂停并还原音量）。</summary>
+    public static void SetSuspended(bool suspended) => Engine.SetSuspended(suspended);
+
+    /// <summary>打开诊断自查通道：主界面切到设置页并展开事件日志。</summary>
+    public static void ShowDiagnostics() => _mainWindow?.OpenDiagnostics();
 
     protected override void OnExit(ExitEventArgs e)
     {

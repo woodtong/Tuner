@@ -57,6 +57,7 @@ public sealed class DuckingEngine : IDisposable
         public bool TriggerIsApp, TargetIsApp;
         public string TriggerNormApp = "", TargetNormApp = "";
         public string TriggerGroupId = "", TargetGroupId = "";
+        public string Label = ""; // 诊断事件用：「触发 → 目标」可读描述
     }
 
     /// <summary>选择器"在播"评估项：由规则计划按键去重而来，换配置才重建（评估每拍进行，不再逐拍建表）。</summary>
@@ -74,6 +75,12 @@ public sealed class DuckingEngine : IDisposable
 
     public event Action<string>? Diagnostics;
 
+    /// <summary>闪避暂停状态切换（SetSuspended 生效后触发，可能在调用线程）。</summary>
+    public event Action? SuspendedChanged;
+
+    /// <summary>闪避是否处于全局暂停（暂停期间不评估规则、不写任何音量）。</summary>
+    public bool Suspended => _suspended;
+
     private const int FadeTickMs = 50;
 
     private readonly AudioSessionMonitor _monitor;
@@ -86,10 +93,19 @@ public sealed class DuckingEngine : IDisposable
     private readonly List<string> _gone = new();
     private readonly MediaSessionTracker _mediaTracker = new();
     private TunerConfig _config;
+    private volatile bool _suspended;
+    private string? _lastDeviceName; // 设备切换诊断事件（名称变化即重报）
+
+    // 规则"生效期"记账：规则从不生效→生效记一轮，全部目标脱离才记解除——
+    // 诊断事件按轮去重（每轮只各报一次），也是暂停/恢复不误报的依据
+    private readonly Dictionary<string, long> _ruleEpisode = new(StringComparer.Ordinal); // 规则Id → 当前轮序号
+    private readonly HashSet<string> _engagedNow = new(StringComparer.Ordinal); // 本拍命中的规则
+    private readonly HashSet<string> _engagedNew = new(StringComparer.Ordinal); // 本拍新进入生效的规则
 
     // 按 _config 引用缓存的规则计划与进程→分组映射（换配置才重建）
     private TunerConfig? _planFor;
     private List<RulePlan>? _plan;
+    private Dictionary<string, RulePlan>? _planById; // 规则Id → 计划（诊断事件查 Label 用）
     private List<SelectorPlan>? _selectors;
     private HashSet<string>? _selectorKeys;
     private Dictionary<string, string>? _groupByProc;
@@ -141,6 +157,43 @@ public sealed class DuckingEngine : IDisposable
             _config = config;
             ConfigStore.Normalize(config);
         }
+        EngineStateChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// 全局暂停/恢复闪避（用户一键停用全部规则）。
+    /// 暂停时立即把所有被引擎接管的会话还原到用户原始音量；恢复后以真实音量为基准重新评估，
+    /// 触发源仍在出声则重新进入闪避（原始音量锚点重新捕获）。
+    /// </summary>
+    public void SetSuspended(bool suspended)
+    {
+        lock (_gate)
+        {
+            if (_suspended == suspended)
+                return;
+            _suspended = suspended;
+            var now = DateTime.UtcNow;
+            if (suspended)
+            {
+                foreach (var t in _tracked.Values.Where(EngineControlling))
+                {
+                    t.Control?.SetVolume(t.OriginalVolume);
+                    t.CurrentVolume = t.OriginalVolume;
+                    t.Ducked = false;
+                    t.TargetVolume = null;
+                    t.UnduckAt = now;
+                }
+            }
+            else
+            {
+                foreach (var t in _tracked.Values)
+                    t.CurrentVolume = ReadVolume(t); // 丢弃暂停前的旧基准，以真实音量重新起算
+            }
+        }
+        Diagnostics?.Invoke(suspended
+            ? "闪避已暂停：全部规则停用，被压音量已还原"
+            : "闪避已恢复：规则重新生效");
+        SuspendedChanged?.Invoke();
         EngineStateChanged?.Invoke();
     }
 
@@ -236,8 +289,18 @@ public sealed class DuckingEngine : IDisposable
             EnsurePlan(config);
             var plan = _plan!;
             _sounding.Clear();
-            EvaluateSelectors(_selectors!, settings, now);
+            if (!_suspended)
+                EvaluateSelectors(_selectors!, settings, now);
             var sounding = _sounding;
+
+            // 设备切换诊断事件（名称变化即重报；首个名称不报——那是正常启动）
+            var deviceName = _monitor.DeviceName;
+            if (!string.Equals(_lastDeviceName, deviceName, StringComparison.Ordinal))
+            {
+                if (!string.IsNullOrEmpty(_lastDeviceName))
+                    Diagnostics?.Invoke($"输出设备切换：{_lastDeviceName} → {deviceName}");
+                _lastDeviceName = deviceName;
+            }
 
             // 1) 成员差量 + 归一名/分组缓存维护（仅在进程名或配置变化时重算）
             var seen = _seen;
@@ -323,10 +386,18 @@ public sealed class DuckingEngine : IDisposable
                 }
             }
 
+            // 暂停期间到此为止：成员/出声状态仍维护（界面照常显示），但不评估规则、不写任何音量
+            if (_suspended)
+                return stateChange;
+
             // 3) 逐会话挑选生效规则并渐变（压低走"闪避开始"时长，恢复走"闪避结束"时长）
+            _engagedNow.Clear();
+            _engagedNew.Clear();
             foreach (var t in _tracked.Values)
             {
                 var rule = EvaluateWinner(t, plan, sounding);
+                if (rule is not null && _engagedNow.Add(rule.Id) && !_ruleEpisode.ContainsKey(rule.Id))
+                    _engagedNew.Add(rule.Id); // 本拍从"未生效"进入"生效"：记一轮新的生效期
                 float target;
                 if (rule is not null)
                 {
@@ -366,9 +437,37 @@ public sealed class DuckingEngine : IDisposable
                     t.Control?.SetVolume(next);
                 t.CurrentVolume = next;
             }
+
+            // 4) 规则生效期记账 + 诊断事件（每轮生效/解除各报一次，不逐拍刷屏）
+            EmitRuleEpisodes();
         }
 
         return stateChange;
+    }
+
+    /// <summary>把"本拍命中规则集"与生效期台账对账：新进入→分配轮次并发事件，全部脱离→销账并发事件。</summary>
+    private void EmitRuleEpisodes()
+    {
+        foreach (var id in _engagedNew)
+            _ruleEpisode[id] = Environment.TickCount64;
+        foreach (var id in _engagedNew)
+        {
+            if (_planById!.TryGetValue(id, out var p))
+                Diagnostics?.Invoke($"规则生效：{p.Label} → 压至 {p.Rule.TargetVolumePercent:F0}%");
+        }
+        if (_ruleEpisode.Count > 0)
+        {
+            _gone.Clear();
+            foreach (var k in _ruleEpisode.Keys)
+                if (!_engagedNow.Contains(k))
+                    _gone.Add(k);
+            foreach (var k in _gone)
+            {
+                _ruleEpisode.Remove(k);
+                if (_planById!.TryGetValue(k, out var p))
+                    Diagnostics?.Invoke($"规则解除：{p.Label}");
+            }
+        }
     }
 
     /// <summary>
@@ -501,6 +600,7 @@ public sealed class DuckingEngine : IDisposable
                 TargetNormApp = ConfigStore.NormalizeProcessName(r.Target.ProcessName ?? ""),
                 TriggerGroupId = r.Trigger.GroupId ?? "",
                 TargetGroupId = r.Target.GroupId ?? "",
+                Label = "", // 分组名要等下方映射建好才能解析，循环结束后统一填
             };
             _plan.Add(p);
             AddSelector(selectorByKey, p.TriggerKey, r.Trigger, r.DetectionMode);
@@ -525,9 +625,45 @@ public sealed class DuckingEngine : IDisposable
             }
         }
 
+        // 规则诊断标签 + Id 索引（生效/解除事件用）
+        _planById = new Dictionary<string, RulePlan>(StringComparer.Ordinal);
+        foreach (var p in _plan)
+        {
+            p.Label = SelectorLabel(p.Rule.Trigger!, _groupNames) + " 出声 → " +
+                      SelectorLabel(p.Rule.Target!, _groupNames);
+            _planById[p.Rule.Id] = p;
+        }
+
+        // 配置问题预警（诊断事件）：启用规则的引用明显失配时提醒——这是"规则永不生效"类静默失效的主要来源。
+        // 仅在重建计划（配置变更）时发，不逐拍刷屏。分组组成员是否在运行属运行时状态，不在此报。
+        foreach (var p in _plan)
+        {
+            WarnBadRef(p.Label, p.Rule.Trigger!, "触发", _groupNames);
+            WarnBadRef(p.Label, p.Rule.Target!, "目标", _groupNames);
+        }
+
         _globalCurve = VolumeCurve.ResolveGlobal(config);
         _planFor = config;
     }
+
+    private void WarnBadRef(string ruleLabel, RuleRef sel, string role, Dictionary<string, string> groupNames)
+    {
+        if (sel.Type == "app")
+        {
+            if ((sel.ProcessName ?? "").Trim().Length == 0)
+                Diagnostics?.Invoke($"配置问题：规则[{ruleLabel}] 的{role}应用名为空，该规则永不生效");
+        }
+        else if (!groupNames.ContainsKey(sel.GroupId ?? ""))
+        {
+            Diagnostics?.Invoke(
+                $"配置问题：规则[{ruleLabel}] 的{role}分组「{sel.GroupId ?? ""}」不存在（分组可能已被删除），该规则永不生效");
+        }
+    }
+
+    private static string SelectorLabel(RuleRef sel, Dictionary<string, string> groupNames) =>
+        sel.Type == "app"
+            ? $"应用「{sel.ProcessName}」"
+            : $"分组「{groupNames.GetValueOrDefault(sel.GroupId ?? "", sel.GroupId ?? "")}」";
 
     /// <summary>登记一个选择器评估项；同一选择器被多条规则共用时只保留首个（评估一次，结果共享）。</summary>
     private static void AddSelector(

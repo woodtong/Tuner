@@ -16,6 +16,11 @@ public partial class MainWindow
             (Rule.Enabled ? "" : "（已停用）") + Label(Rule.Trigger) + " 出声 → " + Label(Rule.Target) +
             $" 渐变到 {Rule.TargetVolumePercent:F0}%" + (Rule.DetectionMode == "state" ? "［状态判定］" : "［声音判定］");
 
+        /// <summary>失配提醒：启用规则的触发/目标当前匹配不上任何会话（或引用已删除的分组）时随行出现。</summary>
+        public string WarnText { get; init; } = "";
+
+        public Visibility WarnVisibility => WarnText.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+
         private static string Label(RuleRef? r)
         {
             if (r is null)
@@ -28,11 +33,42 @@ public partial class MainWindow
 
     private DuckingRuleConfig? SelectedRule => (RuleList.SelectedItem as RuleVm)?.Rule;
 
+    /// <summary>
+    /// 规则失配检测（诊断主动提示的一部分）：应用名（含别名等价）不在当前任何会话中＝未运行或名字不符，
+    /// 分组 Id 不在配置中＝分组已被删除。停用的规则不打扰。
+    /// </summary>
+    private string ComputeRuleWarn(DuckingRuleConfig r)
+    {
+        if (!r.Enabled || r.Trigger is null || r.Target is null)
+            return "";
+
+        string Check(RuleRef sel, string role)
+        {
+            if (sel.Type == "app")
+            {
+                var name = (sel.ProcessName ?? "").Trim();
+                if (name.Length == 0)
+                    return $"{role}应用名为空，规则永不生效";
+                var key = ConfigStore.NormalizeProcessName(name);
+                if (!App.Monitor.CurrentSnapshot.Any(s => ConfigStore.NormalizeProcessName(s.ProcessName) == key))
+                    return $"⚠ {role}应用「{name}」当前没有音频会话（未运行，或名字与实际进程不符）";
+            }
+            else if (App.Config.Groups.All(g => g.Id != sel.GroupId))
+            {
+                return $"⚠ {role}分组不存在（可能已被删除），规则永不生效";
+            }
+            return "";
+        }
+        return Check(r.Trigger, "触发") is { Length: > 0 } triggerWarn ? triggerWarn : Check(r.Target, "目标");
+    }
+
     private void RefreshRuleTab()
     {
         _loadingUi = true;
         var selected = SelectedRule;
-        RuleList.ItemsSource = App.Config.Rules.Select(r => new RuleVm { Rule = r }).ToList();
+        RuleList.ItemsSource = App.Config.Rules
+            .Select(r => new RuleVm { Rule = r, WarnText = ComputeRuleWarn(r) })
+            .ToList();
         RuleList.SelectedItem = RuleList.ItemsSource.Cast<RuleVm>().FirstOrDefault(v => v.Rule == selected)
                                 ?? RuleList.ItemsSource.Cast<RuleVm>().FirstOrDefault();
         _loadingUi = false;
