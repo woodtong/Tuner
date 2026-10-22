@@ -383,12 +383,18 @@ public partial class MainWindow
     private bool _faderBusy(Slider s) =>
         s.DataContext is VolumeChannel ch && (ch.IsDragging || ch.IsAnimating);
 
+    /// <summary>滑轨槽浮现/隐去：透明度渐变（浮现 140ms / 隐去 220ms），不做 0/1 突变。</summary>
     private static void SetGrooveVisible(Slider s, bool on)
     {
-        if (s.Parent is System.Windows.Controls.Panel panel)
-            foreach (var child in panel.Children)
-                if (child is System.Windows.Controls.Border b && b.Name == "FaderGroove")
-                    b.Opacity = on ? 1 : 0;
+        if (s.Parent is not System.Windows.Controls.Panel panel)
+            return;
+        foreach (var child in panel.Children)
+            if (child is System.Windows.Controls.Border b && b.Name == "FaderGroove")
+                b.BeginAnimation(System.Windows.UIElement.OpacityProperty, new DoubleAnimation(
+                    on ? 1 : 0, TimeSpan.FromMilliseconds(on ? 140 : 220))
+                {
+                    EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+                });
     }
 
     /// <summary>

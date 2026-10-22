@@ -3,8 +3,7 @@
                     xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
 
     <!-- ═══ 调色板（分层材质：深窗口底 → 悬浮面板 → 面上抬升块 → 井内凹陷）═══
-         颜色与画刷成对定义：样式引用画刷，过渡动效引用颜色。画刷全部冻结。
-         层级：PageBg(窗口) < CardBg(面板) < ItemBg(面板上的块/行) < FaderGroove(井) -->
+         颜色与画刷成对定义：样式引用画刷，过渡动效引用颜色。画刷全部冻结。 -->
     <Color x:Key="CardBgColor">#171C24</Color>
     <Color x:Key="ItemBgColor">#1F2530</Color>
     <Color x:Key="ItemHoverColor">#262E3B</Color>
@@ -19,6 +18,9 @@
     <Color x:Key="AccentSoftColor">#332B1C</Color>
     <Color x:Key="SwitchTrackColor">#242A34</Color>
     <Color x:Key="SwitchOnColor">#1B3A2E</Color>
+    <Color x:Key="GreenColor">#34D399</Color>
+    <Color x:Key="TextSecondaryColor">#98A2B3</Color>
+    <Color x:Key="CheckOnColor">#12241D</Color>
     <Color x:Key="ScrollThumbColor">#3E4655</Color>
     <Color x:Key="ScrollThumbHoverColor">#55607A</Color>
 
@@ -31,7 +33,7 @@
     <SolidColorBrush x:Key="PressedBg" Color="{StaticResource PressedBgColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="CardBorder" Color="{StaticResource CardBorderColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="TextPrimary" Color="#E8ECF4" po:Freeze="True" />
-    <SolidColorBrush x:Key="TextSecondary" Color="#98A2B3" po:Freeze="True" />
+    <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="TextFaint" Color="#7E889D" po:Freeze="True" />
     <SolidColorBrush x:Key="Accent" Color="{StaticResource AccentColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="AccentHover" Color="{StaticResource AccentHoverColor}" po:Freeze="True" />
@@ -39,7 +41,7 @@
     <SolidColorBrush x:Key="AccentSoft" Color="{StaticResource AccentSoftColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="FieldBorder" Color="{StaticResource FieldBorderColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="FieldBorderHover" Color="{StaticResource FieldBorderHoverColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="Green" Color="#34D399" po:Freeze="True" />
+    <SolidColorBrush x:Key="Green" Color="{StaticResource GreenColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="Amber" Color="#F5B942" po:Freeze="True" />
     <SolidColorBrush x:Key="AmberSoft" Color="#331B1E" po:Freeze="True" />
     <SolidColorBrush x:Key="AmberBadgeBorder" Color="#5A2626" po:Freeze="True" />
@@ -48,11 +50,23 @@
     <SolidColorBrush x:Key="DangerBorder" Color="#F3C9C9" po:Freeze="True" />
     <SolidColorBrush x:Key="SwitchTrackBg" Color="{StaticResource SwitchTrackColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="SwitchOnBg" Color="{StaticResource SwitchOnColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="CheckOnBg" Color="#12241D" po:Freeze="True" />
+    <SolidColorBrush x:Key="CheckOnBg" Color="{StaticResource CheckOnColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="ScrollThumbBg" Color="{StaticResource ScrollThumbColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="ScrollThumbHover" Color="{StaticResource ScrollThumbHoverColor}" po:Freeze="True" />
     <SolidColorBrush x:Key="FaderGrooveBg" Color="#0C0F14" po:Freeze="True" />
     <SolidColorBrush x:Key="FaderGrooveRim" Color="#04060A" po:Freeze="True" />
+
+    <!-- ═══ 状态过渡统一约定（2026-10-22 UI 柔化返工）═══
+         1) 多状态控件（悬停/选中/按下叠加）一律用"分层覆盖层 + 透明度动画"：
+            各状态独立图层（IsHitTestVisible=False），互不抢写同一属性——
+            直改同一画刷色时，后退出动画会把另一状态的 Setter 值冲掉
+            （典型事故：页签选中胶囊被悬停退出动画淡没）。
+         2) 覆盖层画刷在模板内联声明（Color 引资源），不共享、可安全动画；
+            透明度动画永不触碰冻结共享画刷。
+         3) 悬停判定收窄到控件本体：开关/勾选框用 Trigger SourceName 指定内部元素，
+            鼠标还在文字标签上时不再触发视觉变换。
+         4) 时长：进入 0.12~0.18s、退出 0.15~0.2s、按下 0.05~0.08s（触觉反馈要快，视觉要柔）。
+         5) 动画触发器一律配同值 Setter 兜底：载入时已处于该状态的控件不走 EnterActions，直接落位。 -->
 
     <!-- 文本样式 -->
     <Style x:Key="Label" TargetType="TextBlock">
@@ -65,7 +79,8 @@
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
-    <!-- 复选框（深色全局：默认模板是黑字，深底下不可见） -->
+    <!-- 复选框（深色全局：默认模板是黑字，深底下不可见）。
+         悬停高亮用 Box 外圈叠层 + SourceName 判定：只在鼠标位于勾选框上时出现，标签文字不触发 -->
     <Style TargetType="CheckBox">
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Setter Property="FontSize" Value="13" />
@@ -75,27 +90,85 @@
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
                     <StackPanel Orientation="Horizontal" Background="Transparent">
-                        <Border x:Name="Box" Width="16" Height="16" CornerRadius="4.5"
-                                Background="{StaticResource ItemBg}"
-                                BorderBrush="{StaticResource FieldBorder}" BorderThickness="1"
-                                VerticalAlignment="Center">
-                            <Path x:Name="Check" Data="M3.5,8.5 L6.5,11.5 L12.5,4.5"
-                                  Stroke="{StaticResource Green}" StrokeThickness="1.8"
-                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round"
-                                  StrokeLineJoin="Round" Opacity="0"
-                                  HorizontalAlignment="Center" VerticalAlignment="Center" />
-                        </Border>
+                        <Grid VerticalAlignment="Center">
+                            <Border x:Name="Box" Width="16" Height="16" CornerRadius="4.5" BorderThickness="1">
+                                <Border.Background>
+                                    <SolidColorBrush Color="{StaticResource ItemBgColor}" />
+                                </Border.Background>
+                                <Border.BorderBrush>
+                                    <SolidColorBrush Color="{StaticResource FieldBorderColor}" />
+                                </Border.BorderBrush>
+                                <Path x:Name="Check" Data="M3.5,8.5 L6.5,11.5 L12.5,4.5"
+                                      Stroke="{StaticResource Green}" StrokeThickness="1.8"
+                                      StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                                      StrokeLineJoin="Round" Opacity="0"
+                                      HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                            <Border x:Name="BoxHover" Width="16" Height="16" CornerRadius="4.5"
+                                    BorderThickness="1" Opacity="0" IsHitTestVisible="False">
+                                <Border.BorderBrush>
+                                    <SolidColorBrush Color="{StaticResource FieldBorderHoverColor}" />
+                                </Border.BorderBrush>
+                            </Border>
+                        </Grid>
                         <ContentPresenter Margin="8,0,0,0" VerticalAlignment="Center"
                                           RecognizesAccessKey="True" />
                     </StackPanel>
                     <ControlTemplate.Triggers>
+                        <Trigger SourceName="Box" Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BoxHover" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.12" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="BoxHover" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.18" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Check" Property="Opacity" Value="1" />
                             <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource Green}" />
                             <Setter TargetName="Box" Property="Background" Value="{StaticResource CheckOnBg}" />
-                        </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource FieldBorderHover}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.16">
+                                            <DoubleAnimation.EasingFunction>
+                                                <CubicEase EasingMode="EaseOut" />
+                                            </DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <ColorAnimation Storyboard.TargetName="Box"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource GreenColor}" Duration="0:0:0.16" />
+                                        <ColorAnimation Storyboard.TargetName="Box"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource CheckOnColor}" Duration="0:0:0.16" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.1" />
+                                        <ColorAnimation Storyboard.TargetName="Box"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource FieldBorderColor}" Duration="0:0:0.12" />
+                                        <ColorAnimation Storyboard.TargetName="Box"
+                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                        To="{StaticResource ItemBgColor}" Duration="0:0:0.12" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
@@ -107,7 +180,7 @@
     </Style>
 
     <!-- 滑块开关（流块）：启停类开关用（规则启停等）。槽内圆钮左右换位，开=绿；
-         换位与槽底变色均带过渡（Setter 兜底：载入时已勾选不走 EnterActions，直接落位） -->
+         换位/槽底/描边/圆钮填色全部带过渡；悬停判定收窄到槽本体（SourceName=Track） -->
     <Style x:Key="Switch" TargetType="CheckBox">
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
         <Setter Property="FontSize" Value="12.5" />
@@ -117,18 +190,43 @@
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
                     <StackPanel Orientation="Horizontal" Background="Transparent">
-                        <Border x:Name="Track" Width="40" Height="22" CornerRadius="11"
-                                Background="{StaticResource SwitchTrackBg}" BorderBrush="{StaticResource FieldBorder}"
-                                BorderThickness="1" VerticalAlignment="Center">
-                            <Ellipse x:Name="Knob" Width="15" Height="15" Fill="{StaticResource TextSecondary}"
-                                     HorizontalAlignment="Left" Margin="3,0,0,0" />
+                        <Border x:Name="Track" Width="40" Height="22" CornerRadius="11" BorderThickness="1"
+                                VerticalAlignment="Center">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource SwitchTrackColor}" />
+                            </Border.Background>
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="{StaticResource FieldBorderColor}" />
+                            </Border.BorderBrush>
+                            <Ellipse x:Name="Knob" Width="15" Height="15" HorizontalAlignment="Left" Margin="3,0,0,0">
+                                <Ellipse.Fill>
+                                    <SolidColorBrush Color="{StaticResource TextSecondaryColor}" />
+                                </Ellipse.Fill>
+                            </Ellipse>
                         </Border>
                         <ContentPresenter x:Name="Text" Margin="8,0,0,0" VerticalAlignment="Center"
                                           RecognizesAccessKey="True" />
                     </StackPanel>
                     <ControlTemplate.Triggers>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Track" Property="BorderBrush" Value="{StaticResource FieldBorderHover}" />
+                        <Trigger SourceName="Track" Property="IsMouseOver" Value="True">
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Track"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource FieldBorderHoverColor}" Duration="0:0:0.12" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <ColorAnimation Storyboard.TargetName="Track"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource FieldBorderColor}" Duration="0:0:0.15" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Knob" Property="Margin" Value="20,0,0,0" />
@@ -147,6 +245,12 @@
                                         <ColorAnimation Storyboard.TargetName="Track"
                                                         Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
                                                         To="{StaticResource SwitchOnColor}" Duration="0:0:0.18" />
+                                        <ColorAnimation Storyboard.TargetName="Track"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource GreenColor}" Duration="0:0:0.18" />
+                                        <ColorAnimation Storyboard.TargetName="Knob"
+                                                        Storyboard.TargetProperty="Fill.(SolidColorBrush.Color)"
+                                                        To="{StaticResource GreenColor}" Duration="0:0:0.18" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -162,6 +266,12 @@
                                         <ColorAnimation Storyboard.TargetName="Track"
                                                         Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
                                                         To="{StaticResource SwitchTrackColor}" Duration="0:0:0.15" />
+                                        <ColorAnimation Storyboard.TargetName="Track"
+                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
+                                                        To="{StaticResource FieldBorderColor}" Duration="0:0:0.15" />
+                                        <ColorAnimation Storyboard.TargetName="Knob"
+                                                        Storyboard.TargetProperty="Fill.(SolidColorBrush.Color)"
+                                                        To="{StaticResource TextSecondaryColor}" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -201,7 +311,8 @@
         <Setter Property="CornerRadius" Value="10" />
     </Style>
 
-    <!-- 按钮（次要）：悬停底色/描边平滑过渡（0.12s），按下即落 -->
+    <!-- 按钮（次要）：分层结构＝底板（实例可覆写底色/描边）＋悬停层＋按压层＋内容层。
+         悬停/按压为独立覆盖层透明度渐变，互不抢写；按压缩放动画作用于整体。 -->
     <Style x:Key="Btn" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource ItemBg}" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
@@ -212,40 +323,76 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
-                            CornerRadius="7" Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
+                    <Grid x:Name="Root" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform />
+                        </Grid.RenderTransform>
+                        <Border Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="7" />
+                        <Border x:Name="HoverOv" CornerRadius="7" Opacity="0" IsHitTestVisible="False"
+                                BorderThickness="{TemplateBinding BorderThickness}">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource ItemHoverColor}" />
+                            </Border.Background>
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="{StaticResource FieldBorderHoverColor}" />
+                            </Border.BorderBrush>
+                        </Border>
+                        <Border x:Name="PressOv" CornerRadius="7" Opacity="0" IsHitTestVisible="False">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource PressedBgColor}" />
+                            </Border.Background>
+                        </Border>
+                        <Border Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource ItemHoverColor}" Duration="0:0:0.12" />
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
-                                                        To="{StaticResource FieldBorderHoverColor}" Duration="0:0:0.12" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.14" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
                             <Trigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource ItemBgColor}" Duration="0:0:0.15" />
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
-                                                        To="{StaticResource FieldBorderColor}" Duration="0:0:0.15" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.18" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource PressedBg}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressOv" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.05" />
+                                        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                                         To="0.97" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleY"
+                                                         To="0.97" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressOv" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.15" />
+                                        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                                         To="1" Duration="0:0:0.15" />
+                                        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleY"
+                                                         To="1" Duration="0:0:0.15" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
@@ -254,25 +401,9 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <!-- 按压缩放：模板级 Setter 无法指向 Freezable，用样式级触发器整体换 RenderTransform -->
-        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
-        <Setter Property="RenderTransform">
-            <Setter.Value>
-                <ScaleTransform />
-            </Setter.Value>
-        </Setter>
-        <Style.Triggers>
-            <Trigger Property="IsPressed" Value="True">
-                <Setter Property="RenderTransform">
-                    <Setter.Value>
-                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
-                    </Setter.Value>
-                </Setter>
-            </Trigger>
-        </Style.Triggers>
     </Style>
 
-    <!-- 按钮（主要强调）：悬停底色平滑过渡 -->
+    <!-- 按钮（主要强调）：同分层结构，悬停/按压作用于琥珀主色 -->
     <Style x:Key="BtnPrimary" TargetType="Button">
         <Setter Property="Background" Value="{StaticResource Accent}" />
         <Setter Property="Foreground" Value="White" />
@@ -283,33 +414,69 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="7"
-                            Padding="{TemplateBinding Padding}">
-                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Border>
+                    <Grid x:Name="Root" RenderTransformOrigin="0.5,0.5">
+                        <Grid.RenderTransform>
+                            <ScaleTransform />
+                        </Grid.RenderTransform>
+                        <Border Background="{TemplateBinding Background}" CornerRadius="7" />
+                        <Border x:Name="HoverOv" CornerRadius="7" Opacity="0" IsHitTestVisible="False">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource AccentHoverColor}" />
+                            </Border.Background>
+                        </Border>
+                        <Border x:Name="PressOv" CornerRadius="7" Opacity="0" IsHitTestVisible="False">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource AccentPressedColor}" />
+                            </Border.Background>
+                        </Border>
+                        <Border Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource AccentHoverColor}" Duration="0:0:0.12" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.14" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
                             <Trigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource AccentColor}" Duration="0:0:0.15" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.18" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentPressed}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressOv" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.05" />
+                                        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                                         To="0.97" Duration="0:0:0.08" />
+                                        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleY"
+                                                         To="0.97" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="PressOv" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.15" />
+                                        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleX"
+                                                         To="1" Duration="0:0:0.15" />
+                                        <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleY"
+                                                         To="1" Duration="0:0:0.15" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
@@ -318,21 +485,6 @@
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
-        <Setter Property="RenderTransform">
-            <Setter.Value>
-                <ScaleTransform />
-            </Setter.Value>
-        </Setter>
-        <Style.Triggers>
-            <Trigger Property="IsPressed" Value="True">
-                <Setter Property="RenderTransform">
-                    <Setter.Value>
-                        <ScaleTransform ScaleX="0.97" ScaleY="0.97" />
-                    </Setter.Value>
-                </Setter>
-            </Trigger>
-        </Style.Triggers>
     </Style>
 
     <!-- 按钮（危险操作，幽灵样式） -->
@@ -341,7 +493,7 @@
         <Setter Property="BorderBrush" Value="{StaticResource DangerBorder}" />
     </Style>
 
-    <!-- 输入框：井内凹陷 -->
+    <!-- 输入框：井内凹陷。悬停/聚焦描边各用独立描边环叠层渐变（互不抢写） -->
     <Style x:Key="Tb" TargetType="TextBox">
         <Setter Property="Background" Value="#131820" />
         <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}" />
@@ -352,16 +504,61 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
-                    <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                            BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="7">
-                        <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
-                    </Border>
+                    <Grid>
+                        <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="7">
+                            <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
+                        </Border>
+                        <Border x:Name="HoverRing" CornerRadius="7" BorderThickness="1" Opacity="0"
+                                IsHitTestVisible="False">
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="{StaticResource FieldBorderHoverColor}" />
+                            </Border.BorderBrush>
+                        </Border>
+                        <Border x:Name="FocusRing" CornerRadius="7" BorderThickness="1" Opacity="0"
+                                IsHitTestVisible="False">
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="{StaticResource AccentColor}" />
+                            </Border.BorderBrush>
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource FieldBorderHover}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.12" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.18" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsKeyboardFocused" Value="True">
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Accent}" />
+                            <Setter TargetName="FocusRing" Property="Opacity" Value="1" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="FocusRing" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.12" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="FocusRing" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.2" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.5" />
@@ -372,7 +569,7 @@
         </Setter>
     </Style>
 
-    <!-- 下拉框 -->
+    <!-- 下拉框：触发器悬停描边环渐变；列表项悬停底色渐变、选中着色胶囊叠层渐变 -->
     <Style x:Key="Combo" TargetType="ComboBox">
         <Setter Property="FontSize" Value="13" />
         <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
@@ -385,15 +582,38 @@
                                       IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
-                                    <Border x:Name="Bd" Background="{StaticResource ItemBg}" BorderBrush="{StaticResource FieldBorder}"
-                                            BorderThickness="1" CornerRadius="7" Padding="0,6">
-                                        <Path Data="M0,0 L4,4 8,0" Stroke="{StaticResource TextSecondary}"
-                                              StrokeThickness="1.5" HorizontalAlignment="Right"
-                                              VerticalAlignment="Center" Margin="0,0,10,0" />
-                                    </Border>
+                                    <Grid>
+                                        <Border x:Name="Bd" Background="{StaticResource ItemBg}" BorderBrush="{StaticResource FieldBorder}"
+                                                BorderThickness="1" CornerRadius="7" Padding="0,6">
+                                            <Path Data="M0,0 L4,4 8,0" Stroke="{StaticResource TextSecondary}"
+                                                  StrokeThickness="1.5" HorizontalAlignment="Right"
+                                                  VerticalAlignment="Center" Margin="0,0,10,0" />
+                                        </Border>
+                                        <Border x:Name="HoverRing" CornerRadius="7" BorderThickness="1" Opacity="0"
+                                                IsHitTestVisible="False">
+                                            <Border.BorderBrush>
+                                                <SolidColorBrush Color="{StaticResource FieldBorderHoverColor}" />
+                                            </Border.BorderBrush>
+                                        </Border>
+                                    </Grid>
                                     <ControlTemplate.Triggers>
                                         <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource FieldBorderHover}" />
+                                            <Trigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity"
+                                                                         To="1" Duration="0:0:0.12" />
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.EnterActions>
+                                            <Trigger.ExitActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity"
+                                                                         To="0" Duration="0:0:0.15" />
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.ExitActions>
                                         </Trigger>
                                     </ControlTemplate.Triggers>
                                 </ControlTemplate>
@@ -437,17 +657,59 @@
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ComboBoxItem">
-                                <Border x:Name="Bd" Background="Transparent" CornerRadius="6"
-                                        Padding="9,6" Margin="0,1">
-                                    <ContentPresenter />
+                                <Border x:Name="Bd" CornerRadius="6" Padding="9,6" Margin="0,1">
+                                    <Border.Background>
+                                        <SolidColorBrush Color="Transparent" />
+                                    </Border.Background>
+                                    <Grid>
+                                        <Border x:Name="SelOv" CornerRadius="6" Opacity="0" IsHitTestVisible="False">
+                                            <Border.Background>
+                                                <SolidColorBrush Color="{StaticResource AccentSoftColor}" />
+                                            </Border.Background>
+                                        </Border>
+                                        <ContentPresenter />
+                                    </Grid>
                                 </Border>
                                 <ControlTemplate.Triggers>
                                     <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource ItemHover}" />
+                                        <Trigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="Bd"
+                                                                    Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                                    To="{StaticResource ItemHoverColor}" Duration="0:0:0.1" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.EnterActions>
+                                        <Trigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <ColorAnimation Storyboard.TargetName="Bd"
+                                                                    Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
+                                                                    To="Transparent" Duration="0:0:0.15" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.ExitActions>
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
-                                        <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSoft}" />
+                                        <Setter TargetName="SelOv" Property="Opacity" Value="1" />
                                         <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                                        <Trigger.EnterActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="SelOv" Storyboard.TargetProperty="Opacity"
+                                                                     To="1" Duration="0:0:0.12" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.EnterActions>
+                                        <Trigger.ExitActions>
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="SelOv" Storyboard.TargetProperty="Opacity"
+                                                                     To="0" Duration="0:0:0.15" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </Trigger.ExitActions>
                                     </Trigger>
                                 </ControlTemplate.Triggers>
                             </ControlTemplate>
@@ -458,39 +720,69 @@
         </Setter>
     </Style>
 
-    <!-- 列表卡片项：表面色差（抬升块），悬停过渡，选中着色胶囊（macOS 侧栏式） -->
+    <!-- 列表卡片项：表面色差（抬升块）。悬停底色渐变；选中着色胶囊为独立叠层渐变（与悬停互不抢写） -->
     <Style x:Key="CardItem" TargetType="ListBoxItem">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
-                    <Border x:Name="Bd" Background="{StaticResource ItemBg}" BorderBrush="{StaticResource CardBorder}"
-                            BorderThickness="1" CornerRadius="9" Padding="11,9" Margin="0,0,0,7">
-                        <ContentPresenter />
-                    </Border>
+                    <Grid Margin="0,0,0,7">
+                        <Border Background="{StaticResource ItemBg}" BorderBrush="{StaticResource CardBorder}"
+                                BorderThickness="1" CornerRadius="9" />
+                        <Border x:Name="SelOv" CornerRadius="9" BorderThickness="1" Opacity="0"
+                                IsHitTestVisible="False">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource AccentSoftColor}" />
+                            </Border.Background>
+                            <Border.BorderBrush>
+                                <SolidColorBrush Color="{StaticResource AccentColor}" />
+                            </Border.BorderBrush>
+                        </Border>
+                        <Border x:Name="HoverOv" CornerRadius="9" Opacity="0" IsHitTestVisible="False">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource ItemHoverColor}" />
+                            </Border.Background>
+                        </Border>
+                        <Border Padding="11,9">
+                            <ContentPresenter />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource ItemHoverColor}" Duration="0:0:0.12" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.12" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
                             <Trigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource ItemBgColor}" Duration="0:0:0.15" />
+                                        <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource Accent}" />
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSoft}" />
+                            <Setter TargetName="SelOv" Property="Opacity" Value="1" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="SelOv" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.16" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="SelOv" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.16" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -504,43 +796,68 @@
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
     </Style>
 
-    <!-- 导航（macOS 侧栏式）：浮于窗口底，胶囊选中态（着色填充，无强调条），
-         悬停底色平滑过渡 -->
+    <!-- 导航（macOS 侧栏式）：胶囊选中态。选中层与悬停层分离（旧版悬停退出动画会把
+         选中胶囊一起淡没——本版修复），悬停层叠于选中层之上 -->
     <Style TargetType="TabItem">
         <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
-                    <Border x:Name="Bd" CornerRadius="7"
-                            Background="Transparent" Padding="12,9" Margin="0,0,0,2">
-                        <ContentPresenter x:Name="Header" ContentSource="Header"
-                                          TextElement.FontSize="13.5"
-                                          TextElement.Foreground="{TemplateBinding Foreground}" />
-                    </Border>
+                    <Grid>
+                        <Border x:Name="SelOv" CornerRadius="7" Margin="0,0,0,2" Opacity="0" IsHitTestVisible="False">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource AccentSoftColor}" />
+                            </Border.Background>
+                        </Border>
+                        <Border x:Name="HoverOv" CornerRadius="7" Margin="0,0,0,2" Opacity="0" IsHitTestVisible="False">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource HoverSoftColor}" />
+                            </Border.Background>
+                        </Border>
+                        <Border x:Name="Bd" CornerRadius="7" Background="Transparent" Padding="12,9" Margin="0,0,0,2">
+                            <ContentPresenter x:Name="Header" ContentSource="Header"
+                                              TextElement.FontSize="13.5"
+                                              TextElement.Foreground="{TemplateBinding Foreground}" />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSoft}" />
+                            <Setter TargetName="SelOv" Property="Opacity" Value="1" />
                             <Setter Property="Foreground" Value="{StaticResource Accent}" />
                             <Setter TargetName="Header" Property="TextElement.FontWeight" Value="SemiBold" />
-                        </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource HoverSoftColor}" Duration="0:0:0.12" />
+                                        <DoubleAnimation Storyboard.TargetName="SelOv" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.18" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
                             <Trigger.ExitActions>
                                 <BeginStoryboard>
                                     <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Bd"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="Transparent" Duration="0:0:0.15" />
+                                        <DoubleAnimation Storyboard.TargetName="SelOv" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.18" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
+                        </Trigger>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.14" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.18" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -694,7 +1011,7 @@
         </Setter>
     </Style>
 
-    <!-- ContextMenu / MenuItem（深色悬浮材质，全局） -->
+    <!-- ContextMenu / MenuItem（深色悬浮材质，全局）：高亮为叠层渐变 -->
     <Style TargetType="ContextMenu">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="Template">
@@ -718,12 +1035,35 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="MenuItem">
-                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="10,7" Margin="0,1">
-                        <ContentPresenter ContentSource="Header" VerticalAlignment="Center" />
-                    </Border>
+                    <Grid>
+                        <Border x:Name="HlOv" CornerRadius="6" Margin="0,1" Opacity="0" IsHitTestVisible="False">
+                            <Border.Background>
+                                <SolidColorBrush Color="{StaticResource AccentSoftColor}" />
+                            </Border.Background>
+                        </Border>
+                        <Border Background="Transparent" CornerRadius="6" Padding="10,7" Margin="0,1">
+                            <ContentPresenter ContentSource="Header" VerticalAlignment="Center" />
+                        </Border>
+                    </Grid>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsHighlighted" Value="True">
-                            <Setter TargetName="Bd" Property="Background" Value="{StaticResource AccentSoft}" />
+                            <Setter TargetName="HlOv" Property="Opacity" Value="1" />
+                            <Trigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HlOv" Storyboard.TargetProperty="Opacity"
+                                                         To="1" Duration="0:0:0.08" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.EnterActions>
+                            <Trigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="HlOv" Storyboard.TargetProperty="Opacity"
+                                                         To="0" Duration="0:0:0.12" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Opacity" Value="0.4" />

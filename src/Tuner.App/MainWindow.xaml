@@ -826,9 +826,34 @@
                         <!-- 诊断自查通道（隐蔽入口）：默认收起、弱化样式，未展开时不占视觉面积。
                              事件只存内存环形缓冲（最近 600 条），完整日志仍在 app.log 文件。 -->
                         <TextBlock x:Name="DiagToggle" Text="诊断 · 事件日志 ▸" FontSize="11.5" Cursor="Hand"
-                                   Foreground="{StaticResource TextFaint}" Margin="6,12,0,0"
+                                   Foreground="{StaticResource TextFaint}" Margin="6,12,0,0" Opacity="0.85"
                                    MouseLeftButtonDown="OnDiagToggleClicked"
-                                   ToolTip="查看最近的关键事件（规则生效/解除、设备切换、配置问题），用于自查或反馈附档" />
+                                   ToolTip="查看最近的关键事件（规则生效/解除、设备切换、配置问题），用于自查或反馈附档">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Trigger.EnterActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                         To="1" Duration="0:0:0.14" />
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.EnterActions>
+                                            <Trigger.ExitActions>
+                                                <BeginStoryboard>
+                                                    <Storyboard>
+                                                        <DoubleAnimation Storyboard.TargetProperty="Opacity"
+                                                                         To="0.85" Duration="0:0:0.18" />
+                                                    </Storyboard>
+                                                </BeginStoryboard>
+                                            </Trigger.ExitActions>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
                         <Border x:Name="DiagPanel" Style="{StaticResource Card}" Padding="14" Margin="0,8,0,0"
                                 Visibility="Collapsed">
                             <StackPanel>
