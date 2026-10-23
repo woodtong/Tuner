@@ -34,7 +34,7 @@ if (args.Contains("--help") || args.Contains("-h"))
     Console.WriteLine("  --interval  峰值轮询间隔（覆盖配置），默认取配置值（100ms）");
     Console.WriteLine("  --duration  运行指定秒数后自动退出，默认运行到 Ctrl+C");
     Console.WriteLine("  --setvol    调试用：把指定进程的所有会话音量设为给定百分比后退出");
-    Console.WriteLine("  配置从 %APPDATA%\\Tuner\\config.json 加载（不存在则用空配置，不闪避）");
+    Console.WriteLine("  配置默认从 %APPDATA%\\Tuner\\config.json 加载；程序目录有 portable.marker 时改从该目录加载");
     return 0;
 }
 
@@ -72,7 +72,7 @@ else
 {
     // 仅从默认位置（%APPDATA%\Tuner\config.json）加载配置；
     // 手动复现测试时把 config/test-ducking.json 复制过去即可
-    var defaultConfigPath = File.Exists(ConfigStore.DefaultPath) ? ConfigStore.DefaultPath : null;
+    var defaultConfigPath = File.Exists(ConfigStore.ActivePath) ? ConfigStore.ActivePath : null;
     config = defaultConfigPath is not null ? ConfigStore.Load(defaultConfigPath) : ConfigStore.CreateDefault();
     configPath = defaultConfigPath;
 }

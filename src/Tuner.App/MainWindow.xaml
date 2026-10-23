@@ -919,6 +919,33 @@
                             </StackPanel>
                         </Border>
 
+                        <!-- 配置管理：导入/导出 + 存储位置（便携模式） -->
+                        <Border Style="{StaticResource Card}" Padding="22" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="配置" FontSize="13.5" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}" />
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="230" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="导入 / 导出" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="导出当前全部配置（分组/规则/设置）；导入会整体替换现有配置并立即生效（替换前自动留 .bak 备份）" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button Content="导出…" Style="{StaticResource Btn}" Padding="14,5"
+                                                Click="OnConfigExport" />
+                                        <Button Content="导入…" Style="{StaticResource Btn}" Padding="14,5"
+                                                Margin="8,0,0,0" Click="OnConfigImport"
+                                                ToolTip="导入的文件将整体替换现有分组、规则与设置" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock x:Name="ConfigPathText" Style="{StaticResource Hint}" Margin="0,10,0,0"
+                                           TextWrapping="Wrap" />
+                                <TextBlock x:Name="PortableModeText" Style="{StaticResource Hint}" Margin="0,6,0,0"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
                         <!-- 诊断自查通道（隐蔽入口）：默认收起、弱化样式，未展开时不占视觉面积。
                              事件只存内存环形缓冲（最近 600 条），完整日志仍在 app.log 文件。 -->
                         <TextBlock x:Name="DiagToggle" Text="诊断 · 事件日志 ▸" FontSize="11.5" Cursor="Hand"

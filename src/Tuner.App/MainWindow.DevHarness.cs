@@ -364,6 +364,11 @@ public partial class MainWindow
                 takeover.X + SetManualTakeover.ActualWidth <= ActualWidth,
                 $"conflict=({conflict.X:F0},{conflict.Y:F0}) {SetRuleConflict.ActualWidth:F0}宽 takeover=({takeover.X:F0},{takeover.Y:F0}) 窗宽{ActualWidth:F0}");
 
+            Check("配置分组可见", ConfigPathText.IsVisible && ConfigPathText.ActualHeight > 10,
+                $"路径文案高度 {ConfigPathText.ActualHeight:F0}px：{ConfigPathText.Text}");
+            Check("便携模式文案可见", PortableModeText.IsVisible && PortableModeText.ActualHeight > 10,
+                $"文案高度 {PortableModeText.ActualHeight:F0}px");
+
             File.WriteAllLines(resultPath, lines);
             App.Log("[selfcheck] 设置页布局自检完成 → " + resultPath);
         }

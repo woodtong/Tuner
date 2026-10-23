@@ -42,6 +42,10 @@ public partial class MainWindow
             SetAutoStart.IsChecked = false;
         }
         DiagPathText.Text = "完整日志文件：" + App.LogPath + "（事件面板仅内存保留最近 600 条）";
+        ConfigPathText.Text = "配置文件：" + ConfigStore.ActivePath;
+        PortableModeText.Text = ConfigStore.PortableBase is not null
+            ? "便携模式已启用（程序目录存在 portable.marker）：配置与日志都保存在程序目录，拷贝整个文件夹即完成迁移"
+            : "提示：在程序目录新建一个空的 portable.marker 文件可启用便携模式——配置与日志改存程序目录，解压即用、拷走即走（重启应用后生效）";
         // 音量页的曲线编辑器同批初始化（XAML 一次解析全部页签，跨页控件可直接访问）
         LoadCurveEditor();
     }
@@ -136,6 +140,69 @@ public partial class MainWindow
         RefreshDiagBox();
     }
 
+    // ---------- 配置导入/导出（整体文件级操作，导入后全界面重载） ----------
+
+    private void OnConfigExport(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.SaveFileDialog
+        {
+            Title = "导出 Tuner 配置",
+            Filter = "Tuner 配置 (*.json)|*.json",
+            FileName = $"tuner-config-{DateTime.Now:yyyyMMdd-HHmm}.json",
+        };
+        if (dlg.ShowDialog() != true)
+            return;
+        try
+        {
+            AutoSaveNow(); // 先把未落盘的界面修改写完，导出的才是完整现状
+            ConfigStore.Save(dlg.FileName, App.Config);
+            App.Log($"配置已导出：{dlg.FileName}（{App.Config.Groups.Count} 组 / {App.Config.Rules.Count} 条规则）");
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("导出失败：" + ex.Message, "Tuner");
+        }
+    }
+
+    private void OnConfigImport(object sender, RoutedEventArgs e)
+    {
+        var dlg = new Microsoft.Win32.OpenFileDialog
+        {
+            Title = "导入 Tuner 配置（将整体替换现有配置）",
+            Filter = "Tuner 配置 (*.json)|*.json",
+        };
+        if (dlg.ShowDialog() != true)
+            return;
+        var imported = ConfigStore.TryLoadForImport(dlg.FileName);
+        if (imported is null)
+        {
+            MessageBox.Show($"无法读取「{System.IO.Path.GetFileName(dlg.FileName)}」：不是有效的 Tuner 配置文件。现有配置未改动。", "Tuner");
+            return;
+        }
+
+        // 整体替换：落盘（自动留 .bak 备份）→ 引擎生效 → 全部页签重载
+        App.ReplaceConfig(imported);
+        try
+        {
+            ConfigStore.Save(ConfigStore.ActivePath, App.Config);
+            App.Engine.ApplyConfig(ConfigStore.Clone(App.Config));
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("导入后保存失败：" + ex.Message + "（配置已在本次运行中生效，但未写入磁盘）", "Tuner");
+        }
+        _loadingUi = true;
+        RefreshGroupColors();
+        RefreshGroupTab();
+        RefreshRuleTab();
+        LoadSettingsTab();
+        _loadingUi = false;
+        _dirty = false;
+        SetSaveStatus(null);
+        App.Log($"配置已导入：{dlg.FileName}（{App.Config.Groups.Count} 组 / {App.Config.Rules.Count} 条规则）");
+        MessageBox.Show($"导入完成：{App.Config.Groups.Count} 个分组、{App.Config.Rules.Count} 条规则已生效。", "Tuner");
+    }
+
     // ---------- 数值设置 + 自动保存 ----------
 
     /// <summary>设置页字段变更：数值解析与钳制延后到自动保存时统一做（TryParseSettings）。</summary>
@@ -183,7 +250,7 @@ public partial class MainWindow
         }
         try
         {
-            ConfigStore.Save(ConfigStore.DefaultPath, App.Config);
+            ConfigStore.Save(ConfigStore.ActivePath, App.Config);
             App.Engine.ApplyConfig(ConfigStore.Clone(App.Config)); // 深拷贝后生效，避免引擎与 UI 共享可变集合
         }
         catch (Exception ex)

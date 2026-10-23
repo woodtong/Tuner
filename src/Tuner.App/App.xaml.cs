@@ -56,8 +56,8 @@ public partial class App : Application
         !Monitor.CurrentSnapshot.Any(s => s.InstanceId == instanceId) &&
         CommsMonitor.CurrentSnapshot.Any(s => s.InstanceId == instanceId);
 
-    public static string LogPath { get; } =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Tuner", "app.log");
+    /// <summary>日志路径随配置目录走（便携模式＝程序目录，否则 %APPDATA%\Tuner）。</summary>
+    public static string LogPath { get; } = Path.Combine(ConfigStore.ActiveDir, "app.log");
 
     private static readonly object LogGate = new();
 
@@ -103,7 +103,7 @@ public partial class App : Application
         // UI 线程未处理异常至少留痕（不吞异常，崩溃照常发生，但 app.log 里有完整堆栈可查）
         DispatcherUnhandledException += (_, ex) => Log("未处理异常（UI 线程）: " + ex.Exception);
 
-        Config = ConfigStore.Load(ConfigStore.DefaultPath);
+        Config = ConfigStore.Load(ConfigStore.ActivePath);
         Monitor = new AudioSessionMonitor(Math.Max(10, Config.Settings.PollIntervalMs));
         CommsMonitor = new AudioSessionMonitor(Math.Max(10, Config.Settings.PollIntervalMs),
             NAudio.CoreAudioApi.Role.Communications);
@@ -232,6 +232,9 @@ public partial class App : Application
 
     /// <summary>暂停/恢复全部闪避规则（托盘菜单、设置页开关共用入口；true=暂停并还原音量）。</summary>
     public static void SetSuspended(bool suspended) => Engine.SetSuspended(suspended);
+
+    /// <summary>配置导入：整体替换当前配置对象（UI 各处动态读 App.Config，替换引用即全局生效）。</summary>
+    public static void ReplaceConfig(TunerConfig imported) => Config = imported;
 
     /// <summary>打开诊断自查通道：主界面切到设置页并展开事件日志。</summary>
     public static void ShowDiagnostics() => _mainWindow?.OpenDiagnostics();

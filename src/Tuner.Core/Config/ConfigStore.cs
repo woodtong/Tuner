@@ -20,6 +20,25 @@ public static class ConfigStore
 
     public static string DefaultPath => Path.Combine(DefaultDir, "config.json");
 
+    /// <summary>
+    /// 便携模式根目录：exe 同目录存在 portable.marker（空文本文件）即启用——配置/日志全部落在程序目录，
+    /// 解压即用、拷走即走；否则为 null（配置在 %APPDATA%\Tuner）。
+    /// </summary>
+    public static string? PortableBase
+    {
+        get
+        {
+            try { return File.Exists(Path.Combine(AppContext.BaseDirectory, "portable.marker")) ? AppContext.BaseDirectory : null; }
+            catch { return null; }
+        }
+    }
+
+    /// <summary>配置实际读写目录（便携模式＝程序目录，否则＝%APPDATA%\Tuner）。</summary>
+    public static string ActiveDir => PortableBase ?? DefaultDir;
+
+    /// <summary>配置实际读写路径。</summary>
+    public static string ActivePath => Path.Combine(ActiveDir, "config.json");
+
     public static TunerConfig Load(string path)
     {
         // 主文件缺失/损坏 → 回退上一次保存留下的 .bak → 仍没有则全新默认
@@ -42,6 +61,38 @@ public static class ConfigStore
         catch
         {
             return false; // JSON 损坏等读取异常：交给调用方回退备份
+        }
+    }
+
+    /// <summary>
+    /// 导入校验：候选文件可读、确实是 Tuner 配置（顶层存在 settings/groups/rules 任一键）且能反序列化 →
+    /// 返回已 Normalize 的配置；失败返回 null（不抛异常）。宽松反序列化会把任意合法 JSON 读成"空配置"，
+    /// 拿错文件导入会静默清空现有分组规则，故顶层键检查不可省。
+    /// </summary>
+    public static TunerConfig? TryLoadForImport(string path)
+    {
+        try
+        {
+            if (!File.Exists(path))
+                return null;
+            var json = File.ReadAllText(path);
+            using var doc = JsonDocument.Parse(json);
+            bool known = doc.RootElement.ValueKind == JsonValueKind.Object &&
+                         doc.RootElement.EnumerateObject().Any(p =>
+                             p.Name.Equals("settings", StringComparison.OrdinalIgnoreCase) ||
+                             p.Name.Equals("groups", StringComparison.OrdinalIgnoreCase) ||
+                             p.Name.Equals("rules", StringComparison.OrdinalIgnoreCase));
+            if (!known)
+                return null;
+            var config = JsonSerializer.Deserialize<TunerConfig>(json, Options);
+            if (config is null)
+                return null;
+            Normalize(config);
+            return config;
+        }
+        catch
+        {
+            return null;
         }
     }
 
