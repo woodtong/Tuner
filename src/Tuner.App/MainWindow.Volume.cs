@@ -398,14 +398,16 @@ public partial class MainWindow
     }
 
     /// <summary>
-    /// 会话音量写入的唯一入口：引擎正接管（闪避中/渐变回程）时只更新其恢复锚点，
-    /// 绝不直写实际音量——否则与引擎的每拍渐变互相覆盖，听感就是音量抽动。
+    /// 会话音量写入的唯一入口：先经引擎记账——引擎正接管（闪避中/渐变回程）时默认只更新恢复锚点，
+    /// 绝不直写实际音量（否则与引擎的每拍渐变互相覆盖，听感就是音量抽动）；
+    /// 开启"手动接管"后，第一次用户调节即解除引擎控制，IsVolumeControlled 立即变 false，
+    /// 本方法随后的直写让用户值当场生效。
     /// </summary>
     private static void WriteChannelVolume(string instanceId, float volume)
     {
+        App.Engine.SetUserVolume(instanceId, volume);
         if (!App.Engine.IsVolumeControlled(instanceId))
             App.SetSessionVolume(instanceId, volume);
-        App.Engine.SetUserVolume(instanceId, volume);
     }
 
     /// <summary>滚轮：每格（delta 120）= 2%，逻辑目标值累加（快速滚动不丢格），每次调节都记录恢复值。</summary>

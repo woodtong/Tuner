@@ -41,6 +41,18 @@ public sealed class EngineSettings
     public int PollIntervalMs { get; set; } = 100;
 
     /// <summary>
+    /// 同目标多条规则同时命中时的裁决方式："priority"=优先级最高者胜（默认，同级时应用级优先于分组级）；
+    /// "deepest"=取闪避最深者（目标音量最低，如 20% 与 40% 同时命中压到 20%，并列时仍按优先级决出）。
+    /// </summary>
+    public string RuleConflict { get; set; } = "priority";
+
+    /// <summary>
+    /// 手动接管：闪避期间用户手动调节被压会话的音量即视为接管——该会话本轮闪避不再干预
+    /// （音量完全由用户控制），规则解除后的下一次触发恢复闪避。关闭时仅更新恢复锚点（渐变结束回到用户值）。
+    /// </summary>
+    public bool ManualTakeover { get; set; }
+
+    /// <summary>
     /// 音量曲线（全局）："linear"=线性；"square"=平方；"log"=对数（等响度）；"custom"=自定义（CustomCurve 控制点）。
     /// 界面上的音量百分比（混音台推子位置、规则目标音量）统一视为曲线上的位置，按曲线映射为实际振幅。
     /// </summary>

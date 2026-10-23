@@ -89,6 +89,7 @@ public static class ConfigStore
         s.FadeOutDurationMs = Math.Clamp(s.FadeOutDurationMs, 50, 10_000);
         s.FadeInDurationMs = Math.Clamp(s.FadeInDurationMs, 50, 10_000);
         s.FadeDurationMs = null; // 已迁移，保存时不再写旧字段
+        s.RuleConflict = s.RuleConflict == "deepest" ? "deepest" : "priority";
 
         // 音量曲线：非法值回退线性；自定义点规整（custom 但点数不足同样回退线性）
         s.VolumeCurve = VolumeCurve.Normalize(s.VolumeCurve);

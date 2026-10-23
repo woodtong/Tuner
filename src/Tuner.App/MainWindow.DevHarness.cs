@@ -317,6 +317,7 @@ public partial class MainWindow
                 enc.Save(fs);
             }
             App.Log("截图完成");
+            SettingsLayoutSelfCheck(Path.Combine(dir, "settings-check.txt"));
         }
         catch (Exception ex)
         {
@@ -328,4 +329,52 @@ public partial class MainWindow
             Application.Current.Shutdown();
         }
     }
+
+    /// <summary>
+    /// 设置页布局自检（--screenshot 模式专用，视觉通道不可用时的程序化验收）：
+    /// 验证新增设置行可见、顺序正确、无截断与横向溢出，结果写入文本文件。
+    /// </summary>
+    private void SettingsLayoutSelfCheck(string resultPath)
+    {
+        try
+        {
+            Tabs.SelectedIndex = 4;
+            UpdateLayout();
+            var lines = new List<string>();
+            void Check(string name, bool ok, string detail) =>
+                lines.Add($"{(ok ? "PASS" : "FAIL")} {name}: {detail}");
+
+            var suspend = PointOf(SetSuspend, this);
+            var conflict = PointOf(SetRuleConflict, this);
+            var takeover = PointOf(SetManualTakeover, this);
+            var hint = PointOf(SetRuleConflictHint, this);
+
+            Check("三行可见", SetSuspend.IsVisible && SetRuleConflict.IsVisible && SetManualTakeover.IsVisible,
+                $"启用闪避{Vis(SetSuspend)} 多规则{Vis(SetRuleConflict)} 接管{Vis(SetManualTakeover)}");
+            Check("顺序 启用闪避→多规则→接管",
+                suspend.Y < conflict.Y && conflict.Y < takeover.Y,
+                $"Y {suspend.Y:F0} < {conflict.Y:F0} < {takeover.Y:F0}");
+            Check("下拉选中项", SetRuleConflict.SelectedIndex >= 0,
+                $"选中={SetRuleConflict.SelectedItem}（SelectedIndex={SetRuleConflict.SelectedIndex}）");
+            Check("提示行可见且换行正常", SetRuleConflictHint.IsVisible && SetRuleConflictHint.ActualHeight >= 14,
+                $"高度 {SetRuleConflictHint.ActualHeight:F0}px");
+            Check("控件在窗内（无溢出）",
+                conflict.X >= 0 && takeover.X >= 0 &&
+                conflict.X + SetRuleConflict.ActualWidth <= ActualWidth &&
+                takeover.X + SetManualTakeover.ActualWidth <= ActualWidth,
+                $"conflict=({conflict.X:F0},{conflict.Y:F0}) {SetRuleConflict.ActualWidth:F0}宽 takeover=({takeover.X:F0},{takeover.Y:F0}) 窗宽{ActualWidth:F0}");
+
+            File.WriteAllLines(resultPath, lines);
+            App.Log("[selfcheck] 设置页布局自检完成 → " + resultPath);
+        }
+        catch (Exception ex)
+        {
+            File.WriteAllText(resultPath, "自检异常: " + ex);
+        }
+    }
+
+    private static System.Windows.Point PointOf(UIElement v, UIElement relativeTo) =>
+        v.TranslatePoint(new System.Windows.Point(0, 0), relativeTo);
+
+    private static string Vis(UIElement e) => e.IsVisible ? "√" : "×";
 }

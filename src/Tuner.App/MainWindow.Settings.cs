@@ -26,6 +26,12 @@ public partial class MainWindow
         SetFadeOut.Text = s.FadeOutDurationMs.ToString();
         SetFadeIn.Text = s.FadeInDurationMs.ToString();
         SetPoll.Text = s.PollIntervalMs.ToString();
+        if (SetRuleConflict.Items.Count == 0)
+            SetRuleConflict.Items.Add("取优先级最高");
+        if (SetRuleConflict.Items.Count == 1)
+            SetRuleConflict.Items.Add("取闪避最深（压得更低）");
+        SetRuleConflict.SelectedIndex = s.RuleConflict == "deepest" ? 1 : 0;
+        SetManualTakeover.IsChecked = s.ManualTakeover;
         SetSuspend.IsChecked = !App.Engine.Suspended; // 运行态开关：仅同步显示，不落盘
         try
         {
@@ -149,6 +155,8 @@ public partial class MainWindow
         s.FadeOutDurationMs = Math.Clamp(fadeOut, 50, 10_000);
         s.FadeInDurationMs = Math.Clamp(fadeIn, 50, 10_000);
         s.PollIntervalMs = Math.Clamp(poll, 10, 5_000);
+        s.RuleConflict = SetRuleConflict.SelectedIndex == 1 ? "deepest" : "priority";
+        s.ManualTakeover = SetManualTakeover.IsChecked == true;
         return true;
     }
 

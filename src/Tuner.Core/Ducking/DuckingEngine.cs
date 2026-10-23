@@ -23,6 +23,8 @@ public sealed class DuckingEngine : IDisposable
         public required string GroupName { get; init; }
         public required bool Speaking { get; init; }
         public required bool Ducked { get; init; }
+        /// <summary>用户已手动接管：本轮闪避不干预该会话，规则重新触发后恢复。</summary>
+        public required bool UserTookOver { get; init; }
         public required float CurrentVolume { get; init; }
         /// <summary>当前目标音量；null 表示保持原音量。</summary>
         public required float? TargetVolume { get; init; }
@@ -37,6 +39,7 @@ public sealed class DuckingEngine : IDisposable
         public bool Speaking;
         public DateTime? BelowSince;
         public bool Ducked;
+        public bool UserTookOver;  // 手动接管：本轮闪避不干预，规则解除即复位
         public DateTime UnduckAt = DateTime.MinValue; // 上次结束闪避的时刻（锚点保护用）
         public float OriginalVolume = 1f;
         public float CurrentVolume = -1f; // -1 = 未知
@@ -120,6 +123,7 @@ public sealed class DuckingEngine : IDisposable
     private string? _defaultGroupId;
     private Dictionary<string, string>? _groupNames; // 分组 Id→名称（UI 快照用，换配置才重建）
     private CurveSpec _globalCurve = CurveSpec.Linear; // 全局音量曲线（换配置才重建）
+    private bool _conflictDeepest; // 多规则裁决语义（RuleConflict=="deepest"，换配置才重建）
 
     private Thread? _thread;
     private CancellationTokenSource? _cts;
@@ -240,16 +244,33 @@ public sealed class DuckingEngine : IDisposable
     }
 
     /// <summary>
-    /// 用户在混音台手动调整某会话音量：若引擎正接管该会话（闪避中，或正在渐变回原音量），
-    /// 仅更新其"恢复锚点"（渐变结束时回到用户调整后的值），实际音量仍由规则接管；
+    /// 用户在混音台手动调整某会话音量。引擎正接管该会话（闪避中，或正在渐变回原音量）时：
+    /// 默认仅更新其"恢复锚点"（渐变结束时回到用户调整后的值），实际音量仍由规则接管；
+    /// 开启手动接管（Settings.ManualTakeover）后，用户调节即视为接管——本轮闪避不再干预该会话，
+    /// 音量以用户值为准（调用方随后直写生效），规则解除后的下一次触发恢复闪避。
     /// 引擎未接管的会话无需处理（引擎不写，不会覆盖用户的调整）。
     /// </summary>
     public void SetUserVolume(string instanceId, float volume)
     {
         lock (_gate)
         {
-            if (_tracked.TryGetValue(instanceId, out var t) && EngineControlling(t))
-                t.OriginalVolume = Math.Clamp(volume, 0f, 1f);
+            if (!_tracked.TryGetValue(instanceId, out var t) || !EngineControlling(t))
+                return;
+            var v = Math.Clamp(volume, 0f, 1f);
+            if (_config.Settings.ManualTakeover)
+            {
+                if (!t.UserTookOver)
+                {
+                    t.UserTookOver = true;
+                    Diagnostics?.Invoke($"用户手动接管：{t.Session.ProcessName} 本轮闪避不再干预（规则重新触发后恢复）");
+                }
+                t.Ducked = false;
+                t.TargetVolume = null;
+                t.OriginalVolume = v;
+                t.CurrentVolume = v;
+                return;
+            }
+            t.OriginalVolume = v;
         }
     }
 
@@ -416,6 +437,16 @@ public sealed class DuckingEngine : IDisposable
                 var rule = EvaluateWinner(t, plan, sounding);
                 if (rule is not null && _engagedNow.Add(rule.Id) && !_ruleEpisode.ContainsKey(rule.Id))
                     _engagedNew.Add(rule.Id); // 本拍从"未生效"进入"生效"：记一轮新的生效期
+
+                // 手动接管：音量完全由用户控制，本轮不评估不写（规则命中仍记账）；规则解除即复位，
+                // 下一次触发重新接管
+                if (t.UserTookOver)
+                {
+                    if (rule is not null)
+                        continue;
+                    t.UserTookOver = false;
+                }
+
                 float target;
                 if (rule is not null)
                 {
@@ -599,7 +630,8 @@ public sealed class DuckingEngine : IDisposable
 
     /// <summary>
     /// 为单个会话挑选生效规则：触发选择器"在播"、目标选择器命中且不是触发者自身。
-    /// 优先级高者胜；同级时应用级规则优先于分组级；再同级取先配置者。
+    /// 裁决方式按 Settings.RuleConflict：优先级模式高者胜（同级时应用级优先于分组级）；
+    /// 最深模式取目标音量更低者（并列时仍按优先级决出）。
     /// </summary>
     private DuckingRuleConfig? EvaluateWinner(
         Tracked t, List<RulePlan> plan, HashSet<string> sounding)
@@ -688,6 +720,7 @@ public sealed class DuckingEngine : IDisposable
         }
 
         _globalCurve = VolumeCurve.ResolveGlobal(config);
+        _conflictDeepest = config.Settings.RuleConflict == "deepest";
         _planFor = config;
     }
 
@@ -738,9 +771,17 @@ public sealed class DuckingEngine : IDisposable
     private static string SoundingKey(DuckingRuleConfig rule, RuleRef selector) =>
         (rule.DetectionMode == "state" ? "state:" : "sound:") + ConfigStore.RefKey(selector);
 
-    private static bool Better(DuckingRuleConfig a, DuckingRuleConfig b) =>
+    /// <summary>优先级裁决：优先级高者胜；同级时应用级规则优先于分组级。</summary>
+    private static bool BetterPriority(DuckingRuleConfig a, DuckingRuleConfig b) =>
         a.Priority > b.Priority ||
         (a.Priority == b.Priority && a.Target!.Type == "app" && b.Target!.Type != "app");
+
+    /// <summary>两条命中规则谁生效：最深模式（RuleConflict=="deepest"）取闪避更深者（目标音量更低，并列按优先级），否则按优先级。</summary>
+    private bool Better(DuckingRuleConfig a, DuckingRuleConfig b) =>
+        _conflictDeepest
+            ? a.TargetVolumePercent < b.TargetVolumePercent ||
+              (a.TargetVolumePercent == b.TargetVolumePercent && BetterPriority(a, b))
+            : BetterPriority(a, b);
 
     /// <summary>按归一化进程名解析分组：查 EnsurePlan 建好的映射，未匹配落默认组。</summary>
     private string ResolveGroup(TunerConfig config, string normName)
@@ -778,6 +819,7 @@ public sealed class DuckingEngine : IDisposable
             GroupName = groupNames.GetValueOrDefault(t.GroupId, t.GroupId),
             Speaking = t.Speaking,
             Ducked = t.Ducked,
+            UserTookOver = t.UserTookOver,
             CurrentVolume = t.CurrentVolume,
             TargetVolume = t.TargetVolume,
             OriginalVolume = t.OriginalVolume,

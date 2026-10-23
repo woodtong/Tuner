@@ -690,7 +690,7 @@
                                          Width="80" HorizontalAlignment="Left" TextChanged="OnRuleFieldChanged" />
                                 <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource Hint}" FontSize="11"
                                            Margin="0,4,0,0" TextWrapping="Wrap"
-                                           Text="同一目标被多条规则命中时，优先级高者生效；同级时应用级优先于分组级" />
+                                           Text="同一目标被多条规则命中时按优先级决出（高者生效，同级时应用级优先于分组级）；设置页「多规则同时命中」可改为取闪避最深" />
                             </Grid>
 
                             <!-- 规则级闪避节奏覆盖：留空跟随设置页全局值 -->
@@ -810,6 +810,36 @@
                                                   Checked="OnSuspendSwitchChanged" Unchecked="OnSuspendSwitchChanged"
                                                   ToolTip="关闭＝暂停全部规则并还原音量；重新打开后规则立即恢复生效" />
                                         <TextBlock Text="关闭＝暂停全部规则（被压音量立即还原）"
+                                                   Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                                    </StackPanel>
+                                </Grid>
+
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="230" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="多规则同时命中" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="同一会话被多条规则命中时，按哪种方式决定最终压到的音量" />
+                                    <ComboBox Grid.Column="1" x:Name="SetRuleConflict" Style="{StaticResource Combo}"
+                                              Width="230" HorizontalAlignment="Left"
+                                              SelectionChanged="OnSettingsFieldChanged" />
+                                </Grid>
+                                <TextBlock x:Name="SetRuleConflictHint"
+                                           Text="「取闪避最深」＝压得更低者说了算（如 20% 与 40% 同时命中 → 压到 20%）；规则页的优先级字段仅在并列时参与决出"
+                                           Style="{StaticResource Hint}" Margin="0,8,0,0" />
+
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="230" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="手动调节即接管" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="闪避期间手动拖动被压应用的音量＝接管：本轮闪避不再干预该会话，规则重新触发后恢复" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <CheckBox x:Name="SetManualTakeover" Style="{StaticResource Switch}"
+                                                  Checked="OnSettingsFieldChanged" Unchecked="OnSettingsFieldChanged" />
+                                        <TextBlock Text="手动调过音量的会话本轮不再被压低"
                                                    Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="12,0,0,0" />
                                     </StackPanel>
                                 </Grid>
