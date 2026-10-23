@@ -93,8 +93,8 @@ public sealed class DuckingEngine : IDisposable
 
     private const int FadeTickMs = 50;
 
-    private readonly AudioSessionMonitor _monitor;      // 默认播放设备（多媒体角色，主设备）
-    private readonly AudioSessionMonitor? _comms;       // 默认通信设备（可空；同一物理设备时靠 InstanceId 去重）
+    private readonly IAudioSessionMonitor _monitor;   // 默认播放设备（多媒体角色，主设备）
+    private readonly IAudioSessionMonitor? _comms;    // 默认通信设备（可空；同一物理设备时靠 InstanceId 去重）
     private readonly object _gate = new();
     private readonly Dictionary<string, Tracked> _tracked = new();
     private readonly Dictionary<string, DateTime> _lastSounding = new(); // 分组最近一次真实出声时刻
@@ -102,7 +102,7 @@ public sealed class DuckingEngine : IDisposable
     // 每拍复用的遍历缓冲（引擎 50ms 一拍，避免逐拍分配）
     private readonly HashSet<string> _seen = new(StringComparer.Ordinal);
     private readonly List<string> _gone = new();
-    private readonly MediaSessionTracker _mediaTracker = new();
+    private readonly IMediaSessionTracker _mediaTracker;
     private TunerConfig _config;
     private volatile bool _suspended;
     private string? _lastDeviceName; // 设备切换诊断事件（名称变化即重报）
@@ -128,12 +128,25 @@ public sealed class DuckingEngine : IDisposable
     private Thread? _thread;
     private CancellationTokenSource? _cts;
 
-    public DuckingEngine(AudioSessionMonitor monitor, TunerConfig config, AudioSessionMonitor? commsMonitor = null)
+    /// <summary>媒体会话跟踪器由宿主注入（Windows＝SMTC；无实现可传 null，state 判定退化为会话 Active 兜底）。</summary>
+    public DuckingEngine(IAudioSessionMonitor monitor, TunerConfig config,
+        IAudioSessionMonitor? commsMonitor = null, IMediaSessionTracker? mediaTracker = null)
     {
         _monitor = monitor;
         _comms = commsMonitor;
+        _mediaTracker = mediaTracker ?? new NullMediaSessionTracker();
         _config = config;
         ConfigStore.Normalize(config); // 旧字段迁移（TriggerGroupId → Trigger 选择器）
+    }
+
+    /// <summary>空实现：无媒体会话信号源时 state 判定全部落到会话 Active 兜底。</summary>
+    private sealed class NullMediaSessionTracker : IMediaSessionTracker
+    {
+        public void Start() { }
+        public bool? IsPlaying(string processName) => null;
+        public IReadOnlyDictionary<string, string> Snapshot() =>
+            new Dictionary<string, string>();
+        public void Dispose() { }
     }
 
     /// <summary>全部会话的当前引擎状态。</summary>

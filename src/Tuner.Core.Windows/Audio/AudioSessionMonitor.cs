@@ -12,7 +12,7 @@ namespace Tuner.Core.Audio;
 /// 通过 role 参数可监控"默认通信设备"（通话走独立耳机的场景），与多媒体监控并行使用时
 /// 由上层按 InstanceId 去重（同一物理设备被设为双默认时会枚举出相同会话）。
 /// </summary>
-public sealed class AudioSessionMonitor : IDisposable
+public sealed class AudioSessionMonitor : IAudioSessionMonitor
 {
     private readonly int _pollIntervalMs;
     private readonly int _fullReconcilePeriodTicks;

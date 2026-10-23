@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Tuner.Core\Tuner.Core.csproj" />
+    <ProjectReference Include="..\Tuner.Core.Windows\Tuner.Core.Windows.csproj" />
   </ItemGroup>
 
 </Project>

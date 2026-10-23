@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Windows 平台实现：WASAPI 会话监控（NAudio）+ SMTC 媒体会话跟踪（WinRT）。
+       TFM 继承全局 net8.0-windows10.0.19041.0；命名空间保持 Tuner.Core.*，引用方零改动。 -->
+  <ItemGroup>
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <ProjectReference Include="..\Tuner.Core\Tuner.Core.csproj" />
+  </ItemGroup>
+
+</Project>

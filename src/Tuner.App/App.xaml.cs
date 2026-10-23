@@ -114,7 +114,7 @@ public partial class App : Application
         Monitor = new AudioSessionMonitor(Math.Max(10, Config.Settings.PollIntervalMs));
         CommsMonitor = new AudioSessionMonitor(Math.Max(10, Config.Settings.PollIntervalMs),
             NAudio.CoreAudioApi.Role.Communications);
-        Engine = new DuckingEngine(Monitor, Config, CommsMonitor);
+        Engine = new DuckingEngine(Monitor, Config, CommsMonitor, new Tuner.Core.Media.MediaSessionTracker());
         Monitor.Diagnostics += m => Log("[监控] " + m);
         CommsMonitor.Diagnostics += m => Log("[监控-通信] " + m);
         Engine.Diagnostics += m => Log("[引擎] " + m);

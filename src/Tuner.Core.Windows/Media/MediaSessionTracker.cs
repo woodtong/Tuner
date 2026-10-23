@@ -10,7 +10,7 @@ namespace Tuner.Core.Media;
 /// （暂停不是注销会话，而是状态翻转），是区分"歌间静音"与"真正停止"的权威信号。
 /// AUMID 与进程名用"互相包含 + 内置别名表"启发式匹配，未命中时调用方回退到峰值判定。
 /// </summary>
-public sealed class MediaSessionTracker : IDisposable
+public sealed class MediaSessionTracker : IMediaSessionTracker
 {
     private readonly object _gate = new();
     private readonly object _subscribeGate = new();

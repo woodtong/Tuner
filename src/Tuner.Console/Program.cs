@@ -95,7 +95,7 @@ if (durationSec > 0)
 
 var sync = new object();
 var monitor = new AudioSessionMonitor(intervalMs);
-var engine = new DuckingEngine(monitor, config); // 释放顺序：先停引擎（还原音量）再停监控
+var engine = new DuckingEngine(monitor, config, null, new Tuner.Core.Media.MediaSessionTracker()); // 释放顺序：先停引擎（还原音量）再停监控
 monitor.Diagnostics += msg => { lock (sync) Console.Error.WriteLine($"[监控诊断] {msg}"); };
 engine.Diagnostics += msg => { lock (sync) Console.Error.WriteLine($"[引擎诊断] {msg}"); };
 

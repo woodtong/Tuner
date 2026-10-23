@@ -1,7 +1,13 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
+  <!-- 纯逻辑核心（引擎/配置/曲线/抽象接口）：跨平台 TFM（覆盖全局的 Windows TFM），无任何 Windows API 依赖。
+       平台实现见 Tuner.Core.Windows（WASAPI/SMTC）；其他平台按 IAudioSessionMonitor / IMediaSessionTracker 接入。 -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
   <ItemGroup>
-    <PackageReference Include="NAudio" Version="2.2.1" />
+    <InternalsVisibleTo Include="Tuner.Core.Windows" />
   </ItemGroup>
 
 </Project>
