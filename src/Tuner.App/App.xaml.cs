@@ -92,7 +92,7 @@ public partial class App : Application
             _singleInstanceMutex = new Mutex(true, @"Local\Tuner_SingleInstance", out var createdNew);
             if (!createdNew)
             {
-                MessageBox.Show("Tuner 已在运行（请检查系统托盘）。", "Tuner");
+                MessageBox.Show(Lang.Get("S.App.AlreadyRunning"), "Tuner");
                 Shutdown();
                 return;
             }
@@ -104,6 +104,13 @@ public partial class App : Application
         DispatcherUnhandledException += (_, ex) => Log("未处理异常（UI 线程）: " + ex.Exception);
 
         Config = ConfigStore.Load(ConfigStore.ActivePath);
+        Lang.Apply(Lang.Resolve(Config.Settings.Language)); // 界面语言：MainWindow 创建前装载（DynamicResource 首次取值即正确）
+        {
+            // 开发参数 --lang <code>：强制界面语言（英文渲染截图验证用；不落盘）
+            var li = Array.IndexOf(e.Args, "--lang");
+            if (li >= 0 && li + 1 < e.Args.Length)
+                Lang.Apply(e.Args[li + 1]);
+        }
         Monitor = new AudioSessionMonitor(Math.Max(10, Config.Settings.PollIntervalMs));
         CommsMonitor = new AudioSessionMonitor(Math.Max(10, Config.Settings.PollIntervalMs),
             NAudio.CoreAudioApi.Role.Communications);
@@ -117,6 +124,8 @@ public partial class App : Application
             _tray?.SyncSuspendState(Engine.Suspended);
             _mainWindow?.Dispatcher.BeginInvoke(() => _mainWindow.SyncSuspendUi(Engine.Suspended));
         };
+        // 界面语言切换：托盘菜单/悬停文字随新语言重建
+        Lang.LanguageChanged += () => _tray?.ApplyLanguage();
 
         try
         {
@@ -127,7 +136,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log("启动失败: " + ex.Message);
-            MessageBox.Show($"无法访问默认播放设备：{ex.Message}", "Tuner 启动失败");
+            MessageBox.Show(Lang.Get("S.App.StartFail", ex.Message), "Tuner");
             Shutdown();
             return;
         }
@@ -161,7 +170,7 @@ public partial class App : Application
         else
             Log("静默启动（--minimized）：不弹窗口，驻留托盘");
         if (!minimized)
-            _tray.ShowBalloon("Tuner 已启动", "正在监控音频会话并执行分组闪避。关闭窗口即最小化到托盘。");
+            _tray.ShowBalloon(Lang.Get("S.Tray.BalloonTitle"), Lang.Get("S.Tray.BalloonText"));
 
         if (smoke)
         {

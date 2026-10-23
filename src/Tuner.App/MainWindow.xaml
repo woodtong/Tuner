@@ -22,15 +22,15 @@
         <DockPanel Grid.Row="0" Margin="2,0,2,14" LastChildFill="False">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="Tuner" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimary}" />
-                <TextBlock Text="分组音频闪避" FontSize="12.5" Foreground="{StaticResource TextFaint}"
+                <TextBlock Text="{DynamicResource S.App.Subtitle}" FontSize="12.5" Foreground="{StaticResource TextFaint}"
                            VerticalAlignment="Bottom" Margin="9,0,0,3" />
             </StackPanel>
             <controls:LedMeter DockPanel.Dock="Right" x:Name="MasterMeter" Width="110" Height="8" Segments="14"
-                               VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="设备总峰值" />
+                               VerticalAlignment="Center" Margin="0,0,10,0" ToolTip="{DynamicResource S.Tooltip.MasterPeak}" />
             <Button DockPanel.Dock="Right" x:Name="DeviceButton" Style="{StaticResource Btn}"
                     HorizontalContentAlignment="Stretch" Padding="11,4" Margin="0,0,10,0"
                     VerticalAlignment="Center" Click="OnDeviceButtonClicked"
-                    ToolTip="点击切换默认输出设备">
+                    ToolTip="{DynamicResource S.Tooltip.SwitchDevice}">
                 <StackPanel Orientation="Horizontal">
                     <Ellipse Width="7" Height="7" Fill="{StaticResource Green}" VerticalAlignment="Center" />
                     <TextBlock x:Name="DeviceText" Margin="7,0,0,0" FontSize="12"
@@ -43,8 +43,8 @@
             <Border DockPanel.Dock="Right" x:Name="PausedChip" CornerRadius="5" Padding="9,3" Margin="0,0,10,0"
                     Background="{StaticResource AmberSoft}" BorderBrush="{StaticResource AmberBadgeBorder}"
                     BorderThickness="1" VerticalAlignment="Center" Visibility="Collapsed"
-                    ToolTip="闪避已暂停：全部规则停用、被压音量已还原。托盘菜单或设置页可恢复">
-                <TextBlock Text="闪避已暂停" FontSize="11.5" FontWeight="SemiBold"
+                    ToolTip="{DynamicResource S.PausedBadgeTip}">
+                <TextBlock Text="{DynamicResource S.PausedBadge}" FontSize="11.5" FontWeight="SemiBold"
                            Foreground="{StaticResource AmberText}" />
             </Border>
         </DockPanel>
@@ -56,7 +56,7 @@
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE9D9;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
-                            <TextBlock Text="实时状态" Margin="9,0,0,0" />
+                            <TextBlock Text="{DynamicResource S.Tab.Status}" Margin="9,0,0,0" />
                         </StackPanel>
                     </TabItem.Header>
                 <Grid>
@@ -71,7 +71,7 @@
                         <StackPanel Orientation="Horizontal">
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="7" Height="7" Fill="{StaticResource TextSecondary}" VerticalAlignment="Center" />
-                                <TextBlock Text="会话" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="7,0,0,0" />
+                                <TextBlock Text="{DynamicResource S.Stat.Sessions}" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="7,0,0,0" />
                                 <TextBlock x:Name="StatTotal" FontSize="14" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" Margin="7,0,0,0"
                                            VerticalAlignment="Center" />
@@ -79,7 +79,7 @@
                             <Rectangle Width="1" Fill="{StaticResource CardBorder}" Margin="14,1" />
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="7" Height="7" Fill="{StaticResource Green}" VerticalAlignment="Center" />
-                                <TextBlock Text="出声中" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="7,0,0,0" />
+                                <TextBlock Text="{DynamicResource S.Stat.Speaking}" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="7,0,0,0" />
                                 <TextBlock x:Name="StatSpeaking" FontSize="14" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" Margin="7,0,0,0"
                                            VerticalAlignment="Center" />
@@ -87,7 +87,7 @@
                             <Rectangle Width="1" Fill="{StaticResource CardBorder}" Margin="14,1" />
                             <StackPanel Orientation="Horizontal">
                                 <Ellipse Width="7" Height="7" Fill="{StaticResource Amber}" VerticalAlignment="Center" />
-                                <TextBlock Text="闪避中" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="7,0,0,0" />
+                                <TextBlock Text="{DynamicResource S.Stat.Ducking}" Style="{StaticResource Label}" VerticalAlignment="Center" Margin="7,0,0,0" />
                                 <TextBlock x:Name="StatDucking" FontSize="14" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" Margin="7,0,0,0"
                                            VerticalAlignment="Center" />
@@ -181,7 +181,7 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <TextBlock x:Name="StatusEmpty" Text="暂无音频会话 — 让任意应用播放声音后会自动出现在这里"
+                            <TextBlock x:Name="StatusEmpty" Text="{DynamicResource S.Status.Empty}"
                                        HorizontalAlignment="Center" Margin="0,60,0,0" Style="{StaticResource Hint}" />
                         </StackPanel>
                     </ScrollViewer>
@@ -193,7 +193,7 @@
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE767;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
-                            <TextBlock Text="音量" Margin="9,0,0,0" />
+                            <TextBlock Text="{DynamicResource S.Tab.Volume}" Margin="9,0,0,0" />
                         </StackPanel>
                     </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -205,8 +205,7 @@
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Row="0" x:Name="OutputTitle" FontSize="13.5" FontWeight="SemiBold"
-                               Foreground="{StaticResource TextPrimary}" Margin="2,0,0,10"
-                               Text="输出与设备" />
+                               Foreground="{StaticResource TextPrimary}" Margin="2,0,0,10" />
 
                     <Border Grid.Row="1" Style="{StaticResource Card}" Padding="14,12" VerticalAlignment="Top">
                         <StackPanel>
@@ -215,12 +214,12 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="调音台 · MASTER + 应用通道" FontSize="13.5" FontWeight="SemiBold"
+                                <TextBlock Text="{DynamicResource S.Mixer.Title}" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" />
-                                <TextBlock Grid.Column="1" Text="MASTER=默认播放设备；被闪避的应用由规则接管，此时调整将更新其恢复目标"
+                                <TextBlock Grid.Column="1" Text="{DynamicResource S.Mixer.Hint}"
                                            Style="{StaticResource Hint}" HorizontalAlignment="Right"
                                            Margin="16,0,0,0" MaxWidth="400"
-                                           TextAlignment="Right" />
+                                           TextAlignment="Right" TextWrapping="Wrap" />
                             </Grid>
                             <ScrollViewer x:Name="ChannelsScroller"
                                           HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
@@ -237,12 +236,12 @@
                                                            Foreground="{StaticResource Accent}"
                                                            HorizontalAlignment="Center" VerticalAlignment="Center" />
                                             </Border>
-                                            <TextBlock Text="（设备）" FontSize="12" Height="32"
+                                            <TextBlock Text="{DynamicResource S.Mixer.MasterDevice}" FontSize="12" Height="32"
                                                        Foreground="{StaticResource TextSecondary}"
                                                        TextAlignment="Center" />
                                             <controls:LedMeter Height="110" Width="14" Orientation="Vertical" Segments="16"
                                                                x:Name="MasterMeterBig" HorizontalAlignment="Center"
-                                                               ToolTip="设备总峰值" />
+                                                               ToolTip="{DynamicResource S.Tooltip.MasterPeak}" />
                                             <Grid Margin="0,10,0,0" HorizontalAlignment="Center">
                                                 <Slider x:Name="MasterSlider" Style="{StaticResource FaderV}" Height="130"
                                                         Orientation="Vertical" Minimum="0" Maximum="100"
@@ -254,7 +253,7 @@
                                             <TextBlock x:Name="MasterVolText" FontFamily="Consolas" FontSize="12"
                                                        Foreground="{StaticResource TextSecondary}" Margin="0,6,0,0"
                                                        HorizontalAlignment="Center" />
-                                            <Button x:Name="MasterMuteBtn" Content="静音" Width="76" Margin="0,8,0,0"
+                                            <Button x:Name="MasterMuteBtn" Content="{DynamicResource S.Mixer.Mute}" Width="76" Margin="0,8,0,0"
                                                     Style="{StaticResource Btn}" Click="OnMasterMuteClick" />
                                         </StackPanel>
                                     </Border>
@@ -317,21 +316,21 @@
 
                             <!-- 音量曲线：百分比＝推子位置，实际振幅按曲线映射（对数为等响度，可自定义） -->
                             <Rectangle Height="1" Fill="{StaticResource CardBorder}" Margin="2,14,2,0" />
-                            <Grid Margin="2,11,2,0" ToolTip="推子与闪避目标里的百分比都是曲线上的位置，实际音量按曲线换算；切换曲线不动当前音量，只改调整手感">
+                            <Grid Margin="2,11,2,0" ToolTip="{DynamicResource S.Curve.Tooltip}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="音量曲线" FontSize="13.5" FontWeight="SemiBold"
+                                <TextBlock Text="{DynamicResource S.Curve.Title}" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center" />
                                 <ComboBox x:Name="VolumeCurveCombo" Grid.Column="1" Style="{StaticResource Combo}"
                                           Width="150" Margin="14,0,0,0" VerticalAlignment="Center"
                                           SelectionChanged="OnVolumeCurveChanged">
-                                    <ComboBoxItem>线性</ComboBoxItem>
-                                    <ComboBoxItem>平方</ComboBoxItem>
-                                    <ComboBoxItem>对数（等响度）</ComboBoxItem>
-                                    <ComboBoxItem>自定义</ComboBoxItem>
+                                    <ComboBoxItem Content="{DynamicResource S.Curve.Linear}" />
+                                    <ComboBoxItem Content="{DynamicResource S.Curve.Square}" />
+                                    <ComboBoxItem Content="{DynamicResource S.Curve.Log}" />
+                                    <ComboBoxItem Content="{DynamicResource S.Curve.Custom}" />
                                 </ComboBox>
                                 <TextBlock x:Name="VolumeCurveHint" Grid.Column="2" Style="{StaticResource Hint}"
                                            Margin="14,0,0,0" VerticalAlignment="Center"
@@ -351,7 +350,7 @@
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE71D;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
-                            <TextBlock Text="分组" Margin="9,0,0,0" />
+                            <TextBlock Text="{DynamicResource S.Tab.Groups}" Margin="9,0,0,0" />
                         </StackPanel>
                     </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -362,7 +361,7 @@
                     </Grid.ColumnDefinitions>
 
                     <DockPanel Grid.Column="0" Margin="0,0,12,0">
-                        <Button DockPanel.Dock="Bottom" Content="＋ 新建分组" Style="{StaticResource BtnPrimary}"
+                        <Button DockPanel.Dock="Bottom" Content="{DynamicResource S.Group.New}" Style="{StaticResource BtnPrimary}"
                                 HorizontalAlignment="Stretch" Margin="0,4,0,0" Click="OnGroupAdd" />
                         <ListBox x:Name="GroupList" Style="{StaticResource CardList}"
                                  SelectionChanged="OnGroupSelected">
@@ -380,7 +379,7 @@
                                                 <Border Background="{StaticResource AccentSoft}" CornerRadius="4"
                                                         Padding="5,1" Margin="7,0,0,0" VerticalAlignment="Center"
                                                         Visibility="{Binding DefaultVisibility}">
-                                                    <TextBlock Text="默认" FontSize="10.5" Foreground="{StaticResource Accent}" />
+                                                    <TextBlock Text="{DynamicResource S.Group.DefaultBadge}" FontSize="10.5" Foreground="{StaticResource Accent}" />
                                                 </Border>
                                             </StackPanel>
                                             <TextBlock Text="{Binding CountText}" FontSize="11"
@@ -409,14 +408,14 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <StackPanel>
-                                    <TextBlock Text="组名" Style="{StaticResource Label}" />
+                                    <TextBlock Text="{DynamicResource S.Group.Name}" Style="{StaticResource Label}" />
                                     <TextBox x:Name="GroupNameBox" Style="{StaticResource Tb}" Margin="0,6,0,0"
                                              HorizontalAlignment="Stretch" MaxWidth="320"
                                              LostFocus="OnGroupNameChanged" />
                                 </StackPanel>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="16,0,0,0"
                                             VerticalAlignment="Center">
-                                    <CheckBox x:Name="DefaultCheck" Content="设为默认组"
+                                    <CheckBox x:Name="DefaultCheck" Content="{DynamicResource S.Group.SetDefault}"
                                               VerticalAlignment="Center"
                                               Checked="OnDefaultChanged" Unchecked="OnDefaultChanged" />
                                     <Border Width="17" Height="17" CornerRadius="9" Margin="8,0,0,0"
@@ -438,15 +437,15 @@
                                             <ToolTip>
                                                 <TextBlock MaxWidth="430" LineHeight="17"
                                                            Foreground="{StaticResource TextSecondary}" FontSize="12">
-                                                    <Run Text="默认组有且仅有一个：默认组不能被取消勾选（尝试取消会有提示），更换默认组请在目标分组上直接勾选。" />
+                                                    <Run Text="{DynamicResource S.Group.DefaultTip1}" />
                                                     <LineBreak />
-                                                    <Run Text="默认组是兜底分组：进程名未命中任何分组的应用，会自动归入默认组（左侧列表带「默认」徽章，计数为「承接未匹配应用」）。" />
+                                                    <Run Text="{DynamicResource S.Group.DefaultTip2}" />
                                                     <LineBreak />
-                                                    <Run Text="规则以分组为对象：把规则目标设为默认组，等于作用于全部其余应用，不用逐一列举。" />
+                                                    <Run Text="{DynamicResource S.Group.DefaultTip3}" />
                                                     <LineBreak />
-                                                    <Run Text="注意：默认组若同时被用作规则的触发源，则任何未分类应用出声都会触发该规则。" />
+                                                    <Run Text="{DynamicResource S.Group.DefaultTip4}" />
                                                     <LineBreak />
-                                                    <Run Text="至少保留一个默认组；默认组不可删除，需先把其他分组设为默认。" />
+                                                    <Run Text="{DynamicResource S.Group.DefaultTip5}" />
                                                 </TextBlock>
                                             </ToolTip>
                                         </Border.ToolTip>
@@ -459,11 +458,11 @@
                                     BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
                                     CornerRadius="9" Padding="14,12" Margin="0,16,0,0">
                                 <StackPanel>
-                                    <TextBlock Text="进程匹配" FontSize="12.5" FontWeight="SemiBold"
+                                    <TextBlock Text="{DynamicResource S.Group.ProcMatch}" FontSize="12.5" FontWeight="SemiBold"
                                                Foreground="{StaticResource TextPrimary}" />
-                                    <TextBlock Text="按进程名匹配，不区分大小写；填 system sounds 可匹配系统提示音"
+                                    <TextBlock Text="{DynamicResource S.Group.ProcMatchHint}"
                                                Style="{StaticResource Hint}" Margin="0,4,0,10" />
-                                    <TextBlock x:Name="GroupProcEmpty" Text="（尚未添加进程）"
+                                    <TextBlock x:Name="GroupProcEmpty" Text="{DynamicResource S.Group.ProcEmpty}"
                                                Style="{StaticResource Hint}" Margin="0,2,0,2" />
                                     <ScrollViewer MaxHeight="150" VerticalScrollBarVisibility="Auto">
                                         <ItemsControl x:Name="GroupProcesses">
@@ -483,7 +482,7 @@
                                                                     Padding="5,0" Margin="8,0,0,0" BorderThickness="0"
                                                                     Background="Transparent" Tag="{Binding}"
                                                                     Click="OnProcRemoveItem"
-                                                                    ToolTip="从本分组移除该进程" />
+                                                                    ToolTip="{DynamicResource S.Group.RemoveProcTip}" />
                                                         </StackPanel>
                                                     </Border>
                                                 </DataTemplate>
@@ -498,7 +497,7 @@
                                     BorderBrush="{StaticResource CardBorder}" BorderThickness="1"
                                     CornerRadius="9" Padding="14,12" Margin="0,10,0,0">
                                 <StackPanel>
-                                    <TextBlock Text="添加进程" FontSize="12.5" FontWeight="SemiBold"
+                                    <TextBlock Text="{DynamicResource S.Group.AddProc}" FontSize="12.5" FontWeight="SemiBold"
                                                Foreground="{StaticResource TextPrimary}" />
                                     <Grid Margin="0,10,0,0">
                                         <Grid.ColumnDefinitions>
@@ -508,10 +507,10 @@
                                         <TextBox x:Name="NewProcBox" Style="{StaticResource Tb}"
                                                  VerticalContentAlignment="Center"
                                                  KeyDown="OnProcBoxKeyDown" />
-                                        <Button Grid.Column="1" Content="添加" Style="{StaticResource Btn}" Margin="8,0,0,0"
+                                        <Button Grid.Column="1" Content="{DynamicResource S.Group.Add}" Style="{StaticResource Btn}" Margin="8,0,0,0"
                                                 Click="OnProcAdd" />
                                     </Grid>
-                                    <TextBlock Text="从运行中的应用添加（预注册）" FontSize="11"
+                                    <TextBlock Text="{DynamicResource S.Group.FromRunning}" FontSize="11"
                                                Foreground="{StaticResource TextFaint}" Margin="0,12,0,0" />
                                     <Grid Margin="0,6,0,0">
                                         <Grid.ColumnDefinitions>
@@ -520,11 +519,11 @@
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
                                         <ComboBox x:Name="RunningProcs" Style="{StaticResource Combo}" MaxWidth="280" />
-                                        <Button Grid.Column="1" Content="刷新" Style="{StaticResource Btn}" Margin="8,0,0,0"
+                                        <Button Grid.Column="1" Content="{DynamicResource S.Group.Refresh}" Style="{StaticResource Btn}" Margin="8,0,0,0"
                                                 Click="OnRefreshRunning" />
-                                        <Button Grid.Column="2" Content="添加选中" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0"
+                                        <Button Grid.Column="2" Content="{DynamicResource S.Group.AddSelected}" Style="{StaticResource BtnPrimary}" Margin="8,0,0,0"
                                                 Click="OnProcAddRunning"
-                                                ToolTip="该应用的音频会话一旦出现，立即按本分组规则处理" />
+                                                ToolTip="{DynamicResource S.Group.AddSelectedTip}" />
                                     </Grid>
                                 </StackPanel>
                             </Border>
@@ -535,8 +534,8 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="0,0,16,0"
-                                           Text="提示：浏览器各标签页共享一个会话，只能按整个浏览器分组；独占模式 / ASIO 音频无法检测。" />
-                                <Button Grid.Column="1" Content="删除分组" Style="{StaticResource BtnDanger}"
+                                           Text="{DynamicResource S.Group.BrowserHint}" TextWrapping="Wrap" />
+                                <Button Grid.Column="1" Content="{DynamicResource S.Group.Delete}" Style="{StaticResource BtnDanger}"
                                         VerticalAlignment="Center" Click="OnGroupDelete" />
                             </Grid>
                         </Grid>
@@ -550,7 +549,7 @@
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE70F;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
-                            <TextBlock Text="规则" Margin="9,0,0,0" />
+                            <TextBlock Text="{DynamicResource S.Tab.Rules}" Margin="9,0,0,0" />
                         </StackPanel>
                     </TabItem.Header>
                 <Grid>
@@ -560,7 +559,7 @@
                     </Grid.ColumnDefinitions>
 
                     <DockPanel Grid.Column="0" Margin="0,0,12,0">
-                        <Button DockPanel.Dock="Bottom" Content="＋ 新增规则" Style="{StaticResource BtnPrimary}"
+                        <Button DockPanel.Dock="Bottom" Content="{DynamicResource S.Rule.New}" Style="{StaticResource BtnPrimary}"
                                 HorizontalAlignment="Stretch" Margin="0,4,0,0" Click="OnRuleAdd" />
                         <ListBox x:Name="RuleList" Style="{StaticResource CardList}"
                                  SelectionChanged="OnRuleSelected">
@@ -582,7 +581,7 @@
                                         <CheckBox Grid.Column="1" IsChecked="{Binding Rule.Enabled}"
                                                   Style="{StaticResource Switch}" VerticalAlignment="Center"
                                                   Checked="OnRuleToggle"
-                                                  Unchecked="OnRuleToggle" ToolTip="启用 / 停用此规则" />
+                                                  Unchecked="OnRuleToggle" ToolTip="{DynamicResource S.Rule.ToggleTip}" />
                                     </Grid>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
@@ -609,7 +608,7 @@
 
                             <TextBlock Grid.Row="0" FontSize="13.5" FontWeight="SemiBold"
                                        Foreground="{StaticResource TextPrimary}" TextWrapping="Wrap"
-                                       Text="当【触发】出声或在播时，【目标】音量渐变到目标值" />
+                                       Text="{DynamicResource S.Rule.Header}" />
 
                             <!-- 值下拉一律左对齐：Stretch+MaxWidth 组合会被居中排布，宽窗口时控件漂在列中间、两侧留大空洞 -->
                             <Grid Grid.Row="1" Margin="0,16,0,0">
@@ -622,16 +621,16 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="触发" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                <TextBlock Text="{DynamicResource S.Rule.Trigger}" Style="{StaticResource Label}" VerticalAlignment="Center" />
                                 <ComboBox Grid.Row="0" Grid.Column="1" x:Name="RuleTriggerType" Style="{StaticResource Combo}"
                                           Width="90" SelectionChanged="OnRuleSelectorTypeChanged">
-                                    <ComboBoxItem>分组</ComboBoxItem>
-                                    <ComboBoxItem>应用</ComboBoxItem>
+                                    <ComboBoxItem Content="{DynamicResource S.Rule.SelGroup}" />
+                                    <ComboBoxItem Content="{DynamicResource S.Rule.SelApp}" />
                                 </ComboBox>
                                 <ComboBox Grid.Row="0" Grid.Column="2" x:Name="RuleTriggerValue" Style="{StaticResource Combo}"
                                           HorizontalAlignment="Left" MaxWidth="360" MinWidth="110" Margin="8,0,0,0" IsEditable="True"
                                           SelectionChanged="OnRuleSelectorChanged"
-                                          ToolTip="分组=按分组成员匹配；应用=精确到单个进程。列表只列当前真实存在的应用（中英文异名自动互认，如 bilibili/哔哩哔哩）；未运行的应用可直接输入进程名" />
+                                          ToolTip="{DynamicResource S.Rule.TriggerValueTip}" />
                                 <TextBlock x:Name="RuleTriggerHint" Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                                            Style="{StaticResource Hint}" FontSize="11" Margin="8,4,0,0" MaxWidth="430"
                                            TextWrapping="Wrap" Visibility="Collapsed" />
@@ -647,11 +646,11 @@
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="目标" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                <TextBlock Text="{DynamicResource S.Rule.Target}" Style="{StaticResource Label}" VerticalAlignment="Center" />
                                 <ComboBox Grid.Row="0" Grid.Column="1" x:Name="RuleTargetType" Style="{StaticResource Combo}"
                                           Width="90" SelectionChanged="OnRuleSelectorTypeChanged">
-                                    <ComboBoxItem>分组</ComboBoxItem>
-                                    <ComboBoxItem>应用</ComboBoxItem>
+                                    <ComboBoxItem Content="{DynamicResource S.Rule.SelGroup}" />
+                                    <ComboBoxItem Content="{DynamicResource S.Rule.SelApp}" />
                                 </ComboBox>
                                 <ComboBox Grid.Row="0" Grid.Column="2" x:Name="RuleTargetValue" Style="{StaticResource Combo}"
                                           HorizontalAlignment="Left" MaxWidth="360" MinWidth="110" Margin="8,0,0,0" IsEditable="True"
@@ -666,7 +665,7 @@
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="目标音量 %" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                <TextBlock Text="{DynamicResource S.Rule.TargetVolume}" Style="{StaticResource Label}" VerticalAlignment="Center" />
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
                                     <TextBox x:Name="RuleVolume" Style="{StaticResource Tb}" Width="80"
                                              TextChanged="OnRuleFieldChanged" />
@@ -685,12 +684,12 @@
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="优先级" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                <TextBlock Text="{DynamicResource S.Rule.Priority}" Style="{StaticResource Label}" VerticalAlignment="Center" />
                                 <TextBox Grid.Row="0" Grid.Column="1" x:Name="RulePriority" Style="{StaticResource Tb}"
                                          Width="80" HorizontalAlignment="Left" TextChanged="OnRuleFieldChanged" />
                                 <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource Hint}" FontSize="11"
                                            Margin="0,4,0,0" TextWrapping="Wrap"
-                                           Text="同一目标被多条规则命中时按优先级决出（高者生效，同级时应用级优先于分组级）；设置页「多规则同时命中」可改为取闪避最深" />
+                                           Text="{DynamicResource S.Rule.PriorityHint}" />
                             </Grid>
 
                             <!-- 规则级闪避节奏覆盖：留空跟随设置页全局值 -->
@@ -703,22 +702,22 @@
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="闪避节奏" Style="{StaticResource Label}" VerticalAlignment="Center"
-                                           ToolTip="本规则专用的压低/恢复时长；留空＝跟随设置页的全局值。不同规则可有不同节奏（如视频压音乐快进快出、游戏压慢放慢收）" />
+                                <TextBlock Text="{DynamicResource S.Rule.Rhythm}" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                           ToolTip="{DynamicResource S.Rule.RhythmTip}" />
                                 <!-- WrapPanel：窄窗口放不下时"恢复"一组自动换行，绝不裁字 -->
                                 <WrapPanel Grid.Row="0" Grid.Column="1">
                                     <TextBox x:Name="RuleFadeOut" Style="{StaticResource Tb}" Width="64"
-                                             TextChanged="OnRuleFieldChanged" ToolTip="闪避开始（压低）毫秒" />
-                                    <TextBlock Text="压低 ms" Style="{StaticResource Hint}"
+                                             TextChanged="OnRuleFieldChanged" ToolTip="{DynamicResource S.Rule.FadeOutTooltip}" />
+                                    <TextBlock Text="{DynamicResource S.Rule.FadeOutMs}" Style="{StaticResource Hint}"
                                                VerticalAlignment="Center" Margin="6,0,14,0" />
                                     <TextBox x:Name="RuleFadeIn" Style="{StaticResource Tb}" Width="64" Margin="0,0,0,0"
-                                             TextChanged="OnRuleFieldChanged" ToolTip="闪避结束（恢复）毫秒" />
-                                    <TextBlock Text="恢复 ms" Style="{StaticResource Hint}"
+                                             TextChanged="OnRuleFieldChanged" ToolTip="{DynamicResource S.Rule.FadeInTooltip}" />
+                                    <TextBlock Text="{DynamicResource S.Rule.FadeInMs}" Style="{StaticResource Hint}"
                                                VerticalAlignment="Center" Margin="6,0,0,0" />
                                 </WrapPanel>
                                 <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource Hint}" FontSize="11"
                                            Margin="0,4,0,0" TextWrapping="Wrap"
-                                           Text="留空＝跟随设置页的全局闪避时长" />
+                                           Text="{DynamicResource S.Rule.RhythmHint}" />
                             </Grid>
 
                             <!-- 生效条件（最小版：设备条件）——设备下拉独立一行占满，窄窗口放得下长设备名 -->
@@ -731,19 +730,19 @@
                                     <ColumnDefinition Width="90" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="生效条件" Style="{StaticResource Label}" VerticalAlignment="Center"
-                                           ToolTip="让规则只在特定输出设备上生效（如仅耳机启用、接音箱时自动失效）" />
+                                <TextBlock Text="{DynamicResource S.Rule.Condition}" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                           ToolTip="{DynamicResource S.Rule.ConditionTip}" />
                                 <ComboBox Grid.Row="0" Grid.Column="1" x:Name="RuleCondType" Style="{StaticResource Combo}"
                                           Width="130" HorizontalAlignment="Left" SelectionChanged="OnRuleCondTypeChanged">
-                                    <ComboBoxItem>无条件</ComboBoxItem>
-                                    <ComboBoxItem>指定输出设备</ComboBoxItem>
+                                    <ComboBoxItem Content="{DynamicResource S.Rule.CondNone}" />
+                                    <ComboBoxItem Content="{DynamicResource S.Rule.CondDevice}" />
                                 </ComboBox>
                                 <ComboBox Grid.Row="1" Grid.Column="1" x:Name="RuleCondDevice" Style="{StaticResource Combo}"
                                           IsEditable="True" Margin="0,6,0,0" HorizontalAlignment="Stretch"
                                           MaxWidth="360" Visibility="Collapsed"
                                           primitives:TextBoxBase.TextChanged="OnRuleFieldChanged"
                                           SelectionChanged="OnRuleFieldChanged"
-                                          ToolTip="当前默认输出设备名包含该文字时规则才生效（子串匹配，不区分大小写，如&quot;耳机&quot;）" />
+                                          ToolTip="{DynamicResource S.Rule.CondDeviceTip}" />
                             </Grid>
 
                             <Grid Grid.Row="7" Margin="0,16,0,0">
@@ -752,15 +751,15 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="判定方式" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                <TextBlock Text="{DynamicResource S.Rule.Detection}" Style="{StaticResource Label}" VerticalAlignment="Center" />
                                 <ComboBox Grid.Column="1" x:Name="RuleDetectionMode" Style="{StaticResource Combo}"
                                           HorizontalAlignment="Left" Width="220" MinWidth="96"
                                           SelectedIndex="0" SelectionChanged="OnRuleFieldChanged"
-                                          ToolTip="状态判定=SMTC 播放状态/会话 Active（推荐，不看峰值，无宽限）；声音判定=峰值迟滞+宽限">
-                                    <ComboBoxItem>状态判定</ComboBoxItem>
-                                    <ComboBoxItem>声音判定</ComboBoxItem>
+                                          ToolTip="{DynamicResource S.Rule.DetectionTip}">
+                                    <ComboBoxItem Content="{DynamicResource S.Rule.DetectState}" />
+                                    <ComboBoxItem Content="{DynamicResource S.Rule.DetectSound}" />
                                 </ComboBox>
-                                <CheckBox Grid.Column="2" x:Name="RuleEnabled" Content="启用此规则"
+                                <CheckBox Grid.Column="2" x:Name="RuleEnabled" Content="{DynamicResource S.Rule.EnableThis}"
                                           Style="{StaticResource Switch}" Margin="14,0,0,0"
                                           VerticalAlignment="Center"
                                           Checked="OnRuleFieldChanged" Unchecked="OnRuleFieldChanged" />
@@ -772,8 +771,8 @@
                                     <ColumnDefinition Width="Auto" />
                                 </Grid.ColumnDefinitions>
                                 <TextBlock VerticalAlignment="Center" Style="{StaticResource Hint}" Margin="0,0,16,0"
-                                           Text="规则修改会自动保存并立即生效。" />
-                                <Button Grid.Column="1" Content="删除规则" Style="{StaticResource BtnDanger}"
+                                           Text="{DynamicResource S.Rule.AutoSaveHint}" />
+                                <Button Grid.Column="1" Content="{DynamicResource S.Rule.Delete}" Style="{StaticResource BtnDanger}"
                                         VerticalAlignment="Center" Click="OnRuleDelete" />
                             </Grid>
                         </Grid>
@@ -787,7 +786,7 @@
                     <TabItem.Header>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE713;" FontFamily="Segoe MDL2 Assets" FontSize="14" VerticalAlignment="Center" />
-                            <TextBlock Text="设置" Margin="9,0,0,0" />
+                            <TextBlock Text="{DynamicResource S.Tab.Settings}" Margin="9,0,0,0" />
                         </StackPanel>
                     </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -796,20 +795,32 @@
                         <!-- 单卡分组式设置（系统设置风格）：分组以发丝线分隔 -->
                         <Border Style="{StaticResource Card}" Padding="22">
                             <StackPanel>
-                                <TextBlock Text="运行" FontSize="13.5" FontWeight="SemiBold"
+                                <TextBlock Text="{DynamicResource S.Set.Run}" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" />
                                 <Grid Margin="0,14,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="230" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="启用闪避" Style="{StaticResource Label}" VerticalAlignment="Center"
-                                               ToolTip="临时停用全部规则并立即还原被压音量（托盘菜单同名项与此同步）" />
+                                    <TextBlock Text="{DynamicResource S.Set.Language}" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="{DynamicResource S.Set.LanguageHint}" />
+                                    <ComboBox Grid.Column="1" x:Name="SetLanguage" Style="{StaticResource Combo}"
+                                              Width="180" HorizontalAlignment="Left"
+                                              SelectionChanged="OnLanguageChanged" />
+                                </Grid>
+
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="230" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{DynamicResource S.Set.Suspend}" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="{DynamicResource S.Set.SuspendTip}" />
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                                         <CheckBox x:Name="SetSuspend" Style="{StaticResource Switch}"
                                                   Checked="OnSuspendSwitchChanged" Unchecked="OnSuspendSwitchChanged"
-                                                  ToolTip="关闭＝暂停全部规则并还原音量；重新打开后规则立即恢复生效" />
-                                        <TextBlock Text="关闭＝暂停全部规则（被压音量立即还原）"
+                                                  ToolTip="{DynamicResource S.Set.SuspendSwitchTip}" />
+                                        <TextBlock Text="{DynamicResource S.Set.SuspendOffHint}"
                                                    Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="12,0,0,0" />
                                     </StackPanel>
                                 </Grid>
@@ -819,14 +830,14 @@
                                         <ColumnDefinition Width="230" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="多规则同时命中" Style="{StaticResource Label}" VerticalAlignment="Center"
-                                               ToolTip="同一会话被多条规则命中时，按哪种方式决定最终压到的音量" />
+                                    <TextBlock Text="{DynamicResource S.Set.RuleConflict}" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="{DynamicResource S.Set.RuleConflictTip}" />
                                     <ComboBox Grid.Column="1" x:Name="SetRuleConflict" Style="{StaticResource Combo}"
                                               Width="230" HorizontalAlignment="Left"
                                               SelectionChanged="OnSettingsFieldChanged" />
                                 </Grid>
                                 <TextBlock x:Name="SetRuleConflictHint"
-                                           Text="「取闪避最深」＝压得更低者说了算（如 20% 与 40% 同时命中 → 压到 20%）；规则页的优先级字段仅在并列时参与决出"
+                                           Text="{DynamicResource S.Set.RuleConflictHint}"
                                            Style="{StaticResource Hint}" Margin="0,8,0,0" />
 
                                 <Grid Margin="0,14,0,0">
@@ -834,12 +845,12 @@
                                         <ColumnDefinition Width="230" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="手动调节即接管" Style="{StaticResource Label}" VerticalAlignment="Center"
-                                               ToolTip="闪避期间手动拖动被压应用的音量＝接管：本轮闪避不再干预该会话，规则重新触发后恢复" />
+                                    <TextBlock Text="{DynamicResource S.Set.Takeover}" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="{DynamicResource S.Set.TakeoverTip}" />
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                                         <CheckBox x:Name="SetManualTakeover" Style="{StaticResource Switch}"
                                                   Checked="OnSettingsFieldChanged" Unchecked="OnSettingsFieldChanged" />
-                                        <TextBlock Text="手动调过音量的会话本轮不再被压低"
+                                        <TextBlock Text="{DynamicResource S.Set.TakeoverHint}"
                                                    Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="12,0,0,0" />
                                     </StackPanel>
                                 </Grid>
@@ -849,35 +860,35 @@
                                         <ColumnDefinition Width="230" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="全局快捷键" Style="{StaticResource Label}" VerticalAlignment="Center"
-                                               ToolTip="系统级热键，Tuner 在后台或托盘驻留时同样有效" />
+                                    <TextBlock Text="{DynamicResource S.Set.Hotkeys}" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="{DynamicResource S.Set.HotkeysTip}" />
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
                                         <CheckBox x:Name="SetHotkeys" Style="{StaticResource Switch}"
                                                   Checked="OnSettingsFieldChanged" Unchecked="OnSettingsFieldChanged" />
-                                        <TextBlock Text="Ctrl+Alt+P 暂停/恢复闪避 · Ctrl+Alt+M 显示主界面"
+                                        <TextBlock Text="{DynamicResource S.Set.HotkeysHint}"
                                                    Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="12,0,0,0" />
                                     </StackPanel>
                                 </Grid>
-                                <TextBlock Text="组合键被其他程序占用时注册会失败（事件日志有记录）；改动保存后即时生效"
+                                <TextBlock Text="{DynamicResource S.Set.HotkeysFailHint}"
                                            Style="{StaticResource Hint}" Margin="0,8,0,0" />
 
                                 <Rectangle Height="1" Fill="{StaticResource CardBorder}" Margin="0,18,0,0" />
 
-                                <TextBlock Text="出声判定" FontSize="13.5" FontWeight="SemiBold"
+                                <TextBlock Text="{DynamicResource S.Set.Detect}" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" Margin="0,18,0,0" />
-                                <CheckBox x:Name="SetUseSmtc" Content="优先使用系统媒体播放状态判定（推荐：歌间静音不误判，停止/暂停立即恢复）"
+                                <CheckBox x:Name="SetUseSmtc" Content="{DynamicResource S.Set.Smtc}"
                                           Margin="0,14,0,0" HorizontalAlignment="Left"
                                           Checked="OnSettingsFieldChanged" Unchecked="OnSettingsFieldChanged" />
-                                <TextBlock Text="未接入系统媒体会话的应用（部分游戏、老播放器）自动回退为峰值判定，"
+                                <TextBlock Text="{DynamicResource S.Set.SmtcHint1}"
                                            Style="{StaticResource Hint}" Margin="0,10,0,0" />
-                                <TextBlock Text="其进入/退出阈值、低电平保持与静音宽限等兜底参数在配置文件中调整"
+                                <TextBlock Text="{DynamicResource S.Set.SmtcHint2}"
                                            Style="{StaticResource Hint}" />
 
                                 <Rectangle Height="1" Fill="{StaticResource CardBorder}" Margin="0,18,0,0" />
 
-                                <TextBlock Text="音量渐变" FontSize="13.5" FontWeight="SemiBold"
+                                <TextBlock Text="{DynamicResource S.Set.Fade}" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" Margin="0,18,0,0" />
-                                <TextBlock Text="闪避的「压低」和「恢复」是两个独立过程，可以分别控制快慢"
+                                <TextBlock Text="{DynamicResource S.Set.FadeHint}"
                                            Style="{StaticResource Hint}" Margin="0,6,0,0" />
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions>
@@ -885,12 +896,12 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="闪避开始（压低）ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{DynamicResource S.Set.FadeOutLabel}" Style="{StaticResource Label}" VerticalAlignment="Center" />
                                     <TextBox Grid.Column="1" x:Name="SetFadeOut" Style="{StaticResource Tb}" Width="80"
                                              TextChanged="OnSettingsFieldChanged" />
-                                    <TextBlock Grid.Column="2" ToolTip="闪避开始时长"
-                                               Text="触发源开始出声/播放时，把被闪避应用的音量从原始值压到闪避目标值的耗时。越短压得越急（如 200～400），能更快让出声音"
-                                               Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
+                                    <TextBlock Grid.Column="2" ToolTip="{DynamicResource S.Set.FadeOutHint}"
+                                               Text="{DynamicResource S.Set.FadeOutHint}"
+                                               Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" TextWrapping="Wrap" />
                                 </Grid>
                                 <Grid Margin="0,10,0,0">
                                     <Grid.ColumnDefinitions>
@@ -898,17 +909,17 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="闪避结束（恢复）ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{DynamicResource S.Set.FadeInLabel}" Style="{StaticResource Label}" VerticalAlignment="Center" />
                                     <TextBox Grid.Column="1" x:Name="SetFadeIn" Style="{StaticResource Tb}" Width="80"
                                              TextChanged="OnSettingsFieldChanged" />
-                                    <TextBlock Grid.Column="2" ToolTip="闪避结束时长"
-                                               Text="触发源停止出声/停止播放后，把音量从闪避目标值恢复回原始值的耗时。越长越平顺（默认约 1200），过短会显得突兀"
-                                               Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
+                                    <TextBlock Grid.Column="2" ToolTip="{DynamicResource S.Set.FadeInHint}"
+                                               Text="{DynamicResource S.Set.FadeInHint}"
+                                               Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" TextWrapping="Wrap" />
                                 </Grid>
 
                                 <Rectangle Height="1" Fill="{StaticResource CardBorder}" Margin="0,18,0,0" />
 
-                                <TextBlock Text="性能" FontSize="13.5" FontWeight="SemiBold"
+                                <TextBlock Text="{DynamicResource S.Set.Perf}" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" Margin="0,18,0,0" />
                                 <Grid Margin="0,12,0,0">
                                     <Grid.ColumnDefinitions>
@@ -916,44 +927,44 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="轮询间隔 ms" Style="{StaticResource Label}" VerticalAlignment="Center" />
+                                    <TextBlock Text="{DynamicResource S.Set.Poll}" Style="{StaticResource Label}" VerticalAlignment="Center" />
                                     <TextBox Grid.Column="1" x:Name="SetPoll" Style="{StaticResource Tb}" Width="80"
                                              TextChanged="OnSettingsFieldChanged" />
-                                    <TextBlock Grid.Column="2" Text="会话峰值轮询频率，重启应用后生效"
+                                    <TextBlock Grid.Column="2" Text="{DynamicResource S.Set.PollHint}"
                                                Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="14,0,0,0" />
                                 </Grid>
 
                                 <Rectangle Height="1" Fill="{StaticResource CardBorder}" Margin="0,18,0,0" />
 
-                                <TextBlock Text="启动" FontSize="13.5" FontWeight="SemiBold"
+                                <TextBlock Text="{DynamicResource S.Set.Startup}" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" Margin="0,18,0,0" />
-                                <CheckBox x:Name="SetAutoStart" Content="开机自动启动（静默驻留托盘，不弹窗口）"
+                                <CheckBox x:Name="SetAutoStart" Content="{DynamicResource S.Set.AutoStart}"
                                           Margin="0,14,0,0" HorizontalAlignment="Left"
                                           Checked="OnAutoStartChanged" Unchecked="OnAutoStartChanged"
-                                          ToolTip="写入当前用户的注册表 Run 键（免管理员）；仅当条目指向当前 exe 时视为已启用" />
+                                          ToolTip="{DynamicResource S.Set.AutoStartTip}" />
                                 <TextBlock Style="{StaticResource Hint}" Margin="0,10,0,0"
-                                           Text="记录在系统注册表（HKCU Run），不随配置文件走；换了解压目录请重新勾选一次" />
+                                           Text="{DynamicResource S.Set.AutoStartHint}" />
                             </StackPanel>
                         </Border>
 
                         <!-- 配置管理：导入/导出 + 存储位置（便携模式） -->
                         <Border Style="{StaticResource Card}" Padding="22" Margin="0,12,0,0">
                             <StackPanel>
-                                <TextBlock Text="配置" FontSize="13.5" FontWeight="SemiBold"
+                                <TextBlock Text="{DynamicResource S.Set.Config}" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" />
                                 <Grid Margin="0,14,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="230" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="导入 / 导出" Style="{StaticResource Label}" VerticalAlignment="Center"
-                                               ToolTip="导出当前全部配置（分组/规则/设置）；导入会整体替换现有配置并立即生效（替换前自动留 .bak 备份）" />
+                                    <TextBlock Text="{DynamicResource S.Set.ImportExport}" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="{DynamicResource S.Set.ImportExportTip}" />
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <Button Content="导出…" Style="{StaticResource Btn}" Padding="14,5"
+                                        <Button Content="{DynamicResource S.Set.Export}" Style="{StaticResource Btn}" Padding="14,5"
                                                 Click="OnConfigExport" />
-                                        <Button Content="导入…" Style="{StaticResource Btn}" Padding="14,5"
+                                        <Button Content="{DynamicResource S.Set.Import}" Style="{StaticResource Btn}" Padding="14,5"
                                                 Margin="8,0,0,0" Click="OnConfigImport"
-                                                ToolTip="导入的文件将整体替换现有分组、规则与设置" />
+                                                ToolTip="{DynamicResource S.Set.ImportTip}" />
                                     </StackPanel>
                                 </Grid>
                                 <TextBlock x:Name="ConfigPathText" Style="{StaticResource Hint}" Margin="0,10,0,0"
@@ -966,34 +977,34 @@
                         <!-- 关于 + 更新检查（仅提示，不自动下载；链接以文字展示，不拉起浏览器） -->
                         <Border Style="{StaticResource Card}" Padding="22" Margin="0,12,0,0">
                             <StackPanel>
-                                <TextBlock Text="关于" FontSize="13.5" FontWeight="SemiBold"
+                                <TextBlock Text="{DynamicResource S.Set.About}" FontSize="13.5" FontWeight="SemiBold"
                                            Foreground="{StaticResource TextPrimary}" />
                                 <Grid Margin="0,14,0,0">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="230" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="检查更新" Style="{StaticResource Label}" VerticalAlignment="Center"
-                                               ToolTip="查询 GitHub 最新发布版本并与当前版本比较，仅提示、不自动下载" />
+                                    <TextBlock Text="{DynamicResource S.Set.CheckUpdate}" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="{DynamicResource S.Set.CheckUpdateTip}" />
                                     <StackPanel Grid.Column="1" Orientation="Horizontal">
-                                        <Button x:Name="UpdateCheckButton" Content="检查更新" Style="{StaticResource Btn}"
+                                        <Button x:Name="UpdateCheckButton" Content="{DynamicResource S.Set.CheckUpdate}" Style="{StaticResource Btn}"
                                                 Padding="14,5" Click="OnCheckUpdate" />
-                                        <TextBlock x:Name="UpdateStatusText" Text="仅提示新版本，不会自动下载"
+                                        <TextBlock x:Name="UpdateStatusText" Text="{DynamicResource S.Set.UpdateInitialHint}"
                                                    Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="12,0,0,0"
                                                    TextWrapping="Wrap" />
                                     </StackPanel>
                                 </Grid>
                                 <TextBlock Style="{StaticResource Hint}" Margin="0,10,0,0" TextWrapping="Wrap"
-                                           Text="发布页：github.com/woodtong/Tuner/releases" />
+                                           Text="{DynamicResource S.Set.ReleasesHint}" />
                             </StackPanel>
                         </Border>
 
                         <!-- 诊断自查通道（隐蔽入口）：默认收起、弱化样式，未展开时不占视觉面积。
                              事件只存内存环形缓冲（最近 600 条），完整日志仍在 app.log 文件。 -->
-                        <TextBlock x:Name="DiagToggle" Text="诊断 · 事件日志 ▸" FontSize="11.5" Cursor="Hand"
+                        <TextBlock x:Name="DiagToggle" Text="{DynamicResource S.Set.DiagToggleClosed}" FontSize="11.5" Cursor="Hand"
                                    Foreground="{StaticResource TextFaint}" Margin="6,12,0,0" Opacity="0.85"
                                    MouseLeftButtonDown="OnDiagToggleClicked"
-                                   ToolTip="查看最近的关键事件（规则生效/解除、设备切换、配置问题），用于自查或反馈附档">
+                                   ToolTip="{DynamicResource S.Set.DiagToggleTip}">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Style.Triggers>
@@ -1028,11 +1039,11 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Text="最近事件（仅内存保留，重启后清空）" FontSize="12.5" FontWeight="SemiBold"
+                                    <TextBlock Text="{DynamicResource S.Set.DiagTitle}" FontSize="12.5" FontWeight="SemiBold"
                                                Foreground="{StaticResource TextPrimary}" VerticalAlignment="Center" />
-                                    <Button Grid.Column="1" Content="复制全部" Style="{StaticResource Btn}" Padding="10,3"
-                                            Click="OnDiagCopy" ToolTip="复制为文本，方便反馈问题时附档" />
-                                    <Button Grid.Column="2" Content="清空" Style="{StaticResource Btn}" Padding="10,3"
+                                    <Button Grid.Column="1" Content="{DynamicResource S.Set.DiagCopy}" Style="{StaticResource Btn}" Padding="10,3"
+                                            Click="OnDiagCopy" ToolTip="{DynamicResource S.Set.DiagCopyTip}" />
+                                    <Button Grid.Column="2" Content="{DynamicResource S.Set.DiagClear}" Style="{StaticResource Btn}" Padding="10,3"
                                             Margin="8,0,0,0" Click="OnDiagClear" />
                                 </Grid>
                                 <TextBox x:Name="DiagBox" IsReadOnly="True" AcceptsReturn="True" FontFamily="Consolas"

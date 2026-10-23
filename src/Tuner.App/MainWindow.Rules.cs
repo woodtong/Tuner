@@ -13,9 +13,11 @@ public partial class MainWindow
     {
         public required DuckingRuleConfig Rule { get; init; }
         public string Sentence =>
-            (Rule.Enabled ? "" : "（已停用）") + Label(Rule.Trigger) + " 出声 → " + Label(Rule.Target) +
-            $" 渐变到 {Rule.TargetVolumePercent:F0}%" + (Rule.DetectionMode == "state" ? "［状态判定］" : "［声音判定］") +
-            (Rule.Condition == "device" && Rule.DeviceCondition.Length > 0 ? $"［仅 {Rule.DeviceCondition}］" : "");
+            (Rule.Enabled ? "" : Lang.Get("S.Rule.DisabledPrefix")) +
+            Lang.Get("S.Rule.Sentence", Label(Rule.Trigger), Label(Rule.Target), Rule.TargetVolumePercent.ToString("F0")) +
+            (Rule.DetectionMode == "state" ? Lang.Get("S.Rule.StateTag") : Lang.Get("S.Rule.SoundTag")) +
+            (Rule.Condition == "device" && Rule.DeviceCondition.Length > 0
+                ? Lang.Get("S.Rule.DeviceSuffix", Rule.DeviceCondition) : "");
 
         /// <summary>失配提醒：启用规则的触发/目标当前匹配不上任何会话（或引用已删除的分组）时随行出现。</summary>
         public string WarnText { get; init; } = "";
@@ -27,8 +29,8 @@ public partial class MainWindow
             if (r is null)
                 return "?";
             return r.Type == "app"
-                ? r.ProcessName + "（应用）"
-                : (App.Config.Groups.FirstOrDefault(g => g.Id == r.GroupId)?.Name ?? r.GroupId + "?") + "（分组）";
+                ? r.ProcessName + Lang.Get("S.Rule.AppSuffix")
+                : (App.Config.Groups.FirstOrDefault(g => g.Id == r.GroupId)?.Name ?? r.GroupId + "?") + Lang.Get("S.Rule.GroupSuffix");
         }
     }
 
@@ -49,18 +51,20 @@ public partial class MainWindow
             {
                 var name = (sel.ProcessName ?? "").Trim();
                 if (name.Length == 0)
-                    return $"{role}应用名为空，规则永不生效";
+                    return Lang.Get("S.Rule.WarnAppEmpty", role);
                 var key = ConfigStore.NormalizeProcessName(name);
                 if (!App.AllSessions.Any(s => ConfigStore.NormalizeProcessName(s.ProcessName) == key))
-                    return $"⚠ {role}应用「{name}」当前没有音频会话（未运行，或名字与实际进程不符）";
+                    return Lang.Get("S.Rule.WarnNoSession", role, name);
             }
             else if (App.Config.Groups.All(g => g.Id != sel.GroupId))
             {
-                return $"⚠ {role}分组不存在（可能已被删除），规则永不生效";
+                return Lang.Get("S.Rule.WarnGroupGone", role);
             }
             return "";
         }
-        return Check(r.Trigger, "触发") is { Length: > 0 } triggerWarn ? triggerWarn : Check(r.Target, "目标");
+        return Check(r.Trigger, Lang.Get("S.Rule.RoleTrigger")) is { Length: > 0 } triggerWarn
+            ? triggerWarn
+            : Check(r.Target, Lang.Get("S.Rule.RoleTarget"));
     }
 
     private void RefreshRuleTab()
@@ -147,7 +151,7 @@ public partial class MainWindow
             hint.Visibility = Visibility.Collapsed;
             return;
         }
-        hint.Text = $"⚠ 当前没有名为「{name}」的音频会话（应用未运行，或名字与实际进程不符）";
+        hint.Text = Lang.Get("S.Rule.SelectorHint", name);
         hint.Foreground = MakeBrush("#D97706");
         hint.Visibility = Visibility.Visible;
     }

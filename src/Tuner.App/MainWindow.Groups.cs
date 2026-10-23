@@ -15,8 +15,8 @@ public partial class MainWindow
         public required AppGroupConfig Group { get; init; }
         public Visibility DefaultVisibility => Group.IsDefault ? Visibility.Visible : Visibility.Collapsed;
         public string CountText => Group.IsDefault
-            ? $"{Group.ProcessNames.Count} 个进程 · 承接未匹配应用"
-            : $"{Group.ProcessNames.Count} 个进程";
+            ? Lang.Get("S.Group.Count", Group.ProcessNames.Count) + " · " + Lang.Get("S.Group.DefaultCount")
+            : Lang.Get("S.Group.Count", Group.ProcessNames.Count);
 
         public override string ToString() => Group.Name;
     }
@@ -77,7 +77,7 @@ public partial class MainWindow
 
     private void OnGroupAdd(object sender, RoutedEventArgs e)
     {
-        var g = new AppGroupConfig { Id = "g" + DateTime.Now.Ticks.ToString("x"), Name = "新分组" };
+        var g = new AppGroupConfig { Id = "g" + DateTime.Now.Ticks.ToString("x"), Name = Lang.Get("S.Group.Untitled") };
         App.Config.Groups.Add(g);
         RefreshGroupTab();
         RefreshRuleTab();
@@ -92,10 +92,10 @@ public partial class MainWindow
             return;
         if (g.IsDefault)
         {
-            MessageBox.Show("默认组不能删除，可将其他分组设为默认组。", "Tuner");
+            MessageBox.Show(Lang.Get("S.Group.DeleteDefault"), "Tuner");
             return;
         }
-        if (MessageBox.Show($"确定删除分组「{g.Name}」？关联的规则也会一并删除。", "Tuner",
+        if (MessageBox.Show(Lang.Get("S.Group.DeleteConfirm", g.Name), "Tuner",
                 MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
             return;
         // 新旧两种选择器字段都要查（旧 TriggerGroupId/TargetGroupId 仅为迁移遗留，但配置里可能仍在）
@@ -186,7 +186,7 @@ public partial class MainWindow
             _loadingUi = true;
             DefaultCheck.IsChecked = true;
             _loadingUi = false;
-            MessageBox.Show("默认组有且仅有一个，不能取消。\r\n若需要更改默认组，请直接勾选对应分组。", "Tuner");
+            MessageBox.Show(Lang.Get("S.Group.DefaultOnlyOne"), "Tuner");
             return;
         }
         _loadingUi = true;

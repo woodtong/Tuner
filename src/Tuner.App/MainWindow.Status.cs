@@ -111,8 +111,8 @@ public partial class MainWindow
             row.DuckVisibility = e is { Ducked: true } || e is { UserTookOver: true }
                 ? Visibility.Visible : Visibility.Collapsed;
             row.DuckText = e is { Ducked: true }
-                ? $"闪避中 → {(int)Math.Round(PosOf(e?.TargetVolume ?? 0))}%"
-                : "手动接管（本轮不压低）";
+                ? Lang.Get("S.Status.DuckBadge", Math.Round(PosOf(e?.TargetVolume ?? 0)))
+                : Lang.Get("S.Status.TakeoverBadge");
             if (e is { Ducked: true }) ducking++;
             if (!ReferenceEquals(row.IconPngSource, s.IconPng))
             {

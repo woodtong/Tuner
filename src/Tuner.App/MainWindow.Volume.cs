@@ -54,7 +54,7 @@ public partial class MainWindow
 
         public static readonly DependencyProperty MuteTextProperty = DependencyProperty.Register(
             nameof(MuteText), typeof(string), typeof(VolumeChannel),
-            new FrameworkPropertyMetadata("静音"));
+            new FrameworkPropertyMetadata(Lang.Get("S.Mixer.Mute"), (d, _) => ((VolumeChannel)d).UpdateMuteText()));
 
         public double VolumeDisplay
         {
@@ -70,10 +70,13 @@ public partial class MainWindow
 
         private static void OnVolumeDisplayChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var ch = (VolumeChannel)d;
             // 显示规则唯一判断：显示音量为 0 → 取消静音
-            ch.MuteText = (double)e.NewValue <= 0 ? "取消静音" : "静音";
+            ((VolumeChannel)d).UpdateMuteText();
         }
+
+        /// <summary>按当前显示值与语言重算静音按钮文字（语言切换时逐行调用）。</summary>
+        public void UpdateMuteText() =>
+            MuteText = VolumeDisplay <= 0 ? Lang.Get("S.Mixer.Unmute") : Lang.Get("S.Mixer.Mute");
 
         private string _name = "";
         private string _pidText = "";
@@ -213,7 +216,7 @@ public partial class MainWindow
         if (MasterVolText.Text != masterText)
             MasterVolText.Text = masterText;
         MasterMeterBig.Value = Math.Round(App.Monitor.DevicePeak * 100);
-        var masterMuteText = App.Monitor.MasterMuted ? "取消静音" : "静音";
+        var masterMuteText = App.Monitor.MasterMuted ? Lang.Get("S.Mixer.Unmute") : Lang.Get("S.Mixer.Mute");
         if ((string)MasterMuteBtn.Content != masterMuteText)
             MasterMuteBtn.Content = masterMuteText;
         _masterSuppress = false;
@@ -297,7 +300,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            MessageBox.Show("切换输出设备失败：" + ex.Message, "Tuner");
+            MessageBox.Show(Lang.Get("S.Device.SwitchFail", ex.Message), "Tuner");
         }
     }
 
@@ -587,9 +590,9 @@ public partial class MainWindow
     private void UpdateVolumeCurveHint() =>
         VolumeCurveHint.Text = VolumeCurveCombo.SelectedIndex switch
         {
-            1 => "平方：实际音量 = 百分比²。小音量段拖动更细腻，整体近似听感",
-            2 => "对数（等响度）：每 1% 恒定 0.4dB（全程 40dB），等格等响，小音量段不再一拖就炸",
-            3 => "自定义：拖动图中控制点（双击空白加点 / 右键删点，端点仅可上下拖），响度随百分比折线映射",
-            _ => "线性：实际音量 = 百分比。最直观，但小音量段每格听感变化明显",
+            1 => Lang.Get("S.Curve.Hint.Square"),
+            2 => Lang.Get("S.Curve.Hint.Log"),
+            3 => Lang.Get("S.Curve.Hint.Custom"),
+            _ => Lang.Get("S.Curve.Hint.Linear"),
         };
 }

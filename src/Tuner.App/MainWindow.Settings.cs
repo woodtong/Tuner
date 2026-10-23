@@ -2,6 +2,7 @@ using System.Net.Http;
 using System.Reflection;
 using System.Text;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Media;
 using Tuner.Core.Config;
 using Clipboard = System.Windows.Clipboard;
@@ -28,10 +29,17 @@ public partial class MainWindow
         SetFadeOut.Text = s.FadeOutDurationMs.ToString();
         SetFadeIn.Text = s.FadeInDurationMs.ToString();
         SetPoll.Text = s.PollIntervalMs.ToString();
+        if (SetLanguage.Items.Count == 0)
+        {
+            SetLanguage.Items.Add(Lang.Get("S.Set.LangAuto"));
+            SetLanguage.Items.Add(Lang.Get("S.Set.LangZh"));
+            SetLanguage.Items.Add(Lang.Get("S.Set.LangEn"));
+        }
+        SetLanguage.SelectedIndex = s.Language switch { "zh-CN" => 1, "en-US" => 2, _ => 0 };
         if (SetRuleConflict.Items.Count == 0)
-            SetRuleConflict.Items.Add("取优先级最高");
+            SetRuleConflict.Items.Add(Lang.Get("S.Set.ConflictPriority"));
         if (SetRuleConflict.Items.Count == 1)
-            SetRuleConflict.Items.Add("取闪避最深（压得更低）");
+            SetRuleConflict.Items.Add(Lang.Get("S.Set.ConflictDeepest"));
         SetRuleConflict.SelectedIndex = s.RuleConflict == "deepest" ? 1 : 0;
         SetManualTakeover.IsChecked = s.ManualTakeover;
         SetHotkeys.IsChecked = s.HotkeysEnabled;
@@ -44,11 +52,11 @@ public partial class MainWindow
         {
             SetAutoStart.IsChecked = false;
         }
-        DiagPathText.Text = "完整日志文件：" + App.LogPath + "（事件面板仅内存保留最近 600 条）";
-        ConfigPathText.Text = "配置文件：" + ConfigStore.ActivePath;
+        DiagPathText.Text = Lang.Get("S.Diag.PathLabel", App.LogPath);
+        ConfigPathText.Text = Lang.Get("S.Config.FileLabel", ConfigStore.ActivePath);
         PortableModeText.Text = ConfigStore.PortableBase is not null
-            ? "便携模式已启用（程序目录存在 portable.marker）：配置与日志都保存在程序目录，拷贝整个文件夹即完成迁移"
-            : "提示：在程序目录新建一个空的 portable.marker 文件可启用便携模式——配置与日志改存程序目录，解压即用、拷走即走（重启应用后生效）";
+            ? Lang.Get("S.Config.PortableOn")
+            : Lang.Get("S.Config.PortableOff");
         // 音量页的曲线编辑器同批初始化（XAML 一次解析全部页签，跨页控件可直接访问）
         LoadCurveEditor();
     }
@@ -72,6 +80,23 @@ public partial class MainWindow
         App.SetSuspended(SetSuspend.IsChecked != true);
     }
 
+    // ---------- 界面语言（切换立即生效，随自动保存持久化） ----------
+
+    private void OnLanguageChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loadingUi)
+            return;
+        App.Config.Settings.Language = SetLanguage.SelectedIndex switch
+        {
+            1 => "zh-CN",
+            2 => "en-US",
+            _ => "",
+        };
+        Lang.Apply(Lang.Resolve(App.Config.Settings.Language));
+        App.Log("界面语言已切换：" + Lang.Current);
+        MarkDirty();
+    }
+
     // ---------- 开机自启（注册表 HKCU Run，随 --minimized 静默启动） ----------
 
     private void OnAutoStartChanged(object sender, RoutedEventArgs e)
@@ -86,7 +111,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            MessageBox.Show("设置开机自启失败：" + ex.Message, "Tuner");
+            MessageBox.Show(Lang.Get("S.App.AutoStartFail", ex.Message), "Tuner");
             try
             {
                 SetAutoStart.IsChecked = AutoStart.IsEnabled(); // 回滚为真实状态
@@ -104,7 +129,7 @@ public partial class MainWindow
     {
         _diagPanelOpen = open;
         DiagPanel.Visibility = open ? Visibility.Visible : Visibility.Collapsed;
-        DiagToggle.Text = open ? "诊断 · 事件日志 ▾" : "诊断 · 事件日志 ▸";
+        DiagToggle.Text = Lang.Get(open ? "S.Set.DiagToggleOpen" : "S.Set.DiagToggleClosed");
         if (open)
             RefreshDiagBox();
     }
@@ -149,9 +174,10 @@ public partial class MainWindow
     {
         var dlg = new Microsoft.Win32.SaveFileDialog
         {
-            Title = "导出 Tuner 配置",
-            Filter = "Tuner 配置 (*.json)|*.json",
-            FileName = $"tuner-config-{DateTime.Now:yyyyMMdd-HHmm}.json",
+            Title = Lang.Get("S.Config.ExportTitle"),
+            Filter = Lang.Get("S.Config.Filter"),
+            FileName = string.Format(System.Globalization.CultureInfo.CurrentCulture,
+                Lang.Get("S.Config.ExportDefaultName"), DateTime.Now.ToString("yyyyMMdd-HHmm")),
         };
         if (dlg.ShowDialog() != true)
             return;
@@ -163,7 +189,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            MessageBox.Show("导出失败：" + ex.Message, "Tuner");
+            MessageBox.Show(Lang.Get("S.Config.ExportFail", ex.Message), "Tuner");
         }
     }
 
@@ -171,15 +197,15 @@ public partial class MainWindow
     {
         var dlg = new Microsoft.Win32.OpenFileDialog
         {
-            Title = "导入 Tuner 配置（将整体替换现有配置）",
-            Filter = "Tuner 配置 (*.json)|*.json",
+            Title = Lang.Get("S.Config.ImportTitle"),
+            Filter = Lang.Get("S.Config.Filter"),
         };
         if (dlg.ShowDialog() != true)
             return;
         var imported = ConfigStore.TryLoadForImport(dlg.FileName);
         if (imported is null)
         {
-            MessageBox.Show($"无法读取「{System.IO.Path.GetFileName(dlg.FileName)}」：不是有效的 Tuner 配置文件。现有配置未改动。", "Tuner");
+            MessageBox.Show(Lang.Get("S.Config.ImportBadFile", System.IO.Path.GetFileName(dlg.FileName)), "Tuner");
             return;
         }
 
@@ -192,7 +218,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            MessageBox.Show("导入后保存失败：" + ex.Message + "（配置已在本次运行中生效，但未写入磁盘）", "Tuner");
+            MessageBox.Show(Lang.Get("S.Config.ImportSaveFail", ex.Message), "Tuner");
         }
         _loadingUi = true;
         RefreshGroupColors();
@@ -203,8 +229,9 @@ public partial class MainWindow
         _dirty = false;
         SetSaveStatus(null);
         _hotkeys?.SetEnabled(App.Config.Settings.HotkeysEnabled); // 导入配置的快捷键开关即时生效
+        Lang.Apply(Lang.Resolve(App.Config.Settings.Language)); // 导入配置的语言即时生效
         App.Log($"配置已导入：{dlg.FileName}（{App.Config.Groups.Count} 组 / {App.Config.Rules.Count} 条规则）");
-        MessageBox.Show($"导入完成：{App.Config.Groups.Count} 个分组、{App.Config.Rules.Count} 条规则已生效。", "Tuner");
+        MessageBox.Show(Lang.Get("S.Config.ImportDone", App.Config.Groups.Count, App.Config.Rules.Count), "Tuner");
     }
 
     // ---------- 更新检查（GitHub latest 比对，仅提示不下载；链接以文字展示，不拉起浏览器） ----------
@@ -217,7 +244,7 @@ public partial class MainWindow
             return;
         _updateChecking = true;
         UpdateCheckButton.IsEnabled = false;
-        UpdateStatusText.Text = "正在检查更新…";
+        UpdateStatusText.Text = Lang.Get("S.Update.Checking");
         try
         {
             var current = typeof(MainWindow).Assembly
@@ -226,14 +253,14 @@ public partial class MainWindow
             var (tag, url, err) = await Task.Run(FetchLatestRelease);
             if (tag is null)
             {
-                UpdateStatusText.Text = $"检查失败（{err}），请稍后重试或访问发布页";
+                UpdateStatusText.Text = Lang.Get("S.Update.Failed", err ?? "");
                 return;
             }
             var latest = ParseVersionTag(tag);
             var cur = ParseVersionTag(current);
             UpdateStatusText.Text = latest is not null && cur is not null && latest > cur
-                ? $"发现新版本 {tag}（当前 {current}）· 发布页：{url ?? "github.com/woodtong/Tuner/releases"}"
-                : $"已是最新版本（当前 {current}，最新发布 {tag}）";
+                ? Lang.Get("S.Update.New", tag, current, url ?? "github.com/woodtong/Tuner/releases")
+                : Lang.Get("S.Update.Latest", current, tag);
             App.Log($"更新检查：最新发布 {tag}，当前 {current}");
         }
         finally
@@ -301,7 +328,7 @@ public partial class MainWindow
         if (_loadingUi)
             return;
         _dirty = true;
-        SetSaveStatus("● 有未保存的修改…");
+        SetSaveStatus(Lang.Get("S.Save.Pending"));
         _autoSaveTimer.Stop();
         _autoSaveTimer.Start();
     }
@@ -313,7 +340,7 @@ public partial class MainWindow
             return;
         if (!TryParseSettings())
         {
-            SetSaveStatus("设置里有无效数字，修正后自动保存");
+            SetSaveStatus(Lang.Get("S.Save.Invalid"));
             SaveStatus.Foreground = MakeBrush("#D97706");
             return; // 保持 _dirty，后续修改会再次触发
         }
@@ -324,12 +351,12 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            SetSaveStatus("自动保存失败: " + ex.Message);
+            SetSaveStatus(Lang.Get("S.Save.Fail", ex.Message));
             SaveStatus.Foreground = MakeBrush("#DC2626");
             return;
         }
         _dirty = false;
-        SetSaveStatus($"✓ 已自动保存 {DateTime.Now:HH:mm:ss}");
+        SetSaveStatus(Lang.Get("S.Save.Saved", DateTime.Now.ToString("HH:mm:ss")));
         SaveStatus.Foreground = MakeBrush("#16A34A");
         _hotkeys?.SetEnabled(App.Config.Settings.HotkeysEnabled); // 快捷键开关随保存即时生效
         App.Log($"配置已自动保存（{App.Config.Groups.Count} 组 / {App.Config.Rules.Count} 条规则）");
@@ -337,7 +364,7 @@ public partial class MainWindow
 
     private void SetSaveStatus(string? text)
     {
-        SaveStatus.Text = text ?? "修改会自动保存并立即生效";
+        SaveStatus.Text = text ?? Lang.Get("S.Save.Default");
         SaveStatus.Foreground = _dirty
             ? MakeBrush("#D97706")
             : new SolidColorBrush(Color.FromRgb(0x6B, 0x72, 0x80));

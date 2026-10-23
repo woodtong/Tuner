@@ -1,0 +1,227 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+
+    <!-- 简体中文（源语言）。代码侧动态文字同样经本字典取串（Lang.Get）。 -->
+
+    <!-- 顶栏 -->
+    <sys:String x:Key="S.App.Subtitle">分组音频闪避</sys:String>
+    <sys:String x:Key="S.Tooltip.MasterPeak">设备总峰值</sys:String>
+    <sys:String x:Key="S.Tooltip.SwitchDevice">点击切换默认输出设备</sys:String>
+    <sys:String x:Key="S.PausedBadge">闪避已暂停</sys:String>
+    <sys:String x:Key="S.PausedBadgeTip">闪避已暂停：全部规则停用、被压音量已还原。托盘菜单或设置页可恢复</sys:String>
+
+    <!-- 页签 -->
+    <sys:String x:Key="S.Tab.Status">实时状态</sys:String>
+    <sys:String x:Key="S.Tab.Volume">音量</sys:String>
+    <sys:String x:Key="S.Tab.Groups">分组</sys:String>
+    <sys:String x:Key="S.Tab.Rules">规则</sys:String>
+    <sys:String x:Key="S.Tab.Settings">设置</sys:String>
+
+    <!-- 状态页 -->
+    <sys:String x:Key="S.Stat.Sessions">会话</sys:String>
+    <sys:String x:Key="S.Stat.Speaking">出声中</sys:String>
+    <sys:String x:Key="S.Stat.Ducking">闪避中</sys:String>
+    <sys:String x:Key="S.Status.Empty">暂无音频会话 — 让任意应用播放声音后会自动出现在这里</sys:String>
+
+    <!-- 音量页 -->
+    <sys:String x:Key="S.Mixer.Title">调音台 · MASTER + 应用通道</sys:String>
+    <sys:String x:Key="S.Mixer.Hint">MASTER=默认播放设备；被闪避的应用由规则接管，此时调整将更新其恢复目标</sys:String>
+    <sys:String x:Key="S.Mixer.MasterDevice">（设备）</sys:String>
+    <sys:String x:Key="S.Mixer.Mute">静音</sys:String>
+    <sys:String x:Key="S.Mixer.Unmute">取消静音</sys:String>
+    <sys:String x:Key="S.Curve.Title">音量曲线</sys:String>
+    <sys:String x:Key="S.Curve.Tooltip">推子与闪避目标里的百分比都是曲线上的位置，实际音量按曲线换算；切换曲线不动当前音量，只改调整手感</sys:String>
+    <sys:String x:Key="S.Curve.Linear">线性</sys:String>
+    <sys:String x:Key="S.Curve.Square">平方</sys:String>
+    <sys:String x:Key="S.Curve.Log">对数（等响度）</sys:String>
+    <sys:String x:Key="S.Curve.Custom">自定义</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Linear">线性：实际音量 = 百分比。最直观，但小音量段每格听感变化明显</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Square">平方：实际音量 = 百分比²。小音量段拖动更细腻，整体近似听感</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Log">对数（等响度）：每 1% 恒定 0.4dB（全程 40dB），等格等响，小音量段不再一拖就炸</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Custom">自定义：拖动图中控制点（双击空白加点 / 右键删点，端点仅可上下拖），响度随百分比折线映射</sys:String>
+
+    <!-- 分组页 -->
+    <sys:String x:Key="S.Group.New">＋ 新建分组</sys:String>
+    <sys:String x:Key="S.Group.DefaultBadge">默认</sys:String>
+    <sys:String x:Key="S.Group.Name">组名</sys:String>
+    <sys:String x:Key="S.Group.SetDefault">设为默认组</sys:String>
+    <sys:String x:Key="S.Group.DefaultTip1">默认组有且仅有一个：默认组不能被取消勾选（尝试取消会有提示），更换默认组请在目标分组上直接勾选。</sys:String>
+    <sys:String x:Key="S.Group.DefaultTip2">默认组是兜底分组：进程名未命中任何分组的应用，会自动归入默认组（左侧列表带「默认」徽章，计数为「承接未匹配应用」）。</sys:String>
+    <sys:String x:Key="S.Group.DefaultTip3">规则以分组为对象：把规则目标设为默认组，等于作用于全部其余应用，不用逐一列举。</sys:String>
+    <sys:String x:Key="S.Group.DefaultTip4">注意：默认组若同时被用作规则的触发源，则任何未分类应用出声都会触发该规则。</sys:String>
+    <sys:String x:Key="S.Group.DefaultTip5">至少保留一个默认组；默认组不可删除，需先把其他分组设为默认。</sys:String>
+    <sys:String x:Key="S.Group.ProcMatch">进程匹配</sys:String>
+    <sys:String x:Key="S.Group.ProcMatchHint">按进程名匹配，不区分大小写；填 system sounds 可匹配系统提示音</sys:String>
+    <sys:String x:Key="S.Group.ProcEmpty">（尚未添加进程）</sys:String>
+    <sys:String x:Key="S.Group.RemoveProcTip">从本分组移除该进程</sys:String>
+    <sys:String x:Key="S.Group.AddProc">添加进程</sys:String>
+    <sys:String x:Key="S.Group.Add">添加</sys:String>
+    <sys:String x:Key="S.Group.FromRunning">从运行中的应用添加（预注册）</sys:String>
+    <sys:String x:Key="S.Group.Refresh">刷新</sys:String>
+    <sys:String x:Key="S.Group.AddSelected">添加选中</sys:String>
+    <sys:String x:Key="S.Group.AddSelectedTip">该应用的音频会话一旦出现，立即按本分组规则处理</sys:String>
+    <sys:String x:Key="S.Group.BrowserHint">提示：浏览器各标签页共享一个会话，只能按整个浏览器分组；独占模式 / ASIO 音频无法检测。</sys:String>
+    <sys:String x:Key="S.Group.Delete">删除分组</sys:String>
+
+    <!-- 规则页 -->
+    <sys:String x:Key="S.Rule.New">＋ 新增规则</sys:String>
+    <sys:String x:Key="S.Rule.Header">当【触发】出声或在播时，【目标】音量渐变到目标值</sys:String>
+    <sys:String x:Key="S.Rule.Trigger">触发</sys:String>
+    <sys:String x:Key="S.Rule.Target">目标</sys:String>
+    <sys:String x:Key="S.Rule.SelGroup">分组</sys:String>
+    <sys:String x:Key="S.Rule.SelApp">应用</sys:String>
+    <sys:String x:Key="S.Rule.TriggerValueTip">分组=按分组成员匹配；应用=精确到单个进程。列表只列当前真实存在的应用（中英文异名自动互认，如 bilibili/哔哩哔哩）；未运行的应用可直接输入进程名</sys:String>
+    <sys:String x:Key="S.Rule.TargetVolume">目标音量 %</sys:String>
+    <sys:String x:Key="S.Rule.VolumeRange">0 - 100</sys:String>
+    <sys:String x:Key="S.Rule.Priority">优先级</sys:String>
+    <sys:String x:Key="S.Rule.PriorityHint">同一目标被多条规则命中时按优先级决出（高者生效，同级时应用级优先于分组级）；设置页「多规则同时命中」可改为取闪避最深</sys:String>
+    <sys:String x:Key="S.Rule.Rhythm">闪避节奏</sys:String>
+    <sys:String x:Key="S.Rule.RhythmTip">本规则专用的压低/恢复时长；留空＝跟随设置页的全局值。不同规则可有不同节奏（如视频压音乐快进快出、游戏压慢放慢收）</sys:String>
+    <sys:String x:Key="S.Rule.FadeOutMs">压低 ms</sys:String>
+    <sys:String x:Key="S.Rule.FadeInMs">恢复 ms</sys:String>
+    <sys:String x:Key="S.Rule.FadeOutTooltip">闪避开始（压低）毫秒</sys:String>
+    <sys:String x:Key="S.Rule.FadeInTooltip">闪避结束（恢复）毫秒</sys:String>
+    <sys:String x:Key="S.Rule.RhythmHint">留空＝跟随设置页的全局闪避时长</sys:String>
+    <sys:String x:Key="S.Rule.Condition">生效条件</sys:String>
+    <sys:String x:Key="S.Rule.ConditionTip">让规则只在特定输出设备上生效（如仅耳机启用、接音箱时自动失效）</sys:String>
+    <sys:String x:Key="S.Rule.CondNone">无条件</sys:String>
+    <sys:String x:Key="S.Rule.CondDevice">指定输出设备</sys:String>
+    <sys:String x:Key="S.Rule.CondDeviceTip">当前默认输出设备名包含该文字时规则才生效（子串匹配，不区分大小写，如"耳机"）</sys:String>
+    <sys:String x:Key="S.Rule.Detection">判定方式</sys:String>
+    <sys:String x:Key="S.Rule.DetectionTip">状态判定=SMTC 播放状态/会话 Active（推荐，不看峰值，无宽限）；声音判定=峰值迟滞+宽限</sys:String>
+    <sys:String x:Key="S.Rule.DetectState">状态判定</sys:String>
+    <sys:String x:Key="S.Rule.DetectSound">声音判定</sys:String>
+    <sys:String x:Key="S.Rule.EnableThis">启用此规则</sys:String>
+    <sys:String x:Key="S.Rule.ToggleTip">启用 / 停用此规则</sys:String>
+    <sys:String x:Key="S.Rule.AutoSaveHint">规则修改会自动保存并立即生效。</sys:String>
+    <sys:String x:Key="S.Rule.Delete">删除规则</sys:String>
+
+    <!-- 设置页 -->
+    <sys:String x:Key="S.Set.Run">运行</sys:String>
+    <sys:String x:Key="S.Set.Language">界面语言</sys:String>
+    <sys:String x:Key="S.Set.LanguageHint">切换立即生效（事件日志内容保持中文）</sys:String>
+    <sys:String x:Key="S.Set.LangAuto">跟随系统</sys:String>
+    <sys:String x:Key="S.Set.LangZh">简体中文</sys:String>
+    <sys:String x:Key="S.Set.LangEn">English</sys:String>
+    <sys:String x:Key="S.Set.Suspend">启用闪避</sys:String>
+    <sys:String x:Key="S.Set.SuspendTip">临时停用全部规则并立即还原被压音量（托盘菜单同名项与此同步）</sys:String>
+    <sys:String x:Key="S.Set.SuspendSwitchTip">关闭＝暂停全部规则并还原音量；重新打开后规则立即恢复生效</sys:String>
+    <sys:String x:Key="S.Set.SuspendOffHint">关闭＝暂停全部规则（被压音量立即还原）</sys:String>
+    <sys:String x:Key="S.Set.RuleConflict">多规则同时命中</sys:String>
+    <sys:String x:Key="S.Set.RuleConflictTip">同一会话被多条规则命中时，按哪种方式决定最终压到的音量</sys:String>
+    <sys:String x:Key="S.Set.ConflictPriority">取优先级最高</sys:String>
+    <sys:String x:Key="S.Set.ConflictDeepest">取闪避最深（压得更低）</sys:String>
+    <sys:String x:Key="S.Set.RuleConflictHint">「取闪避最深」＝压得更低者说了算（如 20% 与 40% 同时命中 → 压到 20%）；规则页的优先级字段仅在并列时参与决出</sys:String>
+    <sys:String x:Key="S.Set.Takeover">手动调节即接管</sys:String>
+    <sys:String x:Key="S.Set.TakeoverTip">闪避期间手动拖动被压应用的音量＝接管：本轮闪避不再干预该会话，规则重新触发后恢复</sys:String>
+    <sys:String x:Key="S.Set.TakeoverHint">手动调过音量的会话本轮不再被压低</sys:String>
+    <sys:String x:Key="S.Set.Hotkeys">全局快捷键</sys:String>
+    <sys:String x:Key="S.Set.HotkeysTip">系统级热键，Tuner 在后台或托盘驻留时同样有效</sys:String>
+    <sys:String x:Key="S.Set.HotkeysHint">Ctrl+Alt+P 暂停/恢复闪避 · Ctrl+Alt+M 显示主界面</sys:String>
+    <sys:String x:Key="S.Set.HotkeysFailHint">组合键被其他程序占用时注册会失败（事件日志有记录）；改动保存后即时生效</sys:String>
+    <sys:String x:Key="S.Set.Detect">出声判定</sys:String>
+    <sys:String x:Key="S.Set.Smtc">优先使用系统媒体播放状态判定（推荐：歌间静音不误判，停止/暂停立即恢复）</sys:String>
+    <sys:String x:Key="S.Set.SmtcHint1">未接入系统媒体会话的应用（部分游戏、老播放器）自动回退为峰值判定，</sys:String>
+    <sys:String x:Key="S.Set.SmtcHint2">其进入/退出阈值、低电平保持与静音宽限等兜底参数在配置文件中调整</sys:String>
+    <sys:String x:Key="S.Set.Fade">音量渐变</sys:String>
+    <sys:String x:Key="S.Set.FadeHint">闪避的「压低」和「恢复」是两个独立过程，可以分别控制快慢</sys:String>
+    <sys:String x:Key="S.Set.FadeOutLabel">闪避开始（压低）ms</sys:String>
+    <sys:String x:Key="S.Set.FadeInLabel">闪避结束（恢复）ms</sys:String>
+    <sys:String x:Key="S.Set.FadeOutHint">触发源开始出声/播放时，把被闪避应用的音量从原始值压到闪避目标值的耗时。越短压得越急（如 200～400），能更快让出声音</sys:String>
+    <sys:String x:Key="S.Set.FadeInHint">触发源停止出声/停止播放后，把音量从闪避目标值恢复回原始值的耗时。越长越平顺（默认约 1200），过短会显得突兀</sys:String>
+    <sys:String x:Key="S.Set.Perf">性能</sys:String>
+    <sys:String x:Key="S.Set.Poll">轮询间隔 ms</sys:String>
+    <sys:String x:Key="S.Set.PollHint">会话峰值轮询频率，重启应用后生效</sys:String>
+    <sys:String x:Key="S.Set.Startup">启动</sys:String>
+    <sys:String x:Key="S.Set.AutoStart">开机自动启动（静默驻留托盘，不弹窗口）</sys:String>
+    <sys:String x:Key="S.Set.AutoStartTip">写入当前用户的注册表 Run 键（免管理员）；仅当条目指向当前 exe 时视为已启用</sys:String>
+    <sys:String x:Key="S.Set.AutoStartHint">记录在系统注册表（HKCU Run），不随配置文件走；换了解压目录请重新勾选一次</sys:String>
+    <sys:String x:Key="S.Set.Config">配置</sys:String>
+    <sys:String x:Key="S.Set.ImportExport">导入 / 导出</sys:String>
+    <sys:String x:Key="S.Set.ImportExportTip">导出当前全部配置（分组/规则/设置）；导入会整体替换现有配置并立即生效（替换前自动留 .bak 备份）</sys:String>
+    <sys:String x:Key="S.Set.Export">导出…</sys:String>
+    <sys:String x:Key="S.Set.Import">导入…</sys:String>
+    <sys:String x:Key="S.Set.ImportTip">导入的文件将整体替换现有分组、规则与设置</sys:String>
+    <sys:String x:Key="S.Set.About">关于</sys:String>
+    <sys:String x:Key="S.Set.CheckUpdate">检查更新</sys:String>
+    <sys:String x:Key="S.Set.CheckUpdateTip">查询 GitHub 最新发布版本并与当前版本比较，仅提示、不自动下载</sys:String>
+    <sys:String x:Key="S.Set.UpdateInitialHint">仅提示新版本，不会自动下载</sys:String>
+    <sys:String x:Key="S.Set.ReleasesHint">发布页：github.com/woodtong/Tuner/releases</sys:String>
+    <sys:String x:Key="S.Set.DiagToggleClosed">诊断 · 事件日志 ▸</sys:String>
+    <sys:String x:Key="S.Set.DiagToggleOpen">诊断 · 事件日志 ▾</sys:String>
+    <sys:String x:Key="S.Set.DiagToggleTip">查看最近的关键事件（规则生效/解除、设备切换、配置问题），用于自查或反馈附档</sys:String>
+    <sys:String x:Key="S.Set.DiagTitle">最近事件（仅内存保留，重启后清空）</sys:String>
+    <sys:String x:Key="S.Set.DiagCopy">复制全部</sys:String>
+    <sys:String x:Key="S.Set.DiagCopyTip">复制为文本，方便反馈问题时附档</sys:String>
+    <sys:String x:Key="S.Set.DiagClear">清空</sys:String>
+
+    <!-- 代码动态文字 -->
+    <sys:String x:Key="S.Win.Title">Tuner — 分组音频闪避</sys:String>
+    <sys:String x:Key="S.Save.Pending">● 有未保存的修改…</sys:String>
+    <sys:String x:Key="S.Save.Invalid">设置里有无效数字，修正后自动保存</sys:String>
+    <sys:String x:Key="S.Save.Fail">自动保存失败: {0}</sys:String>
+    <sys:String x:Key="S.Save.Saved">✓ 已自动保存 {0}</sys:String>
+    <sys:String x:Key="S.Save.Default">修改会自动保存并立即生效</sys:String>
+    <sys:String x:Key="S.Status.DuckBadge">闪避中 → {0}%</sys:String>
+    <sys:String x:Key="S.Status.TakeoverBadge">手动接管（本轮不压低）</sys:String>
+    <sys:String x:Key="S.Volume.OutputTitle">输出与设备：{0}</sys:String>
+    <sys:String x:Key="S.Group.Count">{0} 个进程</sys:String>
+    <sys:String x:Key="S.Group.DefaultCount">承接未匹配应用</sys:String>
+    <sys:String x:Key="S.Group.NeedName">请先填写分组名</sys:String>
+    <sys:String x:Key="S.Group.DupName">已存在同名分组：{0}</sys:String>
+    <sys:String x:Key="S.Group.DupProc">该进程已在列表中：{0}</sys:String>
+    <sys:String x:Key="S.Group.DeleteDefault">默认组不能删除，可将其他分组设为默认组。</sys:String>
+    <sys:String x:Key="S.Group.DeleteConfirm">确定删除分组「{0}」？关联的规则也会一并删除。</sys:String>
+    <sys:String x:Key="S.Group.DefaultOnlyOne">默认组有且仅有一个，不能取消。
+若需要更改默认组，请直接勾选对应分组。</sys:String>
+    <sys:String x:Key="S.Group.Untitled">新分组</sys:String>
+    <sys:String x:Key="S.Rule.DisabledPrefix">（已停用）</sys:String>
+    <sys:String x:Key="S.Rule.AppSuffix">（应用）</sys:String>
+    <sys:String x:Key="S.Rule.GroupSuffix">（分组）</sys:String>
+    <sys:String x:Key="S.Rule.Sentence">{0} 出声 → {1} 渐变到 {2}%</sys:String>
+    <sys:String x:Key="S.Rule.StateTag">［状态判定］</sys:String>
+    <sys:String x:Key="S.Rule.SoundTag">［声音判定］</sys:String>
+    <sys:String x:Key="S.Rule.DeviceSuffix">［仅 {0}］</sys:String>
+    <sys:String x:Key="S.Rule.RoleTrigger">触发</sys:String>
+    <sys:String x:Key="S.Rule.RoleTarget">目标</sys:String>
+    <sys:String x:Key="S.Rule.WarnAppEmpty">{0}应用名为空，规则永不生效</sys:String>
+    <sys:String x:Key="S.Rule.WarnNoSession">⚠ {0}应用「{1}」当前没有音频会话（未运行，或名字与实际进程不符）</sys:String>
+    <sys:String x:Key="S.Rule.WarnGroupGone">⚠ {0}分组不存在（可能已被删除），规则永不生效</sys:String>
+    <sys:String x:Key="S.Rule.SelectorHint">⚠ 当前没有名为「{0}」的音频会话（应用未运行，或名字与实际进程不符）</sys:String>
+    <sys:String x:Key="S.Common.Ok">确定</sys:String>
+    <sys:String x:Key="S.Common.Cancel">取消</sys:String>
+    <sys:String x:Key="S.Common.Yes">是</sys:String>
+    <sys:String x:Key="S.Common.No">否</sys:String>
+    <sys:String x:Key="S.Common.Error">错误</sys:String>
+    <sys:String x:Key="S.Device.SwitchFail">切换输出设备失败：{0}</sys:String>
+    <sys:String x:Key="S.Device.Switched">默认输出设备已切换: {0}</sys:String>
+    <sys:String x:Key="S.Config.FileLabel">配置文件：{0}</sys:String>
+    <sys:String x:Key="S.Config.PortableOn">便携模式已启用（程序目录存在 portable.marker）：配置与日志都保存在程序目录，拷贝整个文件夹即完成迁移</sys:String>
+    <sys:String x:Key="S.Config.PortableOff">提示：在程序目录新建一个空的 portable.marker 文件可启用便携模式——配置与日志改存程序目录，解压即用、拷走即走（重启应用后生效）</sys:String>
+    <sys:String x:Key="S.Config.ExportTitle">导出 Tuner 配置</sys:String>
+    <sys:String x:Key="S.Config.ImportTitle">导入 Tuner 配置（将整体替换现有配置）</sys:String>
+    <sys:String x:Key="S.Config.Filter">Tuner 配置 (*.json)|*.json</sys:String>
+    <sys:String x:Key="S.Config.ExportDefaultName">tuner-config-{0}.json</sys:String>
+    <sys:String x:Key="S.Config.ExportFail">导出失败：{0}</sys:String>
+    <sys:String x:Key="S.Config.ImportBadFile">无法读取「{0}」：不是有效的 Tuner 配置文件。现有配置未改动。</sys:String>
+    <sys:String x:Key="S.Config.ImportSaveFail">导入后保存失败：{0}（配置已在本次运行中生效，但未写入磁盘）</sys:String>
+    <sys:String x:Key="S.Config.ImportDone">导入完成：{0} 个分组、{1} 条规则已生效。</sys:String>
+    <sys:String x:Key="S.Update.Checking">正在检查更新…</sys:String>
+    <sys:String x:Key="S.Update.Failed">检查失败（{0}），请稍后重试或访问发布页</sys:String>
+    <sys:String x:Key="S.Update.New">发现新版本 {0}（当前 {1}）· 发布页：{2}</sys:String>
+    <sys:String x:Key="S.Update.Latest">已是最新版本（当前 {0}，最新发布 {1}）</sys:String>
+    <sys:String x:Key="S.Tray.Open">打开 Tuner</sys:String>
+    <sys:String x:Key="S.Tray.Suspend">暂停闪避（恢复音量）</sys:String>
+    <sys:String x:Key="S.Tray.Diag">事件日志</sys:String>
+    <sys:String x:Key="S.Tray.Exit">退出（还原音量）</sys:String>
+    <sys:String x:Key="S.Tray.Title">Tuner — 分组音频闪避</sys:String>
+    <sys:String x:Key="S.Tray.TitlePaused">Tuner — 闪避已暂停</sys:String>
+    <sys:String x:Key="S.Tray.BalloonTitle">Tuner 已启动</sys:String>
+    <sys:String x:Key="S.Tray.BalloonText">正在监控音频会话并执行分组闪避。关闭窗口即最小化到托盘。</sys:String>
+    <sys:String x:Key="S.App.AlreadyRunning">Tuner 已在运行（请检查系统托盘）。</sys:String>
+    <sys:String x:Key="S.App.StartFail">无法访问默认播放设备：{0}</sys:String>
+    <sys:String x:Key="S.App.AutoStartFail">设置开机自启失败：{0}</sys:String>
+    <sys:String x:Key="S.Diag.PathLabel">完整日志文件：{0}（事件面板仅内存保留最近 600 条）</sys:String>
+
+</ResourceDictionary>

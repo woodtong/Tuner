@@ -59,7 +59,8 @@ public partial class MainWindow : Window
         catch { /* 图标失败不影响功能 */ }
 
         DeviceText.Text = App.Monitor.DeviceName;
-        OutputTitle.Text = "输出与设备：" + App.Monitor.DeviceName;
+        OutputTitle.Text = Lang.Get("S.Volume.OutputTitle", App.Monitor.DeviceName);
+        Title = Lang.Get("S.Win.Title");
         StatusList.ItemsSource = _statusRows;
         VolumeList.ItemsSource = _volumeRows;
         RefreshGroupColors();
@@ -119,6 +120,19 @@ public partial class MainWindow : Window
         // 导航滑动指示器（参考 cogent-gui useSlideHighlight）：单个胶囊跟随悬停平滑滑动，
         // 鼠标离开导航回落到选中项（悬停色→选中色随位过渡）。模板取件要等模板应用完（Loaded）
         Tabs.Loaded += (_, _) => InitNavIndicator();
+
+        // 语言切换即时刷新：XAML 静态串走 DynamicResource 自动换；这里只处理代码拼接的动态串
+        // （状态页/曲线提示随 250ms 刷新自然跟上；分组/规则 VM 整表重建）
+        Lang.LanguageChanged += () => Dispatcher.BeginInvoke(() =>
+        {
+            Title = Lang.Get("S.Win.Title");
+            OutputTitle.Text = Lang.Get("S.Volume.OutputTitle", App.Monitor.DeviceName);
+            foreach (var row in _volumeRows)
+                row.UpdateMuteText();
+            RefreshGroupTab();
+            RefreshRuleTab();
+            UpdateVolumeCurveHint();
+        });
 
         _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(800) };
         _autoSaveTimer.Tick += (_, _) => AutoSaveNow();
@@ -226,9 +240,10 @@ public partial class MainWindow : Window
             return; // 只响应外层页签切换（页签内的下拉等选择事件也会冒泡到这里）
         if (IsVisible)
             RefreshVisiblePage();
-        if (Tabs.SelectedItem is TabItem { Header: "分组" })
+        // 按索引判断页签（Header 自图标改版后是 StackPanel，字符串匹配早已失效的隐性 bug，顺手修复）
+        if (Tabs.SelectedIndex == 2)
             RefreshGroupDetail();
-        if (Tabs.SelectedItem is TabItem { Header: "规则" })
+        if (Tabs.SelectedIndex == 3)
             RefreshRuleTab(); // 会话随时间变化：切回规则页时重算失配提醒（同时保持选择不变）
         // 导航胶囊滑到新选中项；鼠标仍在导航内时保持悬停色（点击刚选中的那条）
         SlideNavIndicator(Tabs.SelectedItem as TabItem, resting: _navRoot?.IsMouseOver != true);
