@@ -2,6 +2,21 @@
 
 实现要点、踩坑记录与自测清单。README 只保留用户视角内容。
 
+## 2026-10-23 · 产品迭代第 3-5 批（todo 7-12 + 14 探针，0.1.1-eta 三次原位替换，版本号未动）
+
+用户指令：完成 todo 后续任务、版本号不更迭（数字与字母均不动，每批完成即打包原位替换）。
+
+- **todo7 多规则叠加**：`Settings.RuleConflict("priority"|"deepest")` 全局开关（语义决定规则间合成方式，规则级各自选无法互相合成，故放全局）。引擎 `Better` 按语义分支：最深模式取 `TargetVolumePercent` 更低者，并列仍走 `BetterPriority`。生效期记账不变（deepest 下非胜者规则退出 `_engagedNow` 自动销账，事件按轮去重天然正确）。
+- **todo8 手动接管**：`Settings.ManualTakeover` + `Tracked.UserTookOver`。`SetUserVolume` 开启时解除本轮干预（Ducked=false、Current/OriginalVolume=用户值 → `EngineControlling` 立即 false）；Tick 主循环 `UserTookOver && rule!=null → continue`（规则命中仍记账），`rule==null → 复位`。**调用顺序关键**：`WriteChannelVolume` 改为先 `SetUserVolume` 再查 `IsVolumeControlled` 决定直写——接管模式下第一次用户调节即解除控制，同一次调用内用户值直写生效；旧顺序（先查后记）会把直写判断留在"受控"上，用户要拖第二下才生效。状态页徽章复用 DuckVisibility 通道显示「手动接管（本轮不压低）」。
+- **todo9 导入/导出**：`TryLoadForImport` 三层校验——可读 + **顶层键检查**（`JsonDocument` 确认 settings/groups/rules 任一存在；宽松反序列化会把任意合法 JSON 读成空配置，拿错文件导入会静默清空，这是必防项）+ 旧格式迁移由 Normalize 兜底。导入后全页签重载（`_loadingUi` 包裹 RefreshGroupColors/GroupTab/RuleTab/LoadSettingsTab）。
+- **todo10 便携模式**：`ConfigStore.PortableBase/ActiveDir/ActivePath` 单一出口（exe 目录 `portable.marker` 存在即启用）；App 加载、AutoSaveNow、Console `--setvol/--log` 三处从 DefaultPath 切到 ActivePath，`App.LogPath` 同随 ActiveDir。**marker 检测每次读文件系统但只在启动/保存调用，不进引擎热路径**。首次运行不预写 config.json（与 %APPDATA% 行为一致，首次修改才落盘）。
+- **todo11 更新检查**：GitHub `releases/latest` 匿名 API（必须带 User-Agent，否则 403）；版本比较只取数字位（`"v0.1.2-eta"` → 0.1.2），**字母工作版与同数字正式版判等不误报**。发布页链接只作文字展示（守零 Process.Start 纪律）。本机实测遇匿名限流 HTTP 403——属预期路径，UI 如实显示"检查失败"。
+- **todo12 全局快捷键**：`HotkeyHost`：`WindowInteropHelper.EnsureHandle()`（**未 Show 的窗口也能注册**——托盘驻留必须）；`HwndSource.AddHook` 捕 WM_HOTKEY；任一组合键注册失败则全部注销并留日志。开关保存后 `AutoSaveNow` 里同步 `SetEnabled`（导入配置同样同步）。真实键击验证：托盘驻留中 `WScript.Shell.SendKeys("^%p")` 两次，引擎暂停/恢复事件各恰一次。
+- **todo14 探针实测**：`TunerE2E --media`（WinRT `MediaPlayer` 循环播放，自动注册 SMTC）当音源，`PauseProbe test` 实测 TryPause 后**音频峰值连续归零、状态=已暂停、TryPlay 恢复**——SMTC 真启停对集成规范的应用可行；第三方播放器响应度待逐个复测（工具已就绪），是否立项留用户决定。
+- **验证方式重要变化**：本轮视觉通道全程故障（子代理 Read 图片走"CDN 上传确认"路径而非视觉呈现，中英文文件名均如此，两个 image-viewer 实例一致）——改用**程序化布局自检**：`--screenshot` 模式内嵌 `SettingsLayoutSelfCheck`（控件可见性/顺序 Y 坐标/选中项/提示行高/窗内无溢出，结果写 settings-check.txt，9 项 PASS）。视觉通道恢复后可回归截图复核。
+- 端到端仍用"临时工程跑完即删"模式（%TEMP%\tuner-e2e，引用 Tuner.Core 工程引用）：触发源=本进程 WasapiOut 循环播放，被压目标=**系统提示音会话**（`PlaySound` 系统别名预热创建，"System Sounds" 与测试进程分属两会话——同进程 WASAPI 共享会话无法自避自，这是免外部进程的双会话方案）。批次 A 验证 7/7：优先级 40% → deepest 20% → 接管即时 80% 不压回 → 解除保持 → 再触发回 20% → 关闭接管回 40% → 恢复到用户锚点 90%。
+- 提交：e25186c（todo7-8）→ f345537（todo9-10）→ f1fc497（todo11-12），每批后 0.1.1-eta 四件套原位替换（dist 平铺，正式版归档目录未动）。
+
 ## 2026-10-22 · UI 响应式返工（0.1.1-eta 原位替换，字母不变）
 
 用户反馈：小窗文字显示不全、全屏 UI 太离散（规则页为主）。子代理读图定位后修复：
