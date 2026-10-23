@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     private bool _loadingUi;
     private bool _dirty;
     private readonly DispatcherTimer _autoSaveTimer;
+    private HotkeyHost? _hotkeys;
 
     // 分组配色（按配置顺序取色，默认组固定灰蓝）
     private static readonly string[] Palette =
@@ -121,6 +122,12 @@ public partial class MainWindow : Window
 
         _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(800) };
         _autoSaveTimer.Tick += (_, _) => AutoSaveNow();
+
+        // 全局快捷键（EnsureHandle：--minimized 托盘驻留未 Show 时同样注册）
+        _hotkeys = new HotkeyHost(this);
+        _hotkeys.ToggleSuspendRequested += () => App.SetSuspended(!App.Engine.Suspended);
+        _hotkeys.ShowMainRequested += App.ShowMainWindow;
+        _hotkeys.SetEnabled(App.Config.Settings.HotkeysEnabled);
     }
 
     protected override void OnClosing(CancelEventArgs e)
@@ -134,6 +141,12 @@ public partial class MainWindow : Window
         if (_dirty)
             AutoSaveNow(); // 真正退出前把防抖窗口内未落盘的修改补存
         base.OnClosing(e);
+    }
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _hotkeys?.Dispose();
+        base.OnClosed(e);
     }
 
     private int GroupIndex(string groupId)

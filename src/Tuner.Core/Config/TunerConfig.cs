@@ -52,6 +52,9 @@ public sealed class EngineSettings
     /// </summary>
     public bool ManualTakeover { get; set; }
 
+    /// <summary>全局快捷键（Ctrl+Alt+P 暂停/恢复闪避、Ctrl+Alt+M 显示主界面）；组合键被占用时注册失败会在事件日志留痕。</summary>
+    public bool HotkeysEnabled { get; set; } = true;
+
     /// <summary>
     /// 音量曲线（全局）："linear"=线性；"square"=平方；"log"=对数（等响度）；"custom"=自定义（CustomCurve 控制点）。
     /// 界面上的音量百分比（混音台推子位置、规则目标音量）统一视为曲线上的位置，按曲线映射为实际振幅。

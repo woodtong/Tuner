@@ -1,3 +1,5 @@
+using System.Net.Http;
+using System.Reflection;
 using System.Text;
 using System.Windows;
 using System.Windows.Media;
@@ -32,6 +34,7 @@ public partial class MainWindow
             SetRuleConflict.Items.Add("取闪避最深（压得更低）");
         SetRuleConflict.SelectedIndex = s.RuleConflict == "deepest" ? 1 : 0;
         SetManualTakeover.IsChecked = s.ManualTakeover;
+        SetHotkeys.IsChecked = s.HotkeysEnabled;
         SetSuspend.IsChecked = !App.Engine.Suspended; // 运行态开关：仅同步显示，不落盘
         try
         {
@@ -199,8 +202,73 @@ public partial class MainWindow
         _loadingUi = false;
         _dirty = false;
         SetSaveStatus(null);
+        _hotkeys?.SetEnabled(App.Config.Settings.HotkeysEnabled); // 导入配置的快捷键开关即时生效
         App.Log($"配置已导入：{dlg.FileName}（{App.Config.Groups.Count} 组 / {App.Config.Rules.Count} 条规则）");
         MessageBox.Show($"导入完成：{App.Config.Groups.Count} 个分组、{App.Config.Rules.Count} 条规则已生效。", "Tuner");
+    }
+
+    // ---------- 更新检查（GitHub latest 比对，仅提示不下载；链接以文字展示，不拉起浏览器） ----------
+
+    private bool _updateChecking;
+
+    private async void OnCheckUpdate(object sender, RoutedEventArgs e)
+    {
+        if (_updateChecking)
+            return;
+        _updateChecking = true;
+        UpdateCheckButton.IsEnabled = false;
+        UpdateStatusText.Text = "正在检查更新…";
+        try
+        {
+            var current = typeof(MainWindow).Assembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                ?.InformationalVersion.Split('+')[0] ?? "?";
+            var (tag, url, err) = await Task.Run(FetchLatestRelease);
+            if (tag is null)
+            {
+                UpdateStatusText.Text = $"检查失败（{err}），请稍后重试或访问发布页";
+                return;
+            }
+            var latest = ParseVersionTag(tag);
+            var cur = ParseVersionTag(current);
+            UpdateStatusText.Text = latest is not null && cur is not null && latest > cur
+                ? $"发现新版本 {tag}（当前 {current}）· 发布页：{url ?? "github.com/woodtong/Tuner/releases"}"
+                : $"已是最新版本（当前 {current}，最新发布 {tag}）";
+            App.Log($"更新检查：最新发布 {tag}，当前 {current}");
+        }
+        finally
+        {
+            _updateChecking = false;
+            UpdateCheckButton.IsEnabled = true;
+        }
+    }
+
+    private static async Task<(string? Tag, string? Url, string? Err)> FetchLatestRelease()
+    {
+        try
+        {
+            using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            http.DefaultRequestHeaders.Add("User-Agent", "Tuner-UpdateCheck"); // GitHub API 拒绝无 UA 请求
+            using var resp = await http.GetAsync("https://api.github.com/repos/woodtong/Tuner/releases/latest");
+            if (!resp.IsSuccessStatusCode)
+                return (null, null, $"HTTP {(int)resp.StatusCode}");
+            using var doc = System.Text.Json.JsonDocument.Parse(await resp.Content.ReadAsStringAsync());
+            var root = doc.RootElement;
+            var tag = root.TryGetProperty("tag_name", out var t) ? t.GetString() : null;
+            var url = root.TryGetProperty("html_url", out var u) ? u.GetString() : null;
+            return string.IsNullOrEmpty(tag) ? (null, url, "响应缺少版本号") : (tag, url, null);
+        }
+        catch (Exception ex)
+        {
+            return (null, null, ex.Message); // 网络/代理异常：如实呈现，不影响任何功能
+        }
+    }
+
+    /// <summary>"v0.1.2-eta" → 0.1.2（只比数字位，希腊字母后缀忽略）；解析失败返回 null。</summary>
+    private static Version? ParseVersionTag(string s)
+    {
+        var digits = new string(s.Trim().TrimStart('v', 'V').TakeWhile(c => char.IsDigit(c) || c == '.').ToArray());
+        return Version.TryParse(digits, out var v) ? v : null;
     }
 
     // ---------- 数值设置 + 自动保存 ----------
@@ -224,6 +292,7 @@ public partial class MainWindow
         s.PollIntervalMs = Math.Clamp(poll, 10, 5_000);
         s.RuleConflict = SetRuleConflict.SelectedIndex == 1 ? "deepest" : "priority";
         s.ManualTakeover = SetManualTakeover.IsChecked == true;
+        s.HotkeysEnabled = SetHotkeys.IsChecked == true;
         return true;
     }
 
@@ -262,6 +331,7 @@ public partial class MainWindow
         _dirty = false;
         SetSaveStatus($"✓ 已自动保存 {DateTime.Now:HH:mm:ss}");
         SaveStatus.Foreground = MakeBrush("#16A34A");
+        _hotkeys?.SetEnabled(App.Config.Settings.HotkeysEnabled); // 快捷键开关随保存即时生效
         App.Log($"配置已自动保存（{App.Config.Groups.Count} 组 / {App.Config.Rules.Count} 条规则）");
     }
 

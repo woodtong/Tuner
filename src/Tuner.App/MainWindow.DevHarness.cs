@@ -369,6 +369,11 @@ public partial class MainWindow
             Check("便携模式文案可见", PortableModeText.IsVisible && PortableModeText.ActualHeight > 10,
                 $"文案高度 {PortableModeText.ActualHeight:F0}px");
 
+            Check("快捷键开关可见", SetHotkeys.IsVisible && SetHotkeys.ActualWidth > 0,
+                $"SetHotkeys {Vis(SetHotkeys)}");
+            Check("检查更新按钮可见", UpdateCheckButton.IsVisible && UpdateCheckButton.ActualHeight > 10,
+                $"按钮 {UpdateCheckButton.ActualWidth:F0}x{UpdateCheckButton.ActualHeight:F0}，状态文字高度 {UpdateStatusText.ActualHeight:F0}px");
+
             File.WriteAllLines(resultPath, lines);
             App.Log("[selfcheck] 设置页布局自检完成 → " + resultPath);
         }

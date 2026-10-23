@@ -844,6 +844,23 @@
                                     </StackPanel>
                                 </Grid>
 
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="230" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="全局快捷键" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="系统级热键，Tuner 在后台或托盘驻留时同样有效" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <CheckBox x:Name="SetHotkeys" Style="{StaticResource Switch}"
+                                                  Checked="OnSettingsFieldChanged" Unchecked="OnSettingsFieldChanged" />
+                                        <TextBlock Text="Ctrl+Alt+P 暂停/恢复闪避 · Ctrl+Alt+M 显示主界面"
+                                                   Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="12,0,0,0" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Text="组合键被其他程序占用时注册会失败（事件日志有记录）；改动保存后即时生效"
+                                           Style="{StaticResource Hint}" Margin="0,8,0,0" />
+
                                 <Rectangle Height="1" Fill="{StaticResource CardBorder}" Margin="0,18,0,0" />
 
                                 <TextBlock Text="出声判定" FontSize="13.5" FontWeight="SemiBold"
@@ -943,6 +960,31 @@
                                            TextWrapping="Wrap" />
                                 <TextBlock x:Name="PortableModeText" Style="{StaticResource Hint}" Margin="0,6,0,0"
                                            TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- 关于 + 更新检查（仅提示，不自动下载；链接以文字展示，不拉起浏览器） -->
+                        <Border Style="{StaticResource Card}" Padding="22" Margin="0,12,0,0">
+                            <StackPanel>
+                                <TextBlock Text="关于" FontSize="13.5" FontWeight="SemiBold"
+                                           Foreground="{StaticResource TextPrimary}" />
+                                <Grid Margin="0,14,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="230" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="检查更新" Style="{StaticResource Label}" VerticalAlignment="Center"
+                                               ToolTip="查询 GitHub 最新发布版本并与当前版本比较，仅提示、不自动下载" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                        <Button x:Name="UpdateCheckButton" Content="检查更新" Style="{StaticResource Btn}"
+                                                Padding="14,5" Click="OnCheckUpdate" />
+                                        <TextBlock x:Name="UpdateStatusText" Text="仅提示新版本，不会自动下载"
+                                                   Style="{StaticResource Hint}" VerticalAlignment="Center" Margin="12,0,0,0"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                                <TextBlock Style="{StaticResource Hint}" Margin="0,10,0,0" TextWrapping="Wrap"
+                                           Text="发布页：github.com/woodtong/Tuner/releases" />
                             </StackPanel>
                         </Border>
 
