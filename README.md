@@ -69,9 +69,15 @@ dotnet run --project src/Tuner.Console -c Release -- --setvol qqmusic 61
 Tuner.sln
 config/test-ducking.json     自动化验收用测试配置
 src/
-  Tuner.Core/                核心库（UI 无关）：会话监控 / 闪避引擎 / 配置
+  Tuner.Core/                核心库（纯跨平台）：闪避引擎 / 配置 / 音量曲线 + 平台接口
+  Tuner.Core.Windows/        Windows 平台层（WASAPI 会话监控 / SMTC 状态）
+  Tuner.Core.Linux/          Linux 平台层（PulseAudio，P/Invoke libpulse）
+  Tuner.Core.macOS/          macOS 骨架（公开 API 设备级，完整方案见 docs/macOS-plan.md）
+  Tuner.App/                 WPF 托盘应用（Tuner.exe，Windows 主程序）
+  Tuner.App.Avalonia/        Avalonia 跨平台 UI（Windows/Linux 双目标）
   Tuner.Console/             控制台诊断工具
-  Tuner.App/                 WPF 托盘应用（Tuner.exe）
+  Tuner.PauseProbe/          SMTC「暂停目标应用」探针
+  Tuner.LinuxProbe/          Linux 音频层探针
 ```
 
 ### 打包发布
@@ -84,6 +90,9 @@ dotnet publish src/Tuner.App -c Release -r win-x64 --self-contained true `
   -o dist/Tuner-<版本>-win-x64
 
 # 控制台诊断：同参数，输出到 dist/Tuner-Console-<版本>-win-x64
+
+# 跨平台 UI（Avalonia）：linux 目标必须显式 -f net8.0；单文件发布不内嵌 libSkiaSharp，用目录发布
+dotnet publish src/Tuner.App.Avalonia -c Release -f net8.0 -r linux-x64 --self-contained true -o dist/Tuner.Cross-<版本>-linux-x64
 ```
 
 版本号统一在 `src/Directory.Build.props`（四个工程共用）。

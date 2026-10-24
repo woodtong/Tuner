@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
@@ -30,7 +31,7 @@ if (args.Contains("--help") || args.Contains("-h"))
 {
     Console.WriteLine("用法: Tuner.Console [--log|--selftest] [--interval <毫秒>] [--duration <秒>] [--setvol <进程名> <百分比>]");
     Console.WriteLine("  --log       逐行滚动输出（适合重定向/记录），默认为原地刷新的实时表格");
-    Console.WriteLine("  --selftest  内置闪避验收测试：自动拉起测试音源，验证降/恢复/创建初始化/退出还原");
+    Console.WriteLine("  --selftest  内置闪避验收（免外部播放器）：触发压低/间隙保持/停止恢复/暂停闪避/退出还原，逐项断言，退出码=失败数");
     Console.WriteLine("  --interval  峰值轮询间隔（覆盖配置），默认取配置值（100ms）");
     Console.WriteLine("  --duration  运行指定秒数后自动退出，默认运行到 Ctrl+C");
     Console.WriteLine("  --setvol    调试用：把指定进程的所有会话音量设为给定百分比后退出");
@@ -53,20 +54,21 @@ var version = Assembly.GetEntryAssembly()
 
 IWavePlayer? selfTestOutput = null;
 string selfName = Process.GetCurrentProcess().ProcessName;
+var selftestResults = new List<(string Name, bool Pass, string Detail)>();
+float selftestAnchor = -1f;
 TunerConfig config;
 if (selftest)
 {
-    // 自测使用内嵌配置（与 config/test-ducking.json 等价）
+    // 自测使用内嵌配置：触发=本进程播放，目标=系统提示音会话（双会话，免外部播放器）
     configPath = null;
     config = new TunerConfig();
-    config.Groups.Add(new AppGroupConfig { Id = "music", Name = "音乐", ProcessNames = { "qqmusic" } });
-    config.Groups.Add(new AppGroupConfig { Id = "aux", Name = "测试目标", ProcessNames = { selfName } });
+    config.Groups.Add(new AppGroupConfig { Id = "trig", Name = "触发", ProcessNames = { selfName } });
+    config.Groups.Add(new AppGroupConfig { Id = "sys", Name = "系统提示音", ProcessNames = { "system sounds" } });
     config.Groups.Add(new AppGroupConfig { Id = "default", Name = "其他", IsDefault = true });
-    config.Rules.Add(new DuckingRuleConfig { Id = "r1", TriggerGroupId = "aux", TargetGroupId = "music", TargetVolumePercent = 20, Priority = 10, DetectionMode = "state" });
-    config.Rules.Add(new DuckingRuleConfig { Id = "r2", TriggerGroupId = "music", TargetGroupId = "aux", TargetVolumePercent = 50, Priority = 5, DetectionMode = "state" });
-    config.Rules.Add(new DuckingRuleConfig { Id = "r3", TriggerGroupId = "aux", TargetGroupId = "aux", TargetVolumePercent = 30, Priority = 1, DetectionMode = "sound" });
-    config.Settings.InactiveHoldMs = 500; // 盖过测试 wav 循环间隙（~350ms），排除已知间隙导致的恢复循环
-    durationSec = 24;
+    config.Rules.Add(new DuckingRuleConfig { Id = "r1", TriggerGroupId = "trig", TargetGroupId = "sys", TargetVolumePercent = 30, Priority = 10, DetectionMode = "state" });
+    // 裸构造的 Settings 渐变为 0/0（产品默认 400/1200 由 ConfigStore.CreateDefault 注入），这里显式对齐
+    config.Settings.FadeOutDurationMs = 400;
+    config.Settings.FadeInDurationMs = 1200;
 }
 else
 {
@@ -149,54 +151,6 @@ for (int i = 0; i < 20 && monitor.DeviceName.Length == 0; i++)
 Console.WriteLine($"默认播放设备: {monitor.DeviceName}");
 Console.WriteLine();
 
-if (selftest)
-{
-    // 时间线：+3s 起响 4s → 静默 4s → 再响 4s → 保持静默至 +20s 退出。
-    // 验证点：创建即初始化 50%、音乐降 20%、触发停止后恢复 61%、二次降、退出还原 100%。
-    if (!monitor.CurrentSnapshot.Any(s => s.ProcessName == "qqmusic" && s.Peak > 0.02f))
-        Console.WriteLine("⚠ 自测前提：QQMusic 应正在播放，否则部分验证点无法触发。");
-    var wav = new[] { "Windows Balloon.wav", "Windows Ding.wav", "tada.wav", "notify.wav" }
-        .Select(f => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Media", f))
-        .FirstOrDefault(File.Exists);
-    if (wav is null)
-    {
-        Console.Error.WriteLine("自测失败：找不到系统提示音 wav。");
-        engine.Dispose();
-        monitor.Dispose();
-        return 1;
-    }
-    Console.WriteLine($"[自测] +3s 起响（{Path.GetFileName(wav)}，进程内播放）：响4s → 暂停6s(流保持打开，模拟歌间间隙) → 再响4s → 停止，全程约 24s");
-    Console.WriteLine("[自测] 预期：暂停期间闪避保持不恢复；停止后约 1.5s 恢复；退出时还原音量");
-    Console.WriteLine();
-    // 时间线在进程内驱动：+3s 起响 4s → 静默 4s → 再响 4s → 静默至 +20s 退出。
-    // 测试会话归属本进程（与外部音源等价地验证"新会话动态出现"），且不产生任何外部命令执行
-    _ = Task.Run(async () =>
-    {
-        try
-        {
-            // 时间线：+3s 起响 4s → +7s 暂停 6s（音频流保持打开，模拟歌曲间隙）
-            //        → +13s 恢复播放 4s → +17s 停止（流关闭）→ +24s 退出。
-            // 预期：暂停期间闪避保持（无"恢复"事件）；停止后约 1.5s（关流宽限）恢复。
-            await Task.Delay(3000);
-            var loop = new LoopStream(new WaveFileReader(wav));
-            selfTestOutput = new WasapiOut(AudioClientShareMode.Shared, 100);
-            selfTestOutput.Init(loop);
-            selfTestOutput.Play();
-            await Task.Delay(4000);
-            selfTestOutput.Pause();
-            await Task.Delay(6000);
-            loop.Position = 0;
-            selfTestOutput.Play();
-            await Task.Delay(4000);
-            selfTestOutput.Stop();
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"[自测] 播放失败: {ex.Message}");
-        }
-    });
-}
-
 if (logMode)
 {
     // 闪避/出声状态切换的过程日志
@@ -255,18 +209,117 @@ else
     monitor.SamplesUpdated += _ => table.Render(monitor.DeviceName, monitor.DevicePeak, monitor.CurrentSnapshot, engine.CurrentStates);
 }
 
-cts.Token.WaitHandle.WaitOne();
+float SysVol() => monitor.CurrentSnapshot.FirstOrDefault(s => s.IsSystemSounds)?.Volume ?? -1f;
+
+void SelfCheck(string name, bool pass, string detail)
+{
+    selftestResults.Add((name, pass, detail));
+    Console.WriteLine($"{(pass ? "PASS" : "FAIL")}  {name}  [{detail}]");
+}
+
+void RunSelftest()
+{
+    var wav = new[] { "Windows Balloon.wav", "Windows Ding.wav", "tada.wav", "notify.wav" }
+        .Select(f => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "Media", f))
+        .FirstOrDefault(File.Exists);
+    if (wav is null)
+    {
+        SelfCheck("找到触发源 wav", false, "Windows Media 目录无可用 wav");
+        return;
+    }
+    Console.WriteLine("[自测] 触发=本进程 WasapiOut 循环播放，目标=系统提示音会话（双会话，免外部播放器）");
+    Console.WriteLine("[自测] 时间线：压低 → 间隙保持 → 停止恢复 → 再压低 → 暂停闪避即时还原 → 恢复再压低 → 退出还原，全程约 24s");
+    Console.WriteLine();
+
+    // 预热目标会话：PlaySound（系统别名）。注意：本进程调用 PlaySound 时声音计入本进程会话，
+    // 会让"触发"组短暂出声 → 预热即引发一轮闪避，须等其完全解除（宽限+恢复渐变）后再读锚点。
+    for (int i = 0; i < 3 && SysVol() < 0f; i++)
+    {
+        WinMm.PlaySound("SystemExclamation", IntPtr.Zero, 0x10001); // SND_ALIAS|SND_ASYNC
+        Thread.Sleep(600);
+    }
+    for (int i = 0; i < 16 && SysVol() < 0f; i++)
+        Thread.Sleep(250);
+    var sys = monitor.CurrentSnapshot.FirstOrDefault(s => s.IsSystemSounds);
+    if (sys is null)
+    {
+        SelfCheck("系统提示音会话可用", false, "PlaySound 预热后未出现会话（系统提示音被禁用？）");
+        return;
+    }
+    string sysId = sys.InstanceId;
+    bool Engaged() => engine.CurrentStates.Any(s => s.InstanceId == sysId && s.Ducked);
+    for (int i = 0; i < 30 && Engaged(); i++)
+        Thread.Sleep(300);
+    Thread.Sleep(1500); // 等恢复渐变走完，锚点稳定
+    selftestAnchor = SysVol();
+    if (selftestAnchor < 0f)
+    {
+        SelfCheck("系统提示音会话可用", false, "预热后目标会话消失");
+        return;
+    }
+    Console.WriteLine($"[自测] 目标会话就绪，锚点音量 {selftestAnchor:P0}");
+
+    void TriggerOn()
+    {
+        selfTestOutput = new WasapiOut(AudioClientShareMode.Shared, 100);
+        selfTestOutput.Init(new LoopStream(new WaveFileReader(wav)));
+        selfTestOutput.Play();
+    }
+
+    TriggerOn();
+    Thread.Sleep(2000);
+    SelfCheck("触发出声后目标压至 30%", SysVol() is >= 0.24f and <= 0.45f, $"vol={SysVol():P0}");
+
+    selfTestOutput!.Pause();
+    Thread.Sleep(5000);
+    SelfCheck("歌曲间隙保持（流打开暂停不恢复）", SysVol() is >= 0.24f and <= 0.45f, $"vol={SysVol():P0}");
+    selfTestOutput.Play();
+    Thread.Sleep(2000);
+
+    selfTestOutput.Stop();
+    selfTestOutput.Dispose();
+    selfTestOutput = null;
+    Thread.Sleep(4500); // 关流短宽限 1.5s + 恢复渐变
+    SelfCheck("触发停止后恢复锚点", Math.Abs(SysVol() - selftestAnchor) <= 0.06f, $"vol={SysVol():P0}，锚点 {selftestAnchor:P0}");
+
+    TriggerOn();
+    Thread.Sleep(2000);
+    SelfCheck("再触发重新压低", SysVol() is >= 0.24f and <= 0.45f, $"vol={SysVol():P0}");
+
+    engine.SetSuspended(true);
+    Thread.Sleep(700);
+    SelfCheck("暂停闪避立即还原锚点", Math.Abs(SysVol() - selftestAnchor) <= 0.07f, $"vol={SysVol():P0}");
+
+    engine.SetSuspended(false);
+    Thread.Sleep(2500);
+    SelfCheck("恢复闪避引擎后重新压低", SysVol() is >= 0.24f and <= 0.45f, $"vol={SysVol():P0}");
+    // 结束时保持触发出声：退出路径的 Dispose 在"压低中"执行，检验退出还原链路
+}
+
+if (selftest)
+{
+    RunSelftest();
+}
+else
+{
+    cts.Token.WaitHandle.WaitOne();
+}
 Console.WriteLine("正在退出并还原音量…");
 engine.Dispose();
 if (selftest)
 {
-    // 退出还原验证：自测音源会话若仍存在，其音量应已被引擎还原为 100%
-    Thread.Sleep(400); // 等监控回读一次音量
-    var ps = monitor.CurrentSnapshot.FirstOrDefault(s => s.ProcessName == selfName);
-    Console.WriteLine(ps is null
-        ? "[退出还原验证] 自测音源会话已不存在（还原对象随之终结）"
-        : $"[退出还原验证] {selfName} 会话音量 = {(int)Math.Round(ps.Volume * 100)}%（预期 100%）");
+    // 退出还原验证：上一段结束时仍处于压低中，Dispose 应把目标会话还原到锚点
+    Thread.Sleep(500); // 等监控回读一次音量
+    float v = SysVol();
+    if (selftestAnchor >= 0f && v >= 0f)
+        SelfCheck("退出时还原锚点", Math.Abs(v - selftestAnchor) <= 0.07f, $"vol={v:P0}，锚点 {selftestAnchor:P0}");
     try { selfTestOutput?.Dispose(); } catch { } // 会话随流关闭，放在还原验证之后
+    int failed = selftestResults.Count(r => !r.Pass);
+    Console.WriteLine();
+    Console.WriteLine($"===== 自测结果 {selftestResults.Count - failed}/{selftestResults.Count} 通过 =====");
+    try { monitor.Dispose(); } catch { }
+    Console.WriteLine("已退出。");
+    return failed > 0 ? 1 : 0;
 }
 try { monitor.Dispose(); } catch { }
 Console.WriteLine("已退出。");
@@ -332,6 +385,13 @@ internal static class ConsoleView
 
     // 近似：CJK 及全角字符按 2 列计，其余按 1 列
     private static int CharWidth(char ch) => ch >= 0x2E80 ? 2 : 1;
+}
+
+/// <summary>系统提示音播放（P/Invoke，进程内 API 调用，非外部命令）：预热"系统提示音"音频会话用。</summary>
+internal static class WinMm
+{
+    [DllImport("winmm.dll", CharSet = CharSet.Unicode)]
+    internal static extern bool PlaySound(string sound, IntPtr hmod, int flags);
 }
 
 /// <summary>循环播放包装：读到结尾自动回到起点（自测音源用）。</summary>
