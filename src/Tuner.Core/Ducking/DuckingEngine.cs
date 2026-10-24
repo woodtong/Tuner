@@ -236,10 +236,19 @@ public sealed class DuckingEngine : IDisposable
         }
         thread?.Join(2000);
 
-        lock (_gate)
+        // 退出还原：凡被引擎写过的会话（闪避中，或渐变回程被中断）都恢复到用户原始音量。
+        // 引擎线程可能正卡在持锁的 COM 音量调用上（实测：显示关闭触发设备电源切换时 audiodg 可无限挂起），
+        // 这里限时取锁——拿不到就放弃还原并如实报告，绝不让退出流程死等。
+        int restored = 0;
+        bool lockTaken = false;
+        try
         {
-            // 退出还原：凡被引擎写过的会话（闪避中，或渐变回程被中断）都恢复到用户原始音量
-            int restored = 0;
+            Monitor.TryEnter(_gate, 1500, ref lockTaken);
+            if (!lockTaken)
+            {
+                Diagnostics?.Invoke("引擎线程未在期限内退出（疑似音频服务无响应），跳过还原音量");
+                return;
+            }
             foreach (var t in _tracked.Values.Where(EngineControlling))
             {
                 t.Ducked = false;
@@ -247,12 +256,11 @@ public sealed class DuckingEngine : IDisposable
                 restored++;
             }
             LastRestoreCount = restored;
-            _tracked.Clear();
-            _lastSounding.Clear();
-            _mediaTracker.Dispose();
-            _cts?.Dispose();
-            _cts = null;
-            _thread = null;
+        }
+        finally
+        {
+            if (lockTaken)
+                Monitor.Exit(_gate);
         }
     }
 

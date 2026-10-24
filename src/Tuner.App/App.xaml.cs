@@ -251,6 +251,15 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         Log("—— 退出：停止引擎并还原音量 ——");
+        // 退出看门狗：任何一环（引擎停止/COM 调用）被音频服务挂起时，8 秒后硬退——
+        // 绝不能让托盘常驻进程变成"点退出没反应"的僵尸（2026-10-24 实测：显示关闭触发
+        // 设备电源切换时引擎线程持锁的 COM 音量调用可无限挂起）
+        var watchdog = Task.Run(async () =>
+        {
+            await Task.Delay(8000);
+            Log("退出流程超时（8s），强制结束进程");
+            Environment.Exit(0);
+        });
         // 启动早期中止（单实例互斥/设备失败）时 Engine/Monitor 可能尚未创建，需判空
         try
         {

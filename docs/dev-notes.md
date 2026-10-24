@@ -10,6 +10,15 @@
 - **三个新坑（重造过程实证）**：①裸 `new TunerConfig()` 的 Settings 渐变默认 0/0（产品默认 400/1200 由 ConfigStore.CreateDefault 注入）——内嵌配置必须显式补渐变值；②**本进程调用 winmm PlaySound，声音计入本进程会话**（并非直觉的 pid=0 System Sounds 会话）——预热即让"触发"组出声、白引一轮闪避，锚点必须等该轮完全解除（宽限+恢复渐变）后再读（首版因此读到场中值 43% 当锚点，3 项恢复断言全挂）；③引擎线程须显式 `engine.Start()`（构造函数只挂配置）——E2E harness 漏调时零闪避零报错，与"忘 monitor.Start()"同族。
 - 文档整改：README 开发段落目录结构更新为 9 工程 + Avalonia 打包命令；todo 8 注记补"README 已知限制第 4 条随发版更新"；todo 15③ 注记补"跨平台制品未入 dist 待决策"；下方自测清单重写。
 
+## 2026-10-24 · 修复退出卡死（用户实测触发，0.1.1-eta 原位替换）
+
+用户现象：点托盘退出无反应，进程变僵尸。日志定位：OnExit 打出"—— 退出 ——"后无"退出还原完成"——**卡死在 Engine.Dispose**。根因链：显示关闭（SC_MONITORPOWER 息屏）触发音频设备电源切换 → 引擎线程正持 `_gate` 执行 COM 音量调用（SetVolume/GetVolume 经 audiodg）被无限挂起 → Dispose 的 Join(2000) 超时后 `lock(_gate)` 永久等待 → UI 线程冻结。
+
+- 修复①（Core）：`DuckingEngine.Dispose` 改 `Monitor.TryEnter(_gate, 1500)`——拿不到锁就放弃还原并如实记诊断"疑似音频服务无响应"，绝不久等；还原成功路径行为不变（--selftest 7/7 回归 ✓）。
+- 修复②（双端 App）：OnExit/ShutdownCleanup 加 8 秒退出看门狗（Task.Delay → Environment.Exit(0)）——任何一环再被音频服务挂起，最多 8 秒硬退，托盘常驻进程永不僵尸化。
+- **本轮新坑：`Task.Dispose()` 只能在完成态调用**（未完成的 watchdog Task Dispose 抛 InvalidOperationException → 退出链路反而被自己人炸掉，冒烟实测 exit=-532462766）——看门狗 Task 挂着即可，绝不 Dispose。
+- 教训：**凡持锁执行跨进程调用（COM/IPC）的线程，任何 Dispose/停机路径都要限时取锁 + 全局看门狗双保险**。
+
 ## 2026-10-24 · 多端适配第 3-4 步（todo 15 ④，Avalonia UI + macOS 骨架，0.1.1-eta 原位替换）
 
 用户拍板"都要做"（Avalonia + macOS）。

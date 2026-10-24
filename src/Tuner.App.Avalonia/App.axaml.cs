@@ -168,6 +168,13 @@ public class App : Application
     private static void ShutdownCleanup()
     {
         Log("—— 退出：停止引擎并还原音量 ——");
+        // 退出看门狗：音频服务挂起时 8 秒硬退（与 WPF 版同源的防御，见 2026-10-24 退出卡死事件）
+        var watchdog = Task.Run(async () =>
+        {
+            await Task.Delay(8000);
+            Log("退出流程超时（8s），强制结束进程");
+            Environment.Exit(0);
+        });
         try
         {
             Engine?.Dispose();
