@@ -2,6 +2,17 @@
 
 实现要点、踩坑记录与自测清单。README 只保留用户视角内容。
 
+## 2026-10-23/24 · 产品迭代第 6-8 批（todo 13 i18n + todo 14 第三方实测 + todo 15 多端两步，0.1.1-eta 原位替换）
+
+用户指令：13/15 需要做、14 授权真实第三方播放器实测（插耳机不影响物理世界）；版本号不动。
+
+- **todo14 第三方实测**：拉起本机 QQ音乐（`SMTCFeature.dll` 确有 SMTC 集成）跑 `PauseProbe test`——TryPlay=True 后真实出声（峰值 28-31%）、TryPause=True 后声音真停（峰值 4s 归零保持、状态=已暂停）。**"第三方支持有限"的担忧在最大代表性目标上不成立**，B站/网易云按需复测（工具就绪）。
+- **todo13 i18n**：`Lang/Strings.{zh-CN,en-US}.xaml` 双语字典（203 键）+ `Lang.Apply`（字典置顶合并，DynamicResource 全局即时刷新）。代码动态串经 `Lang.Get`（params 格式化）。**即时刷新链**：XAML 自动；窗口标题/静音钮/分组规则 VM/托盘菜单/设置页下拉 Items 由 `LanguageChanged` 订阅重建；状态页随 250ms 刷新自然跟上。语言设置 `Settings.Language`（""跟系统）。**验证方法（视觉通道仍不可用）**：键静态审计（XAML 126 + 代码 70 引用键 vs 双字典，无缺失无差异）+ 中英两套 `--screenshot` 布局自检各 9 PASS + `--lang en-US` 实测渲染（下拉 Highest priority wins、Config file）。**坑**：ComboBoxItem 无 Text 属性用 Content；`Tabs_SelectionChanged` 按 Header 字符串匹配页签自图标改版后一直静默失效（顺手改 SelectedIndex 修复）。
+- **todo15-1 Core 分层**：Tuner.Core → 纯 net8.0（引擎/配置/曲线/`IAudioSessionMonitor`/`IMediaSessionTracker`）；新工程 Tuner.Core.Windows（WASAPI/SMTC，命名空间保持 Tuner.Core.* 引用方零改动）；引擎构造接口注入（无媒体跟踪器时 NullMediaSessionTracker 兜底）。SoundSession internal setter 经 `InternalsVisibleTo` 开放。sln 挂工程用 GUID 替换脚本（配置段照抄 Core 行 + 嵌套到 src 目录）。
+- **todo15-2 Linux 原型**：Tuner.Core.Linux（P/Invoke libpulse.so.0，threaded mainloop 标准模式）+ Tuner.LinuxProbe 探针（linux-x64 自包含单文件发布 → WSL 直接跑，连 `PULSE_SERVER=unix:/mnt/wslg/PulseServer`）。**libpulse 三坑（全靠运行时调试揪出，坑坑致命）**：①结构体含 ByValArray 嵌套数组的 `PtrToStructure` 回调方向段错误——全部改显式 offset 手读；②**libpulse 16.x 结构字段序与记忆不符**：pa_sink_info 是 name/**index**/description/…（index 夹中间），sink_input 的 mute@0x150/proplist@0x158/corked@0x160——用 hex dump 实证（先播放生成会话再 dump 对照 format=3/rate=44100/channels=2 定位 sample_spec）；③订阅常量 MASK_SINK_INPUT=0x4、facility=0x2，写错时**静默失效**（写 success=1、pactl 外部可见 30%，但回读永不更新）。另：写操作发起后立即 unref 会取消执行中的 op（须带 success 回调 WaitForOperation）；paplay 循环播放每次重开流（index 递增），长流验证用 60s 正弦 wav + setsid 脱离 wsl 会话（否则 wsl 命令退出进程被 SIGHUP）。
+- **todo15-3 macOS 评估**：CoreAudio 公开 API 无 per-app 会话音量/峰值（只有设备级）；BackgroundMusic 等方案全靠 AudioDriverKit 虚拟设备驱动（C++ 原生 + 签名公证）或私有 API。**判定：macOS 在公开 API + 纯 .NET 范围内不可行，需原生驱动项目单独立项。**
+- 提交：10032e0（i18n）→ 851c6b8（Core 分层）→ 8e702e0（Linux 原型）。Windows 侧每步回归 --smoke/--probe ✓。Mimosa 钩子会拦截 git mv/python 直写源码（改 Read→Write→git rm 流程）。
+
 ## 2026-10-23 · 产品迭代第 3-5 批（todo 7-12 + 14 探针，0.1.1-eta 三次原位替换，版本号未动）
 
 用户指令：完成 todo 后续任务、版本号不更迭（数字与字母均不动，每批完成即打包原位替换）。

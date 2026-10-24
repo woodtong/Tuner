@@ -56,20 +56,24 @@
 
 - [x] **12. 全局快捷键**（2026-10-23 已实现，待用户验收） —— 如"暂停/恢复闪避""显示主界面"（RegisterHotKey）。
   > 实现注记：`HotkeyHost`（RegisterHotKey + HwndSource 钩 WM_HOTKEY）：Ctrl+Alt+P 暂停/恢复闪避、Ctrl+Alt+M 显示主界面。`EnsureHandle` 保证 --minimized 托盘驻留（窗口未 Show）时同样注册；设置页「运行」组开关（保存即生效，默认开）；组合键被占用时注册失败、事件日志留痕。真实键击实测：托盘驻留中 SendKeys 发 Ctrl+Alt+P 两次，引擎"闪避已暂停/已恢复"事件各恰一次。自定义键位按需追加（当前固定两组合键）。
-- [ ] **13. 英文界面（i18n）** —— 公开仓库目前纯中文，想扩受众才值得做。
-  > 状态注记（2026-10-23）：本轮迭代未动——"想扩受众才值得做"的门槛未过（需用户表态）；做的话是全 UI 字符串抽资源的大改，先立项再动。
+- [x] **13. 英文界面（i18n）**（2026-10-23 已实现，待用户验收） —— 公开仓库目前纯中文，想扩受众才值得做。
+  > 实现注记：全量字符串资源化（XAML 约 130 处静态串 + 约 70 个代码动态键）经 `Lang/Strings.{zh-CN,en-US}.xaml` 双语字典（203 键同构），`{DynamicResource}` 即时切换；设置页「界面语言」下拉（跟随系统/简体中文/English），切换即时生效并持久化；托盘/气泡/对话框全翻译，事件日志与 app.log 保持中文（面向维护者）。顺手修复：页签切换按 Header 字符串匹配的隐性失效 bug（改 SelectedIndex）。
 
 ## 实验性（先探针验证，再决定立项）
 
 - [x] **14. 「暂停目标应用」作为闪避替代动作**（探针已完成 2026-10-23；**是否立项待用户决定**）
   看视频时直接暂停音乐播放器（而非压音量），视频停了自动恢复播放。第三方经 SMTC 请求暂停支持有限，大概率需向目标应用发送媒体键，可靠性存疑——先做可行性探针，再决定。
-  > 探针结论（Tuner.PauseProbe + WinRT MediaPlayer 音源实测）：**SMTC 真启停在"SMTC 集成规范的应用"上可行**——`TryPauseAsync` 返回 True 后目标音频峰值连续归零（音频流关闭而非无声后台播放）、SMTC 状态变"已暂停"；`TryPlayAsync` 恢复后峰值回来。**边界**：实测对象是 WinRT MediaPlayer（第一方集成）；todo 担心的"第三方支持有限"仍未证伪——QQ音乐/网易云/B站等第三方播放器是否响应外部 SMTC 暂停命令需逐个复测（探针工具就绪：`PauseProbe list` / `PauseProbe test <关键字>`，可在真播放器上随时跑）。另注意 SMTC 暂停对**没有注册 SMTC 的应用**（部分游戏/老播放器）完全无效，若立项需回退到压音量路径。
+  > 探针结论（2026-10-23 两轮实测）：**SMTC 真启停可行，含真实第三方播放器**。①WinRT MediaPlayer 音源：TryPause 后峰值连续归零、状态=已暂停、TryPlay 恢复；②**QQ音乐实测**（Tuner 典型目标应用，自带 SMTCFeature.dll）：TryPlay=True 后真实出声（峰值 28-31%），TryPause=True 后声音真停（峰值 4s 归零保持、状态=已暂停）——"第三方支持有限"的担忧在 QQ音乐上不成立。B站/网易云等按需复测（工具就绪：`PauseProbe list` / `PauseProbe test <关键字>`）。边界：对未注册 SMTC 的应用（部分游戏/老播放器）完全无效，若立项需回退压音量路径。**技术可行性已验证，是否立项由用户决定。**
 
 ## 长期方向（单独立项评估，不排入常规迭代）
 
-- [ ] **15. 多端适配（macOS / Linux）**
+- [ ] **15. 多端适配（macOS / Linux）**（Linux 已打通原型 2026-10-23；macOS 评估完成待决策）
   目标：不能只用于 Windows。
   现实约束：音频层 WASAPI（NAudio）为 Windows 专属——macOS 需 CoreAudio、Linux 需 PipeWire/PulseAudio，会话监控与音量控制层需按平台整体重写；UI 层 WPF 同为 Windows 专属，需换跨平台框架（如 Avalonia）或分平台实现。Tuner.Core 中规则引擎、配置、音量曲线等 UI 无关部分可直接复用。工程量约等于按平台重做核心层，需单独立项评估。
+  > **推进注记（2026-10-23，已完成三步中的两步）**：
+  > ① **Core 平台抽象**（完成）：Tuner.Core 拆纯跨平台 net8.0（引擎/配置/曲线 + `IAudioSessionMonitor`/`IMediaSessionTracker` 接口），Windows 实现收敛到新工程 Tuner.Core.Windows（WASAPI/SMTC），命名空间不变引用方零改动；引擎改接口注入。
+  > ② **Linux 平台层**（原型打通，WSLg 实测）：Tuner.Core.Linux（P/Invoke libpulse，PipeWire 经 pipewire-pulse 同样可用）——sink_input 会话枚举/进程名/PID/corked 状态/音量读写/主音量/设备枚举全部端到端验证（写 30% 回读生效、pactl 交叉验证）。**边界**：PulseAudio 无 per-stream 峰值（sound 判定不可用，state 判定用 corked）；MPRIS 媒体状态未接（传 null 退化兜底）；Linux 版 UI（Avalonia 迁移）未做。
+  > ③ **macOS 评估**（结论：公开 API 范围内不可行）：CoreAudio 公开 API 只有**设备级**音量，**无 per-app 会话音量/峰值的公开接口**；现有多平台音量工具（BackgroundMusic 等）一律走**虚拟音频设备驱动**（AudioDriverKit，C++ 原生 + Apple 开发者签名/公证），或私有 API。即 macOS 版 = 一个原生驱动项目 + .NET 宿主，工程量远超 Linux 路线且无法在 Windows 机器上开发验证。**建议：macOS 单独立项（或放弃），优先把 Linux 线走完（Avalonia UI + MPRIS + 真机发行版验证）。**
 
 ## 已确认不缺（审核时核查过，避免重复列）
 
