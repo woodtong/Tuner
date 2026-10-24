@@ -70,10 +70,11 @@
 - [ ] **15. 多端适配（macOS / Linux）**（Linux 已打通原型 2026-10-23；macOS 评估完成待决策）
   目标：不能只用于 Windows。
   现实约束：音频层 WASAPI（NAudio）为 Windows 专属——macOS 需 CoreAudio、Linux 需 PipeWire/PulseAudio，会话监控与音量控制层需按平台整体重写；UI 层 WPF 同为 Windows 专属，需换跨平台框架（如 Avalonia）或分平台实现。Tuner.Core 中规则引擎、配置、音量曲线等 UI 无关部分可直接复用。工程量约等于按平台重做核心层，需单独立项评估。
-  > **推进注记（2026-10-23，已完成三步中的两步）**：
+  > **推进注记（2026-10-23/24，四步全部推进）**：
   > ① **Core 平台抽象**（完成）：Tuner.Core 拆纯跨平台 net8.0（引擎/配置/曲线 + `IAudioSessionMonitor`/`IMediaSessionTracker` 接口），Windows 实现收敛到新工程 Tuner.Core.Windows（WASAPI/SMTC），命名空间不变引用方零改动；引擎改接口注入。
-  > ② **Linux 平台层**（原型打通，WSLg 实测）：Tuner.Core.Linux（P/Invoke libpulse，PipeWire 经 pipewire-pulse 同样可用）——sink_input 会话枚举/进程名/PID/corked 状态/音量读写/主音量/设备枚举全部端到端验证（写 30% 回读生效、pactl 交叉验证）。**边界**：PulseAudio 无 per-stream 峰值（sound 判定不可用，state 判定用 corked）；MPRIS 媒体状态未接（传 null 退化兜底）；Linux 版 UI（Avalonia 迁移）未做。
-  > ③ **macOS 评估**（结论：公开 API 范围内不可行）：CoreAudio 公开 API 只有**设备级**音量，**无 per-app 会话音量/峰值的公开接口**；现有多平台音量工具（BackgroundMusic 等）一律走**虚拟音频设备驱动**（AudioDriverKit，C++ 原生 + Apple 开发者签名/公证），或私有 API。即 macOS 版 = 一个原生驱动项目 + .NET 宿主，工程量远超 Linux 路线且无法在 Windows 机器上开发验证。**建议：macOS 单独立项（或放弃），优先把 Linux 线走完（Avalonia UI + MPRIS + 真机发行版验证）。**
+  > ② **Linux 平台层**（完成，WSLg 实测）：Tuner.Core.Linux（P/Invoke libpulse）——sink_input 会话枚举/进程名/PID/corked 状态/音量读写/主音量/设备枚举全部端到端验证。**边界**：PulseAudio 无 per-stream 峰值（sound 判定不可用，state 判定用 corked）；MPRIS 媒体状态未接。
+  > ③ **Avalonia 跨平台 UI**（完成 v1，Windows/WSLg 双端冒烟通过）：Tuner.App.Avalonia 单源码双目标（net8.0-windows→WASAPI、net8.0→PulseAudio），五页功能完整 + 双语即时切换 + 托盘 + 导入导出 + 更新检查 + 诊断日志。**已知差距（后续迭代）**：动效精细度（滑动胶囊/分层渐变）、推子回写博弈完整版、自定义曲线点编辑、滚轮调音、开机自启、全局热键。
+  > ④ **macOS**（骨架+蓝图，需 Mac 接手）：Tuner.Core.macOS 公开 API 设备级实现（编译通过未运行验证）；完整 per-app 能力需虚拟音频驱动路线（AudioDriverKit，可借鉴 MIT 的 BackgroundMusic）+ Apple 开发者签名——方案与工程量见 docs/macOS-plan.md。**公开 API 范围内 per-app 不可行的结论不变。**
 
 ## 已确认不缺（审核时核查过，避免重复列）
 
