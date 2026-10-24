@@ -10,6 +10,13 @@
 - **三个新坑（重造过程实证）**：①裸 `new TunerConfig()` 的 Settings 渐变默认 0/0（产品默认 400/1200 由 ConfigStore.CreateDefault 注入）——内嵌配置必须显式补渐变值；②**本进程调用 winmm PlaySound，声音计入本进程会话**（并非直觉的 pid=0 System Sounds 会话）——预热即让"触发"组出声、白引一轮闪避，锚点必须等该轮完全解除（宽限+恢复渐变）后再读（首版因此读到场中值 43% 当锚点，3 项恢复断言全挂）；③引擎线程须显式 `engine.Start()`（构造函数只挂配置）——E2E harness 漏调时零闪避零报错，与"忘 monitor.Start()"同族。
 - 文档整改：README 开发段落目录结构更新为 9 工程 + Avalonia 打包命令；todo 8 注记补"README 已知限制第 4 条随发版更新"；todo 15③ 注记补"跨平台制品未入 dist 待决策"；下方自测清单重写。
 
+## 2026-10-24 · 修复 Avalonia 空白窗口（用户实测触发）
+
+用户在 WSLg 打开 Linux 版看到全空白窗口。根因：**App.axaml 漏挂 FluentTheme**（csproj 引了包但 XAML 未 `<FluentTheme />`）——无控件主题时全部控件无模板不渲染，只剩窗口背景；--smoke 只验进程存活不验画面，没拦住。修复：App.Styles 挂 FluentTheme。
+- **验证方法（视觉通道仍故障期间）**：xdotool 按窗口名定位 + ImageMagick import 截窗 + `convert -format %k` 数唯一色——空白窗 <10 色/1-3KB，渲染后 774 色/30KB，可客观判定渲染与否。
+- 坑：WSL 里 `pkill -f Tuner.Cross` 会匹配到自己 sh -c 的命令行自杀（exit 15），用 `pkill -x`（按进程名精确匹配）。
+- dist 的 Linux 目录与 zip 已同步刷新；Windows 目标同 bug 同修（smoke 复验 exit 0）。
+
 ## 2026-10-24 · 修复退出卡死（用户实测触发，0.1.1-eta 原位替换）
 
 用户现象：点托盘退出无反应，进程变僵尸。日志定位：OnExit 打出"—— 退出 ——"后无"退出还原完成"——**卡死在 Engine.Dispose**。根因链：显示关闭（SC_MONITORPOWER 息屏）触发音频设备电源切换 → 引擎线程正持 `_gate` 执行 COM 音量调用（SetVolume/GetVolume 经 audiodg）被无限挂起 → Dispose 的 Join(2000) 超时后 `lock(_gate)` 永久等待 → UI 线程冻结。
