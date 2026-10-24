@@ -654,12 +654,41 @@ public partial class MainWindow : Window
         {
             1 => "zh-CN", 2 => "en-US", _ => "",
         };
-        Lang.Apply(Lang.Resolve(App.Config.Settings.Language));
+        // 延迟到 SelectionChanged 事件完成后再整体重建：在 ComboBox 自己的选择事件里
+        // Clear/重建 Items 会重入（Avalonia 上可致崩溃），Post 到下一轮 UI 分发执行
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (App.ForceExit)
+                return;
+            Lang.Apply(Lang.Resolve(App.Config.Settings.Language));
+            LoadSettings();
+            RefreshGroups();
+            RefreshRules();
+            App.Log("界面语言已切换：" + Lang.Current);
+            MarkDirty();
+        });
+    }
+
+    /// <summary>语言切换自动化复现（--langtest 诊断模式）：逐步打点，崩溃时 app.log 停在死点。
+    /// 第二阶段模拟真实交互：弹出框打开状态下改 SelectedIndex（触发真正的 OnLanguageChanged 路径）。</summary>
+    public void RunLangTest()
+    {
+        App.Log("[langtest] step0 切到设置页");
+        Tabs.SelectedIndex = 4;
+        App.Log("[langtest] step1 Apply(en-US)");
+        Lang.Apply("en-US");
+        App.Log("[langtest] step2 Apply(zh-CN)");
+        Lang.Apply("zh-CN");
+        App.Log("[langtest] step3 LoadSettings");
         LoadSettings();
+        App.Log("[langtest] step4 RefreshGroups");
         RefreshGroups();
+        App.Log("[langtest] step5 RefreshRules");
         RefreshRules();
-        App.Log("界面语言已切换：" + Lang.Current);
-        MarkDirty();
+        App.Log("[langtest] 直接序列完成；阶段2：弹出框打开 + 真实选择事件路径");
+        SetLanguage.IsDropDownOpen = true;
+        SetLanguage.SelectedIndex = 2; // en-US → 走 OnLanguageChanged（含 Post 重建）
+        App.Log("[langtest] 阶段2 选择已发出，等待延迟重建");
     }
 
     private void OnSuspendSwitchChanged(object? sender, RoutedEventArgs e)

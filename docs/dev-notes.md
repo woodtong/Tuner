@@ -10,6 +10,14 @@
 - **三个新坑（重造过程实证）**：①裸 `new TunerConfig()` 的 Settings 渐变默认 0/0（产品默认 400/1200 由 ConfigStore.CreateDefault 注入）——内嵌配置必须显式补渐变值；②**本进程调用 winmm PlaySound，声音计入本进程会话**（并非直觉的 pid=0 System Sounds 会话）——预热即让"触发"组出声、白引一轮闪避，锚点必须等该轮完全解除（宽限+恢复渐变）后再读（首版因此读到场中值 43% 当锚点，3 项恢复断言全挂）；③引擎线程须显式 `engine.Start()`（构造函数只挂配置）——E2E harness 漏调时零闪避零报错，与"忘 monitor.Start()"同族。
 - 文档整改：README 开发段落目录结构更新为 9 工程 + Avalonia 打包命令；todo 8 注记补"README 已知限制第 4 条随发版更新"；todo 15③ 注记补"跨平台制品未入 dist 待决策"；下方自测清单重写。
 
+## 2026-10-24 · 修复 Linux 切语言 SIGABRT 崩溃（用户实测触发）
+
+用户在 WSLg 把界面语言切到中文：卡住数秒后进程消失，stderr/app.log 全空。syslog 定位：**signal 6（SIGABRT）**＝.NET 后台线程未处理异常或运行时致命错的默认硬终止，不留托管日志。
+- 根因：`OnLanguageChanged` 在 ComboBox **自己的 SelectionChanged 事件内同步执行** `LoadSettings()`（其中 `SetLanguage.Items.Clear()` 重建 Items）——弹出框还开着时的重入在 Avalonia 上直接炸（WPF 版同写法没事，两框架事件模型差异）。程序化直调 Apply/LoadSettings/RefreshGroups/RefreshRules 全活（--langtest 阶段1），坐实崩在事件重入路径而非重载逻辑。
+- 修复：切换重建整体 `Dispatcher.UIThread.Post` 延迟到事件完成后的下一轮分发执行；`--langtest` 阶段2（弹出框打开 + 真实改 SelectedIndex 触发完整事件路径）存活验证 ✓，正常模式人工复验中。
+- 附带加固：AppDomain.UnhandledException / TaskScheduler.UnobservedTaskException 挂钩写 app.log——此后任何后台线程致命错都有完整堆栈可查（本次 SIGABRT 无日志的直接对策）。
+- 坑：`grep -c` 数到 0 匹配时退出码 1，接 `&&` 会短路整条链——验证命令别用 grep -c 当链中间节点；`dotnet build -f net8.0`（不带 -r）产出的是构建机（Windows）布局，给 WSL 部署必须 `publish -r linux-x64 --self-contained`。
+
 ## 2026-10-24 · 修复 Avalonia 空白窗口（用户实测触发）
 
 用户在 WSLg 打开 Linux 版看到全空白窗口。根因：**App.axaml 漏挂 FluentTheme**（csproj 引了包但 XAML 未 `<FluentTheme />`）——无控件主题时全部控件无模板不渲染，只剩窗口背景；--smoke 只验进程存活不验画面，没拦住。修复：App.Styles 挂 FluentTheme。

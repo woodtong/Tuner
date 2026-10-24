@@ -49,6 +49,13 @@ public class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        // 崩溃捕获先行：后台线程未处理异常/未观察任务异常在 .NET 默认直接终止进程（SIGABRT，不留托管日志），
+        // 挂钩后至少在 app.log 留下完整堆栈（2026-10-24 Linux 切语言 SIGABRT 事件的直接对策）
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+            Log("致命（AppDomain 未处理异常, 终止=" + e.IsTerminating + "）: " + e.ExceptionObject);
+        TaskScheduler.UnobservedTaskException += (_, e) =>
+            Log("未观察任务异常: " + e.Exception);
+
         _singleInstance = new Mutex(true, "Tuner-SingleInstance", out var createdNew);
         if (!createdNew)
         {
@@ -105,6 +112,36 @@ public class App : Application
         }
         AttachTray();
         _main.Show();
+
+        if ((Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)
+            ?.Args is { } appArgs && appArgs.Contains("--langtest"))
+        {
+            // 语言切换自动化复现（诊断模式）：2.5s 后执行切换序列逐步打点，存活 4s 后干净退出
+            Log("[langtest] 模式启动");
+            var t1 = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(2500) };
+            t1.Tick += (_, _) =>
+            {
+                t1.Stop();
+                try
+                {
+                    _main.RunLangTest();
+                }
+                catch (Exception ex)
+                {
+                    Log("[langtest] 外层异常: " + ex);
+                }
+                var t2 = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(4) };
+                t2.Tick += (_, _) =>
+                {
+                    t2.Stop();
+                    Log("[langtest] 存活确认，退出");
+                    ForceExit = true;
+                    (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Shutdown();
+                };
+                t2.Start();
+            };
+            t1.Start();
+        }
         base.OnFrameworkInitializationCompleted();
     }
 
