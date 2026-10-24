@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Tuner.Core.Windows" />
+    <InternalsVisibleTo Include="Tuner.Core.Linux" />
   </ItemGroup>
 
 </Project>

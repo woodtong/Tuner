@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Linux 平台实现：PulseAudio/PipeWire-pulse 客户端（P/Invoke libpulse.so.0）。
+       纯 net8.0，Windows 上可编译（native 库运行时才解析），须在 Linux（含 WSLg）上运行验证。 -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tuner.Core\Tuner.Core.csproj" />
+  </ItemGroup>
+
+</Project>

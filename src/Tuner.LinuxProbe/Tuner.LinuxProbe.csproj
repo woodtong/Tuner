@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Linux 平台可行性探针（todo 15）：连 PulseAudio 列 sink_input / 读写音量，须在 Linux 运行。 -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Tuner.LinuxProbe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tuner.Core.Linux\Tuner.Core.Linux.csproj" />
+  </ItemGroup>
+
+</Project>
