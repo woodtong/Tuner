@@ -37,11 +37,14 @@ public partial class MainWindow : Window
 
         Closing += (_, e) =>
         {
-            if (!App.ForceExit)
+            if (App.ForceExit)
+                return;
+            if (App.TrayAvailable)
             {
                 e.Cancel = true;
-                Hide(); // 关窗驻留托盘（与 WPF 版一致）
+                Hide(); // 有托盘：关窗驻留（与 WPF 版一致）
             }
+            // 无托盘（如 WSLg）：关窗＝走正常退出链路（还原音量后结束），不做看不见的后台驻留
         };
     }
 

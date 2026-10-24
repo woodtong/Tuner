@@ -169,12 +169,16 @@ public class App : Application
             _trayMenu = menu;
             _traySuspend = suspendItem;
             _tray = new TrayIcon { Menu = menu, ToolTipText = Lang.Get("S.Tray.Title"), IsVisible = true };
+            TrayAvailable = true;
         }
         catch (Exception ex)
         {
             Log("托盘不可用（不影响功能）: " + ex.Message);
         }
     }
+
+    /// <summary>托盘是否可用。不可用（如 WSLg 无系统托盘）时关窗＝退出，不做无托盘的后台驻留。</summary>
+    public static bool TrayAvailable { get; private set; }
 
     private static NativeMenu? _trayMenu;
     private static NativeMenuItem? _traySuspend;

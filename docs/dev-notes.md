@@ -10,6 +10,13 @@
 - **三个新坑（重造过程实证）**：①裸 `new TunerConfig()` 的 Settings 渐变默认 0/0（产品默认 400/1200 由 ConfigStore.CreateDefault 注入）——内嵌配置必须显式补渐变值；②**本进程调用 winmm PlaySound，声音计入本进程会话**（并非直觉的 pid=0 System Sounds 会话）——预热即让"触发"组出声、白引一轮闪避，锚点必须等该轮完全解除（宽限+恢复渐变）后再读（首版因此读到场中值 43% 当锚点，3 项恢复断言全挂）；③引擎线程须显式 `engine.Start()`（构造函数只挂配置）——E2E harness 漏调时零闪避零报错，与"忘 monitor.Start()"同族。
 - 文档整改：README 开发段落目录结构更新为 9 工程 + Avalonia 打包命令；todo 8 注记补"README 已知限制第 4 条随发版更新"；todo 15③ 注记补"跨平台制品未入 dist 待决策"；下方自测清单重写。
 
+## 2026-10-24 · Linux 使用体验收口：关窗即退出 + 桌面快捷方式启动
+
+- **无托盘环境关窗＝退出**：Avalonia 版 `App.TrayAvailable`（AttachTray 成功置位）——有托盘关窗驻留（同 WPF），无托盘（WSLg）关窗直接走正常退出链路（还原音量）。此前的行为是关窗隐藏进程驻留，在没托盘的 Linux 上＝看不见的僵尸，用户只能 pkill。
+- **Windows 桌面快捷方式启动 Linux 版**：`Tuner-Linux.lnk` → `wsl.exe -d Ubuntu-24.04 -- sh -c "PULSE_SERVER=... DISPLAY=:0 XDG_RUNTIME_DIR=... ~/tuner-live/Tuner.Cross"`（环境内联，无脚本依赖；WindowStyle 最小化）。**坑：Start-Process 多元素 ArgumentList 不给带空格参数加引号**，sh -c 只收到第一个变量赋值静默退出——单字符串传参并内嵌引号才可靠；bash→powershell 引号会二次打架，一律走 .ps1 脚本文件执行。
+- 部署流：publish 到本地临时目录再 WSL 复制（钩子拦 .sh 类文件的直写/复制；`dotnet publish` 直出 UNC 路径会被 bash 吃成 `E:\wsl$\` 假目录）。
+- dist 的 Linux 包附带通用 run.sh（定位自身目录执行，随包分发）。
+
 ## 2026-10-24 · 修复 Linux 切语言 SIGABRT 崩溃（用户实测触发）
 
 用户在 WSLg 把界面语言切到中文：卡住数秒后进程消失，stderr/app.log 全空。syslog 定位：**signal 6（SIGABRT）**＝.NET 后台线程未处理异常或运行时致命错的默认硬终止，不留托管日志。
