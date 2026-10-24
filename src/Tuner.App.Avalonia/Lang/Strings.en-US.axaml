@@ -1,0 +1,227 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="using:System">
+
+    <!-- English. Keep keys in sync with Strings.zh-CN.xaml. -->
+
+    <!-- Top bar -->
+    <sys:String x:Key="S.App.Subtitle">Group audio ducking</sys:String>
+    <sys:String x:Key="S.Tooltip.MasterPeak">Device peak level</sys:String>
+    <sys:String x:Key="S.Tooltip.SwitchDevice">Click to switch the default output device</sys:String>
+    <sys:String x:Key="S.PausedBadge">Ducking paused</sys:String>
+    <sys:String x:Key="S.PausedBadgeTip">Ducking is paused: all rules disabled and ducked volumes restored. Resume from the tray menu or Settings</sys:String>
+
+    <!-- Tabs -->
+    <sys:String x:Key="S.Tab.Status">Live Status</sys:String>
+    <sys:String x:Key="S.Tab.Volume">Volume</sys:String>
+    <sys:String x:Key="S.Tab.Groups">Groups</sys:String>
+    <sys:String x:Key="S.Tab.Rules">Rules</sys:String>
+    <sys:String x:Key="S.Tab.Settings">Settings</sys:String>
+
+    <!-- Status page -->
+    <sys:String x:Key="S.Stat.Sessions">Sessions</sys:String>
+    <sys:String x:Key="S.Stat.Speaking">Sounding</sys:String>
+    <sys:String x:Key="S.Stat.Ducking">Ducked</sys:String>
+    <sys:String x:Key="S.Status.Empty">No audio sessions yet — play sound in any app and it will appear here</sys:String>
+
+    <!-- Volume page -->
+    <sys:String x:Key="S.Mixer.Title">Mixer · MASTER + app channels</sys:String>
+    <sys:String x:Key="S.Mixer.Hint">MASTER = default playback device; apps being ducked are managed by rules — adjusting them updates their restore target</sys:String>
+    <sys:String x:Key="S.Mixer.MasterDevice">(device)</sys:String>
+    <sys:String x:Key="S.Mixer.Mute">Mute</sys:String>
+    <sys:String x:Key="S.Mixer.Unmute">Unmute</sys:String>
+    <sys:String x:Key="S.Curve.Title">Volume curve</sys:String>
+    <sys:String x:Key="S.Curve.Tooltip">Percentages on faders and duck targets are positions on the curve; actual amplitude is mapped through it. Switching curves keeps current volume, it only changes the feel of adjustments</sys:String>
+    <sys:String x:Key="S.Curve.Linear">Linear</sys:String>
+    <sys:String x:Key="S.Curve.Square">Square</sys:String>
+    <sys:String x:Key="S.Curve.Log">Logarithmic (equal loudness)</sys:String>
+    <sys:String x:Key="S.Curve.Custom">Custom</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Linear">Linear: actual volume = percentage. Most intuitive, but each step in the low range is clearly audible</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Square">Square: actual volume = percentage². Finer control in the low range, closer to perceived loudness overall</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Log">Logarithmic (equal loudness): every 1% is a constant 0.4dB (40dB in total); small steps no longer jump too loud</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Custom">Custom: drag the control points in the chart (double-click empty space to add, right-click to remove; endpoints move vertically only); loudness follows the polyline</sys:String>
+
+    <!-- Groups page -->
+    <sys:String x:Key="S.Group.New">＋ New Group</sys:String>
+    <sys:String x:Key="S.Group.DefaultBadge">Default</sys:String>
+    <sys:String x:Key="S.Group.Name">Group name</sys:String>
+    <sys:String x:Key="S.Group.SetDefault">Set as default</sys:String>
+    <sys:String x:Key="S.Group.DefaultTip1">There is exactly one default group: it cannot be unchecked (a notice explains why), and you switch the default by checking another group directly.</sys:String>
+    <sys:String x:Key="S.Group.DefaultTip2">The default group is the fallback: apps whose process name matches no group are assigned to it (shown with the "Default" badge; its count means "catches unmatched apps").</sys:String>
+    <sys:String x:Key="S.Group.DefaultTip3">Rules work on groups: targeting the default group with a rule affects every other app, no need to list them one by one.</sys:String>
+    <sys:String x:Key="S.Group.DefaultTip4">Note: if the default group is also used as a rule trigger, any unclassified app making sound triggers that rule.</sys:String>
+    <sys:String x:Key="S.Group.DefaultTip5">Keep at least one default group; the default group cannot be deleted — set another group as default first.</sys:String>
+    <sys:String x:Key="S.Group.ProcMatch">Process matching</sys:String>
+    <sys:String x:Key="S.Group.ProcMatchHint">Matched by process name, case-insensitive; enter "system sounds" to match system notification sounds</sys:String>
+    <sys:String x:Key="S.Group.ProcEmpty">(no processes yet)</sys:String>
+    <sys:String x:Key="S.Group.RemoveProcTip">Remove this process from the group</sys:String>
+    <sys:String x:Key="S.Group.AddProc">Add process</sys:String>
+    <sys:String x:Key="S.Group.Add">Add</sys:String>
+    <sys:String x:Key="S.Group.FromRunning">Add from running apps (pre-register)</sys:String>
+    <sys:String x:Key="S.Group.Refresh">Refresh</sys:String>
+    <sys:String x:Key="S.Group.AddSelected">Add selected</sys:String>
+    <sys:String x:Key="S.Group.AddSelectedTip">As soon as this app's audio session appears, it is handled by this group's rules</sys:String>
+    <sys:String x:Key="S.Group.BrowserHint">Note: browser tabs share one session — browsers can only be grouped as a whole; exclusive-mode / ASIO audio cannot be detected.</sys:String>
+    <sys:String x:Key="S.Group.Delete">Delete Group</sys:String>
+
+    <!-- Rules page -->
+    <sys:String x:Key="S.Rule.New">＋ New Rule</sys:String>
+    <sys:String x:Key="S.Rule.Header">When [Trigger] sounds or is playing, [Target] fades to the target volume</sys:String>
+    <sys:String x:Key="S.Rule.Trigger">Trigger</sys:String>
+    <sys:String x:Key="S.Rule.Target">Target</sys:String>
+    <sys:String x:Key="S.Rule.SelGroup">Group</sys:String>
+    <sys:String x:Key="S.Rule.SelApp">App</sys:String>
+    <sys:String x:Key="S.Rule.TriggerValueTip">Group = match by group members; App = one exact process. The list only shows apps that currently exist (Chinese/English aliases are matched, e.g. bilibili/哔哩哔哩); type a process name for apps that aren't running</sys:String>
+    <sys:String x:Key="S.Rule.TargetVolume">Target volume %</sys:String>
+    <sys:String x:Key="S.Rule.VolumeRange">0 - 100</sys:String>
+    <sys:String x:Key="S.Rule.Priority">Priority</sys:String>
+    <sys:String x:Key="S.Rule.PriorityHint">When multiple rules hit the same target, the higher priority wins (app-level beats group-level on ties); Settings "Multiple rules" can switch to deepest-wins</sys:String>
+    <sys:String x:Key="S.Rule.Rhythm">Duck rhythm</sys:String>
+    <sys:String x:Key="S.Rule.RhythmTip">Per-rule duck/restore durations; empty = follow the global value in Settings. Different rules can have different rhythms (e.g. fast for video-over-music, slow for games)</sys:String>
+    <sys:String x:Key="S.Rule.FadeOutMs">Duck ms</sys:String>
+    <sys:String x:Key="S.Rule.FadeInMs">Restore ms</sys:String>
+    <sys:String x:Key="S.Rule.FadeOutTooltip">Duck start duration in milliseconds</sys:String>
+    <sys:String x:Key="S.Rule.FadeInTooltip">Restore duration in milliseconds</sys:String>
+    <sys:String x:Key="S.Rule.RhythmHint">Empty = follow the global duck durations in Settings</sys:String>
+    <sys:String x:Key="S.Rule.Condition">Condition</sys:String>
+    <sys:String x:Key="S.Rule.ConditionTip">Make the rule apply only on a specific output device (e.g. only on headphones, auto-disabled on speakers)</sys:String>
+    <sys:String x:Key="S.Rule.CondNone">Unconditional</sys:String>
+    <sys:String x:Key="S.Rule.CondDevice">Specific output device</sys:String>
+    <sys:String x:Key="S.Rule.CondDeviceTip">The rule applies only when the default output device name contains this text (substring match, case-insensitive, e.g. "headphone")</sys:String>
+    <sys:String x:Key="S.Rule.Detection">Detection</sys:String>
+    <sys:String x:Key="S.Rule.DetectionTip">State = SMTC playback status / session Active (recommended; ignores peaks, no grace period); Sound = peak hysteresis + grace period</sys:String>
+    <sys:String x:Key="S.Rule.DetectState">State</sys:String>
+    <sys:String x:Key="S.Rule.DetectSound">Sound</sys:String>
+    <sys:String x:Key="S.Rule.EnableThis">Enable this rule</sys:String>
+    <sys:String x:Key="S.Rule.ToggleTip">Enable / disable this rule</sys:String>
+    <sys:String x:Key="S.Rule.AutoSaveHint">Rule changes save automatically and take effect immediately.</sys:String>
+    <sys:String x:Key="S.Rule.Delete">Delete Rule</sys:String>
+
+    <!-- Settings page -->
+    <sys:String x:Key="S.Set.Run">Runtime</sys:String>
+    <sys:String x:Key="S.Set.Language">Language</sys:String>
+    <sys:String x:Key="S.Set.LanguageHint">Applies immediately (event log content stays in Chinese)</sys:String>
+    <sys:String x:Key="S.Set.LangAuto">Follow system</sys:String>
+    <sys:String x:Key="S.Set.LangZh">简体中文</sys:String>
+    <sys:String x:Key="S.Set.LangEn">English</sys:String>
+    <sys:String x:Key="S.Set.Suspend">Enable ducking</sys:String>
+    <sys:String x:Key="S.Set.SuspendTip">Temporarily disable all rules and immediately restore ducked volumes (synced with the same tray menu item)</sys:String>
+    <sys:String x:Key="S.Set.SuspendSwitchTip">Off = pause all rules and restore volumes; turning it back on re-enables the rules immediately</sys:String>
+    <sys:String x:Key="S.Set.SuspendOffHint">Off = pause all rules (ducked volumes restored at once)</sys:String>
+    <sys:String x:Key="S.Set.RuleConflict">Multiple rules hit</sys:String>
+    <sys:String x:Key="S.Set.RuleConflictTip">How the final ducked volume is decided when several rules hit the same session</sys:String>
+    <sys:String x:Key="S.Set.ConflictPriority">Highest priority wins</sys:String>
+    <sys:String x:Key="S.Set.ConflictDeepest">Deepest duck wins</sys:String>
+    <sys:String x:Key="S.Set.RuleConflictHint">"Deepest duck wins": the lower target volume takes effect (e.g. 20% and 40% both hit → ducked to 20%); the rule priority only breaks ties</sys:String>
+    <sys:String x:Key="S.Set.Takeover">Manual adjustment takes over</sys:String>
+    <sys:String x:Key="S.Set.TakeoverTip">Adjusting the volume of a ducked app by hand = taking over: ducking leaves that session alone this round, until the rule triggers again</sys:String>
+    <sys:String x:Key="S.Set.TakeoverHint">Sessions you adjusted are not ducked again this round</sys:String>
+    <sys:String x:Key="S.Set.Hotkeys">Global hotkeys</sys:String>
+    <sys:String x:Key="S.Set.HotkeysTip">System-wide hotkeys, work while Tuner is in the background or tray</sys:String>
+    <sys:String x:Key="S.Set.HotkeysHint">Ctrl+Alt+P pause/resume ducking · Ctrl+Alt+M show main window</sys:String>
+    <sys:String x:Key="S.Set.HotkeysFailHint">Registration fails if another app owns the key combo (see event log); changes apply on save</sys:String>
+    <sys:String x:Key="S.Set.Detect">Sound detection</sys:String>
+    <sys:String x:Key="S.Set.Smtc">Prefer system media playback status (recommended: no false restore between tracks; stop/pause restores instantly)</sys:String>
+    <sys:String x:Key="S.Set.SmtcHint1">Apps without a system media session (some games, older players) fall back to peak detection;</sys:String>
+    <sys:String x:Key="S.Set.SmtcHint2">their thresholds, hold times and grace periods are tuned in the config file</sys:String>
+    <sys:String x:Key="S.Set.Fade">Volume fading</sys:String>
+    <sys:String x:Key="S.Set.FadeHint">Ducking "down" and "restore" are two independent processes with separate speeds</sys:String>
+    <sys:String x:Key="S.Set.FadeOutLabel">Duck start (down) ms</sys:String>
+    <sys:String x:Key="S.Set.FadeInLabel">Duck end (restore) ms</sys:String>
+    <sys:String x:Key="S.Set.FadeOutHint">Time to fade a ducked app from its original volume to the duck target when the trigger starts. Shorter = snappier (e.g. 200–400) and yields faster</sys:String>
+    <sys:String x:Key="S.Set.FadeInHint">Time to fade back from the duck target to the original volume after the trigger stops. Longer = smoother (default ~1200); too short feels abrupt</sys:String>
+    <sys:String x:Key="S.Set.Perf">Performance</sys:String>
+    <sys:String x:Key="S.Set.Poll">Polling interval ms</sys:String>
+    <sys:String x:Key="S.Set.PollHint">Session peak polling frequency; takes effect after restart</sys:String>
+    <sys:String x:Key="S.Set.Startup">Startup</sys:String>
+    <sys:String x:Key="S.Set.AutoStart">Start automatically at logon (silent in tray, no window)</sys:String>
+    <sys:String x:Key="S.Set.AutoStartTip">Writes the current user's registry Run key (no admin needed); counted as enabled only when the entry points to this exe</sys:String>
+    <sys:String x:Key="S.Set.AutoStartHint">Stored in the registry (HKCU Run), not the config file; re-check it after moving the app folder</sys:String>
+    <sys:String x:Key="S.Set.Config">Config</sys:String>
+    <sys:String x:Key="S.Set.ImportExport">Import / Export</sys:String>
+    <sys:String x:Key="S.Set.ImportExportTip">Export the full config (groups/rules/settings); import replaces the whole config and applies immediately (a .bak backup is kept)</sys:String>
+    <sys:String x:Key="S.Set.Export">Export…</sys:String>
+    <sys:String x:Key="S.Set.Import">Import…</sys:String>
+    <sys:String x:Key="S.Set.ImportTip">The imported file replaces all existing groups, rules and settings</sys:String>
+    <sys:String x:Key="S.Set.About">About</sys:String>
+    <sys:String x:Key="S.Set.CheckUpdate">Check for updates</sys:String>
+    <sys:String x:Key="S.Set.CheckUpdateTip">Queries the latest GitHub release and compares it with the current version; notify only, never downloads</sys:String>
+    <sys:String x:Key="S.Set.UpdateInitialHint">Notifies only — never downloads automatically</sys:String>
+    <sys:String x:Key="S.Set.ReleasesHint">Releases: github.com/woodtong/Tuner/releases</sys:String>
+    <sys:String x:Key="S.Set.DiagToggleClosed">Diagnostics · Event log ▸</sys:String>
+    <sys:String x:Key="S.Set.DiagToggleOpen">Diagnostics · Event log ▾</sys:String>
+    <sys:String x:Key="S.Set.DiagToggleTip">Recent key events (rule engaged/released, device switches, config issues) for self-checking or bug reports</sys:String>
+    <sys:String x:Key="S.Set.DiagTitle">Recent events (memory only, cleared on restart)</sys:String>
+    <sys:String x:Key="S.Set.DiagCopy">Copy all</sys:String>
+    <sys:String x:Key="S.Set.DiagCopyTip">Copy as text to attach to a bug report</sys:String>
+    <sys:String x:Key="S.Set.DiagClear">Clear</sys:String>
+
+    <!-- Dynamic strings -->
+    <sys:String x:Key="S.Win.Title">Tuner — Group Audio Ducking</sys:String>
+    <sys:String x:Key="S.Save.Pending">● Unsaved changes…</sys:String>
+    <sys:String x:Key="S.Save.Invalid">A number in Settings is invalid; auto-save resumes after fixing it</sys:String>
+    <sys:String x:Key="S.Save.Fail">Auto-save failed: {0}</sys:String>
+    <sys:String x:Key="S.Save.Saved">✓ Auto-saved {0}</sys:String>
+    <sys:String x:Key="S.Save.Default">Changes save automatically and apply immediately</sys:String>
+    <sys:String x:Key="S.Status.DuckBadge">Ducked → {0}%</sys:String>
+    <sys:String x:Key="S.Status.TakeoverBadge">Manual takeover (not ducked this round)</sys:String>
+    <sys:String x:Key="S.Volume.OutputTitle">Output &amp; device: {0}</sys:String>
+    <sys:String x:Key="S.Group.Count">{0} processes</sys:String>
+    <sys:String x:Key="S.Group.DefaultCount">Catches unmatched apps</sys:String>
+    <sys:String x:Key="S.Group.NeedName">Enter a group name first</sys:String>
+    <sys:String x:Key="S.Group.DupName">A group with this name already exists: {0}</sys:String>
+    <sys:String x:Key="S.Group.DupProc">This process is already in the list: {0}</sys:String>
+    <sys:String x:Key="S.Group.DeleteDefault">The default group cannot be deleted. Set another group as default first.</sys:String>
+    <sys:String x:Key="S.Group.DeleteConfirm">Delete group "{0}"? Rules referencing it are deleted too.</sys:String>
+    <sys:String x:Key="S.Group.DefaultOnlyOne">There is exactly one default group and it cannot be unchecked.
+To change the default, check the target group directly.</sys:String>
+    <sys:String x:Key="S.Group.Untitled">New group</sys:String>
+    <sys:String x:Key="S.Rule.DisabledPrefix">(disabled) </sys:String>
+    <sys:String x:Key="S.Rule.AppSuffix">(app)</sys:String>
+    <sys:String x:Key="S.Rule.GroupSuffix">(group)</sys:String>
+    <sys:String x:Key="S.Rule.Sentence">{0} sounds → duck {1} to {2}%</sys:String>
+    <sys:String x:Key="S.Rule.StateTag">[state]</sys:String>
+    <sys:String x:Key="S.Rule.SoundTag">[sound]</sys:String>
+    <sys:String x:Key="S.Rule.DeviceSuffix">[only {0}]</sys:String>
+    <sys:String x:Key="S.Rule.RoleTrigger">Trigger</sys:String>
+    <sys:String x:Key="S.Rule.RoleTarget">Target</sys:String>
+    <sys:String x:Key="S.Rule.WarnAppEmpty">{0} app name is empty; the rule never fires</sys:String>
+    <sys:String x:Key="S.Rule.WarnNoSession">⚠ {0} app "{1}" has no audio session (not running, or the name differs from the actual process)</sys:String>
+    <sys:String x:Key="S.Rule.WarnGroupGone">⚠ {0} group no longer exists (possibly deleted); the rule never fires</sys:String>
+    <sys:String x:Key="S.Rule.SelectorHint">⚠ No audio session named "{0}" (app not running, or the name differs from the actual process)</sys:String>
+    <sys:String x:Key="S.Common.Ok">OK</sys:String>
+    <sys:String x:Key="S.Common.Cancel">Cancel</sys:String>
+    <sys:String x:Key="S.Common.Yes">Yes</sys:String>
+    <sys:String x:Key="S.Common.No">No</sys:String>
+    <sys:String x:Key="S.Common.Error">Error</sys:String>
+    <sys:String x:Key="S.Device.SwitchFail">Failed to switch output device: {0}</sys:String>
+    <sys:String x:Key="S.Device.Switched">Default output device switched: {0}</sys:String>
+    <sys:String x:Key="S.Config.FileLabel">Config file: {0}</sys:String>
+    <sys:String x:Key="S.Config.PortableOn">Portable mode is on (portable.marker next to the exe): config and logs live in the app folder — copy the folder to migrate</sys:String>
+    <sys:String x:Key="S.Config.PortableOff">Tip: create an empty portable.marker file next to the exe to enable portable mode — config and logs move into the app folder (takes effect after restart)</sys:String>
+    <sys:String x:Key="S.Config.ExportTitle">Export Tuner config</sys:String>
+    <sys:String x:Key="S.Config.ImportTitle">Import Tuner config (replaces the whole config)</sys:String>
+    <sys:String x:Key="S.Config.Filter">Tuner config (*.json)|*.json</sys:String>
+    <sys:String x:Key="S.Config.ExportDefaultName">tuner-config-{0}.json</sys:String>
+    <sys:String x:Key="S.Config.ExportFail">Export failed: {0}</sys:String>
+    <sys:String x:Key="S.Config.ImportBadFile">Cannot read "{0}": not a valid Tuner config file. The current config is untouched.</sys:String>
+    <sys:String x:Key="S.Config.ImportSaveFail">Saving after import failed: {0} (the config is active for this run but was not written to disk)</sys:String>
+    <sys:String x:Key="S.Config.ImportDone">Import done: {0} groups and {1} rules are in effect.</sys:String>
+    <sys:String x:Key="S.Update.Checking">Checking for updates…</sys:String>
+    <sys:String x:Key="S.Update.Failed">Check failed ({0}). Try again later or visit the releases page</sys:String>
+    <sys:String x:Key="S.Update.New">New version {0} available (current {1}) · Releases: {2}</sys:String>
+    <sys:String x:Key="S.Update.Latest">Up to date (current {0}, latest release {1})</sys:String>
+    <sys:String x:Key="S.Tray.Open">Open Tuner</sys:String>
+    <sys:String x:Key="S.Tray.Suspend">Pause ducking (restore volume)</sys:String>
+    <sys:String x:Key="S.Tray.Diag">Event log</sys:String>
+    <sys:String x:Key="S.Tray.Exit">Exit (restore volume)</sys:String>
+    <sys:String x:Key="S.Tray.Title">Tuner — Group Audio Ducking</sys:String>
+    <sys:String x:Key="S.Tray.TitlePaused">Tuner — Ducking paused</sys:String>
+    <sys:String x:Key="S.Tray.BalloonTitle">Tuner started</sys:String>
+    <sys:String x:Key="S.Tray.BalloonText">Monitoring audio sessions and applying group ducking. Closing the window minimizes to the tray.</sys:String>
+    <sys:String x:Key="S.App.AlreadyRunning">Tuner is already running (check the system tray).</sys:String>
+    <sys:String x:Key="S.App.StartFail">Cannot access the default playback device: {0}</sys:String>
+    <sys:String x:Key="S.App.AutoStartFail">Failed to set autostart: {0}</sys:String>
+    <sys:String x:Key="S.Diag.PathLabel">Full log file: {0} (the panel keeps the latest 600 entries in memory)</sys:String>
+
+</ResourceDictionary>

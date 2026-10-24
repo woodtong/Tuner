@@ -1,0 +1,13 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="Tuner.Cross.MsgBox" Title="Tuner" SizeToContent="Height" Width="420"
+        WindowStartupLocation="CenterOwner" CanResize="False" ShowInTaskbar="False"
+        Background="{DynamicResource PageBg}">
+    <StackPanel Margin="18">
+        <TextBlock x:Name="Text" TextWrapping="Wrap" FontSize="13" Foreground="{DynamicResource TextPrimary}" />
+        <StackPanel Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" Margin="0,18,0,0">
+            <Button x:Name="OkBtn" Content="{DynamicResource S.Common.Ok}" MinWidth="88" Click="OnOk" Classes="accent" />
+            <Button x:Name="CancelBtn" Content="{DynamicResource S.Common.Cancel}" MinWidth="88" Click="OnCancel" IsVisible="False" />
+        </StackPanel>
+    </StackPanel>
+</Window>

@@ -1,0 +1,27 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="Tuner.Cross.App"
+             RequestedThemeVariant="Light">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceInclude Source="avares://Tuner.Cross/Lang/Strings.zh-CN.axaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- 全局配色（与 WPF 版同源的浅色系） -->
+            <SolidColorBrush x:Key="PageBg" Color="#F4F5F7" />
+            <SolidColorBrush x:Key="CardBg" Color="#FFFFFF" />
+            <SolidColorBrush x:Key="CardBorder" Color="#E4E7EC" />
+            <SolidColorBrush x:Key="ItemBg" Color="#F8F9FB" />
+            <SolidColorBrush x:Key="TextPrimary" Color="#1F2328" />
+            <SolidColorBrush x:Key="TextSecondary" Color="#57606A" />
+            <SolidColorBrush x:Key="TextFaint" Color="#8B949E" />
+            <SolidColorBrush x:Key="Accent" Color="#2563EB" />
+            <SolidColorBrush x:Key="AccentSoft" Color="#DDEBFF" />
+            <SolidColorBrush x:Key="Amber" Color="#F59E0B" />
+            <SolidColorBrush x:Key="AmberSoft" Color="#FEF3C7" />
+            <SolidColorBrush x:Key="Green" Color="#22C55E" />
+            <SolidColorBrush x:Key="Danger" Color="#DC2626" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

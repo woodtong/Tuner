@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 跨平台 UI（Avalonia）：单一 UI 源码，双目标——
+       net8.0-windows10.0.19041.0 引 Tuner.Core.Windows（WASAPI/SMTC），
+       net8.0 引 Tuner.Core.Linux（PulseAudio）。运行时按目标装配引擎。 -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFrameworks>net8.0;net8.0-windows10.0.19041.0</TargetFrameworks>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Tuner.Cross</AssemblyName>
+    <RootNamespace>Tuner.Cross</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == 'net8.0-windows10.0.19041.0'">
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="11.2.2" />
+    <PackageReference Include="Avalonia.Desktop" Version="11.2.2" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.2" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="2.88.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tuner.Core\Tuner.Core.csproj" />
+    <ProjectReference Include="..\Tuner.Core.Linux\Tuner.Core.Linux.csproj"
+                      Condition="'$(TargetFramework)' != 'net8.0-windows10.0.19041.0'" />
+    <ProjectReference Include="..\Tuner.Core.Windows\Tuner.Core.Windows.csproj"
+                      Condition="'$(TargetFramework)' == 'net8.0-windows10.0.19041.0'" />
+  </ItemGroup>
+
+</Project>
