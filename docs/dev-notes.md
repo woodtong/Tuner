@@ -17,8 +17,8 @@
 - **Tuner.App.Avalonia**（Avalonia 11.2.2，单源码双目标）：`TargetFrameworks=net8.0;net8.0-windows10.0.19041.0` + 条件 ProjectReference（windows→Core.Windows，否则→Core.Linux）+ `DefineConstants;WINDOWS`。五页功能完整版（状态/调音台/分组/规则/设置）+ 双语字典迁移（WPF `Strings.*.xaml` → Avalonia axaml 只改头三行 xmlns：`https://github.com/avaloniaui` + `using:System`）+ Lang.Apply（MergedDictionaries 重载）+ 托盘 NativeMenu（Linux 不支持时 catch 降级）+ MsgBox 自制（Avalonia 无内置）+ StorageProvider 文件对话框。
 - **Avalonia 坑**：Slider ValueChanged 事件参数在 `Avalonia.Controls.Primitives`；ComboBox 不可编辑（无 Text）；NativeMenuItem.Click 是 EventHandler；TextBox 即时保存用 TextInput/TextChanged；单文件发布**不内嵌 libSkiaSharp.so**（目录发布）且 `SkiaNativeAssets.Linux` 版本须 ≥ 传递依赖（NU1605）；windows 目标发布 linux RID 报 WinForms 无运行时包——**publish 必须 `-f net8.0`**。
 - **验证**：Windows 目标 --smoke ✓（WASAPI 后端）；WSLg 目录发布 + `DISPLAY=:0 XDG_RUNTIME_DIR=/mnt/wslg/runtime-dir` 跑 --smoke ✓（PulseAudio 后端连接/6 秒退出/退出还原链路/配置落 ~/.config/Tuner/）。WPF 版回归 smoke ✓。
-- **Tuner.Core.macOS 骨架**：CoreAudio 公开 API 设备级（默认设备/主音量/静音，unsafe 指针传参）；per-app 空实现 + docs/macOS-plan.md 蓝图（AudioDriverKit 虚拟驱动 + XPC 接 IAudioSessionMonitor，工程量 3-6 周驱动 + 1-2 周宿主，Apple 签名依赖）。**仅编译验证，真机复核点已在代码标注。**
-- 提交：2f3a82f。解决方案现 7 工程（Core/Core.Windows/Core.Linux/Core.macOS/App/App.Avalonia/Console/PauseProbe/LinuxProbe——实为 9）。
+- macOS 曾建骨架（CoreAudio 设备级 P/Invoke）与蓝图文档，**用户 2026-10-24 决策不做 macOS、双端定稿**，两者已删除（评估结论留档于 todo 15 注记④）。
+- 提交：2f3a82f（含 macOS，后撤）。解决方案现 8 工程（Core/Core.Windows/Core.Linux/App/App.Avalonia/Console/PauseProbe/LinuxProbe）。
 
 ## 2026-10-23/24 · 产品迭代第 6-8 批（todo 13 i18n + todo 14 第三方实测 + todo 15 多端两步，0.1.1-eta 原位替换）
 
