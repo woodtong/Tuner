@@ -87,12 +87,12 @@ src/
 dotnet publish src/Tuner.App -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
   -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:DebugSymbols=false `
-  -o dist/Tuner-<版本>-win-x64
+  -o dist/windows/Tuner-<版本>-win-x64
 
-# 控制台诊断：同参数，输出到 dist/Tuner-Console-<版本>-win-x64
+# 控制台诊断：同参数，输出到 dist/console/Tuner-Console-<版本>-win-x64
 
 # 跨平台 UI（Avalonia）：linux 目标必须显式 -f net8.0；单文件发布不内嵌 libSkiaSharp，用目录发布
-dotnet publish src/Tuner.App.Avalonia -c Release -f net8.0 -r linux-x64 --self-contained true -o dist/Tuner.Cross-<版本>-linux-x64
+dotnet publish src/Tuner.App.Avalonia -c Release -f net8.0 -r linux-x64 --self-contained true -o dist/linux/Tuner-<版本>-linux-x64
 ```
 
 版本号统一在 `src/Directory.Build.props`（四个工程共用）。
