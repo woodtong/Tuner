@@ -80,6 +80,19 @@ src/
   Tuner.LinuxProbe/          Linux 音频层探针
 ```
 
+### 分支模型（2026-11-05 起）
+
+```
+main            稳定线：只接受来自开发线的合并，保持随时可发布
+├─ dev/windows  Windows 开发线（WPF 主线，src/Tuner.App + Tuner.Core.Windows）
+└─ dev/linux    Linux 开发线（Avalonia，src/Tuner.App.Avalonia + Tuner.Core.Linux）
+```
+
+- 细小功能/修复一律从所属开发线派生短命分支：`feat/<描述>`（新功能）、`fix/<描述>`（修复）、`docs/<描述>`（文档），完成合并回开发线后删除。
+- **共享核心**（`src/Tuner.Core`、配置模型）的改动基于 `dev/windows`（主线）进行，再以 merge 或 cherry-pick 同步到 `dev/linux`，避免双向漂移。
+- 开发线阶段性稳定后合并进 `main` 并打 tag（如 `v0.1.1-eta`）。
+- 单端开发就切到对应开发线工作，不要直接提交 `main`。
+
 ### 打包发布
 
 ```bash
