@@ -111,7 +111,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Lang.Get("S.App.AutoStartFail", ex.Message), "Tuner");
+            MsgBox.Show(this, Lang.Get("S.App.AutoStartFail", ex.Message));
             try
             {
                 SetAutoStart.IsChecked = AutoStart.IsEnabled(); // 回滚为真实状态
@@ -137,7 +137,7 @@ public partial class MainWindow
     /// <summary>诊断自查入口（托盘菜单「事件日志」）：切到设置页并展开面板。</summary>
     public void OpenDiagnostics()
     {
-        Tabs.SelectedIndex = 4; // 设置页
+        Tabs.SelectedIndex = 5; // 设置页（外观页之后第 6 个页签）
         SetDiagPanelOpen(true);
         DiagPanel.BringIntoView();
     }
@@ -189,7 +189,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Lang.Get("S.Config.ExportFail", ex.Message), "Tuner");
+            MsgBox.Show(this, Lang.Get("S.Config.ExportFail", ex.Message));
         }
     }
 
@@ -205,7 +205,7 @@ public partial class MainWindow
         var imported = ConfigStore.TryLoadForImport(dlg.FileName);
         if (imported is null)
         {
-            MessageBox.Show(Lang.Get("S.Config.ImportBadFile", System.IO.Path.GetFileName(dlg.FileName)), "Tuner");
+            MsgBox.Show(this, Lang.Get("S.Config.ImportBadFile", System.IO.Path.GetFileName(dlg.FileName)));
             return;
         }
 
@@ -218,7 +218,7 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Lang.Get("S.Config.ImportSaveFail", ex.Message), "Tuner");
+            MsgBox.Show(this, Lang.Get("S.Config.ImportSaveFail", ex.Message));
         }
         _loadingUi = true;
         RefreshGroupColors();
@@ -231,7 +231,7 @@ public partial class MainWindow
         _hotkeys?.SetEnabled(App.Config.Settings.HotkeysEnabled); // 导入配置的快捷键开关即时生效
         Lang.Apply(Lang.Resolve(App.Config.Settings.Language)); // 导入配置的语言即时生效
         App.Log($"配置已导入：{dlg.FileName}（{App.Config.Groups.Count} 组 / {App.Config.Rules.Count} 条规则）");
-        MessageBox.Show(Lang.Get("S.Config.ImportDone", App.Config.Groups.Count, App.Config.Rules.Count), "Tuner");
+        MsgBox.Show(this, Lang.Get("S.Config.ImportDone", App.Config.Groups.Count, App.Config.Rules.Count));
     }
 
     // ---------- 更新检查（GitHub latest 比对，仅提示不下载；链接以文字展示，不拉起浏览器） ----------
@@ -338,6 +338,8 @@ public partial class MainWindow
         _autoSaveTimer.Stop();
         if (!_dirty)
             return;
+        if (App.DevAppearanceActive)
+            return; // 取证运行（dev 外观参数）：绝不把内存里的 dev 配置写进用户真实配置
         if (!TryParseSettings())
         {
             SetSaveStatus(Lang.Get("S.Save.Invalid"));

@@ -128,6 +128,15 @@ public static class ConfigStore
         config.Groups ??= new List<AppGroupConfig>();
         config.Rules ??= new List<DuckingRuleConfig>();
         config.Settings ??= new EngineSettings();
+        config.Appearance ??= new AppearanceSettings();
+
+        // 外观归一：非法值回默认（深色/默认琥珀/标准字号/舒适密度/柔和圆角；Animations 为 bool 无需归一，默认关）
+        var a = config.Appearance;
+        a.Theme = a.Theme is "light" or "system" ? a.Theme : "dark";
+        a.Accent = IsValidAccentHex(a.Accent) ? a.Accent.ToUpperInvariant() : "";
+        a.FontScale = a.FontScale is "small" or "large" ? a.FontScale : "standard";
+        a.Density = a.Density == "compact" ? "compact" : "comfortable";
+        a.Radius = a.Radius is "sharp" or "round" ? a.Radius : "soft";
 
         // 渐变时长迁移：旧配置只有单一 fadeDurationMs → 两个方向都取该值；
         // 新配置缺失/非法时落默认（开始 400 急压，结束 1200 平顺）
@@ -182,6 +191,16 @@ public static class ConfigStore
             if (r.DeviceCondition.Length == 0)
                 r.Condition = "none"; // 设备条件为空视同无条件
         }
+    }
+
+    /// <summary>强调色合法性：#RRGGBB 六位十六进制。</summary>
+    private static bool IsValidAccentHex(string s)
+    {
+        if (string.IsNullOrEmpty(s) || s.Length != 7 || s[0] != '#')
+            return false;
+        return byte.TryParse(s[1..3], System.Globalization.NumberStyles.HexNumber, null, out _)
+            && byte.TryParse(s[3..5], System.Globalization.NumberStyles.HexNumber, null, out _)
+            && byte.TryParse(s[5..7], System.Globalization.NumberStyles.HexNumber, null, out _);
     }
 
     /// <summary>

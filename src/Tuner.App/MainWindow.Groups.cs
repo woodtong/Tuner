@@ -92,11 +92,10 @@ public partial class MainWindow
             return;
         if (g.IsDefault)
         {
-            MessageBox.Show(Lang.Get("S.Group.DeleteDefault"), "Tuner");
+            MsgBox.Show(this, Lang.Get("S.Group.DeleteDefault"));
             return;
         }
-        if (MessageBox.Show(Lang.Get("S.Group.DeleteConfirm", g.Name), "Tuner",
-                MessageBoxButton.OKCancel, MessageBoxImage.Question) != MessageBoxResult.OK)
+        if (!MsgBox.Confirm(this, Lang.Get("S.Group.DeleteConfirm", g.Name)))
             return;
         // 新旧两种选择器字段都要查（旧 TriggerGroupId/TargetGroupId 仅为迁移遗留，但配置里可能仍在）
         App.Config.Rules.RemoveAll(r =>
@@ -166,6 +165,26 @@ public partial class MainWindow
     /// 默认组自身**不允许取消勾选**，尝试取消时弹回并提示如何更换。
     /// （此前两版静默弹回仍会让用户困惑"为什么勾不掉"，显式提示把规则说透。）
     /// </summary>
+    /// <summary>默认组不可取消、只能转移：在点击/空格触达复选框的切换逻辑之前就拦下——
+    /// 勾选状态从头到尾不变（"取消后再弹回"的路子无论同步/延迟写回都压不住点击管线，实测会闪成取消态）。</summary>
+    private void OnDefaultCheckGuard(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (_loadingUi || SelectedGroup is not { IsDefault: true } || DefaultCheck.IsChecked != true)
+            return; // 非默认组的勾选/取消不受影响
+        e.Handled = true; // 吞掉本次点击：不产生 Unchecked
+        MsgBox.Show(this, Lang.Get("S.Group.DefaultOnlyOne"));
+    }
+
+    /// <summary>键盘路径（空格）同理拦截。</summary>
+    private void OnDefaultCheckKeyGuard(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key != System.Windows.Input.Key.Space
+            || _loadingUi || SelectedGroup is not { IsDefault: true } || DefaultCheck.IsChecked != true)
+            return;
+        e.Handled = true;
+        MsgBox.Show(this, Lang.Get("S.Group.DefaultOnlyOne"));
+    }
+
     private void OnDefaultChanged(object sender, RoutedEventArgs e)
     {
         if (_loadingUi || SelectedGroup is not { } g)
@@ -182,11 +201,15 @@ public partial class MainWindow
         {
             if (!g.IsDefault)
                 return; // 纯显示抖动（非默认组的复选框本就不该有取消事件）
-            // 默认组不可取消：先弹回勾选（_loadingUi 抑制重入），再说明规则
-            _loadingUi = true;
-            DefaultCheck.IsChecked = true;
-            _loadingUi = false;
-            MessageBox.Show(Lang.Get("S.Group.DefaultOnlyOne"), "Tuner");
+            // 默认组不可取消：延迟弹回勾选——点击事件管线还在处理中，同步写回会被点击结果覆盖
+            // （此前即因此"提示了但勾选仍显示取消"）；_loadingUi 抑制弹回引起新事件
+            Dispatcher.BeginInvoke(() =>
+            {
+                _loadingUi = true;
+                DefaultCheck.IsChecked = true;
+                _loadingUi = false;
+            });
+            MsgBox.Show(this, Lang.Get("S.Group.DefaultOnlyOne"));
             return;
         }
         _loadingUi = true;

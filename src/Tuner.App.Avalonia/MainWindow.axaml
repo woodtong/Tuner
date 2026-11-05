@@ -10,23 +10,24 @@
         <!-- 顶栏 -->
         <DockPanel Grid.Row="0" Margin="2,0,2,12">
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Tuner" FontSize="18" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" />
-                <TextBlock Text="{DynamicResource S.App.Subtitle}" FontSize="12.5" Foreground="{DynamicResource TextFaint}"
+                <TextBlock Text="Tuner" FontSize="{DynamicResource Fz.Brand}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" />
+                <TextBlock Text="{DynamicResource S.App.Subtitle}" FontSize="{DynamicResource Fz.Base}" Foreground="{DynamicResource TextFaint}"
                            VerticalAlignment="Bottom" Margin="9,0,0,3" />
             </StackPanel>
-            <Border DockPanel.Dock="Right" x:Name="PausedChip" CornerRadius="5" Padding="9,3" Margin="0,0,10,0"
-                    Background="{DynamicResource AmberSoft}" BorderBrush="#F1D089" BorderThickness="1"
+            <Border DockPanel.Dock="Right" x:Name="PausedChip" CornerRadius="{DynamicResource Rad.Chip}" Padding="9,3" Margin="0,0,10,0"
+                    Background="{DynamicResource AmberSoft}" BorderBrush="{DynamicResource AmberBadgeBorder}" BorderThickness="1"
                     VerticalAlignment="Center" IsVisible="False"
                     ToolTip.Tip="{DynamicResource S.PausedBadgeTip}">
-                <TextBlock Text="{DynamicResource S.PausedBadge}" FontSize="11.5" FontWeight="SemiBold" Foreground="#B45309" />
+                <TextBlock Text="{DynamicResource S.PausedBadge}" FontSize="{DynamicResource Fz.Small}" FontWeight="SemiBold" Foreground="{DynamicResource AmberText}" />
             </Border>
-            <Border DockPanel.Dock="Right" x:Name="DeviceInfo" CornerRadius="5" Padding="9,3" Background="{DynamicResource ItemBg}"
+            <Border DockPanel.Dock="Right" x:Name="DeviceInfo" CornerRadius="{DynamicResource Rad.Chip}" Padding="9,3" Background="{DynamicResource ItemBg}"
                     VerticalAlignment="Center">
-                <TextBlock x:Name="DeviceText" FontSize="12" Foreground="{DynamicResource TextSecondary}" />
+                <TextBlock x:Name="DeviceText" FontSize="{DynamicResource Fz.Small}" Foreground="{DynamicResource TextSecondary}" />
             </Border>
         </DockPanel>
 
-        <TabControl Grid.Row="1" x:Name="Tabs">
+        <Grid Grid.Row="1" x:Name="NavHost">
+            <TabControl x:Name="Tabs">
 
             <!-- ═══ 实时状态 ═══ -->
             <TabItem>
@@ -39,17 +40,17 @@
                     <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="16" Margin="2,0,0,10">
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <TextBlock Text="{DynamicResource S.Stat.Sessions}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" />
-                            <TextBlock x:Name="StatTotal" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" />
+                            <TextBlock x:Name="StatTotal" FontSize="{DynamicResource Fz.Stat}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <Ellipse Width="7" Height="7" Fill="{DynamicResource Green}" VerticalAlignment="Center" />
                             <TextBlock Text="{DynamicResource S.Stat.Speaking}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" />
-                            <TextBlock x:Name="StatSpeaking" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" />
+                            <TextBlock x:Name="StatSpeaking" FontSize="{DynamicResource Fz.Stat}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" />
                         </StackPanel>
                         <StackPanel Orientation="Horizontal" Spacing="6">
                             <Ellipse Width="7" Height="7" Fill="{DynamicResource Amber}" VerticalAlignment="Center" />
                             <TextBlock Text="{DynamicResource S.Stat.Ducking}" Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" />
-                            <TextBlock x:Name="StatDucking" FontSize="15" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" />
+                            <TextBlock x:Name="StatDucking" FontSize="{DynamicResource Fz.Stat}" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" />
                         </StackPanel>
                     </StackPanel>
                     <ScrollViewer Grid.Row="1">
@@ -57,25 +58,27 @@
                             <ItemsControl x:Name="StatusList">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{DynamicResource CardBg}" CornerRadius="9" Padding="12,9"
+                                        <!-- 名称+分组副行 → 音量%（主位）→ 状态徽章（数字优先，去掉冗余状态列） -->
+                                        <Border Background="{DynamicResource ItemBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="{DynamicResource M.Item}"
                                                 Margin="0,0,4,8" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
-                                            <Grid ColumnDefinitions="*,Auto,Auto,Auto" >
-                                                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
-                                                    <Ellipse Width="9" Height="9" Fill="{Binding SpeakingBrush}" VerticalAlignment="Center" />
-                                                    <TextBlock Text="{Binding Process}" FontWeight="SemiBold" FontSize="14"
-                                                               Foreground="{DynamicResource TextPrimary}" />
-                                                    <Border Background="{DynamicResource ItemBg}" CornerRadius="4" Padding="6,2">
-                                                        <TextBlock Text="{Binding GroupName}" FontSize="11" Foreground="{DynamicResource TextSecondary}" />
-                                                    </Border>
+                                            <Grid ColumnDefinitions="*,Auto,Auto">
+                                                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center" Margin="0,0,14,0">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <Ellipse Width="8" Height="8" Fill="{Binding SpeakingBrush}" VerticalAlignment="Center" />
+                                                        <TextBlock Text="{Binding Process}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Stat}"
+                                                                   Foreground="{DynamicResource TextPrimary}" TextTrimming="CharacterEllipsis" />
+                                                    </StackPanel>
+                                                    <TextBlock Text="{Binding GroupName}" FontSize="{DynamicResource Fz.Micro}"
+                                                               Foreground="{DynamicResource TextFaint}" Margin="16,0,0,0" />
                                                 </StackPanel>
-                                                <TextBlock Grid.Column="1" Text="{Binding StateText}" FontSize="11.5"
-                                                           Foreground="{DynamicResource TextFaint}" VerticalAlignment="Center" Margin="0,0,14,0" />
-                                                <Border Grid.Column="2" Background="{DynamicResource AmberSoft}" CornerRadius="5" Padding="8,3"
-                                                        IsVisible="{Binding IsBadged}" VerticalAlignment="Center" Margin="0,0,14,0">
-                                                    <TextBlock Text="{Binding DuckText}" FontSize="11" FontWeight="SemiBold" Foreground="#B45309" />
+                                                <TextBlock Grid.Column="1" Text="{Binding VolumeText}" FontFamily="Consolas, Menlo, monospace"
+                                                           FontSize="{DynamicResource Fz.Num}" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center"
+                                                           MinWidth="52" TextAlignment="Right" Margin="0,0,12,0" />
+                                                <Border Grid.Column="2" Background="{DynamicResource AmberSoft}" CornerRadius="{DynamicResource Rad.Chip}" Padding="8,3"
+                                                        IsVisible="{Binding IsBadged}" VerticalAlignment="Center">
+                                                    <TextBlock Text="{Binding DuckText}" FontSize="{DynamicResource Fz.Micro}" FontWeight="SemiBold" Foreground="{DynamicResource AmberText}" />
                                                 </Border>
-                                                <TextBlock Grid.Column="3" Text="{Binding VolumeText}" FontFamily="Consolas, Menlo, monospace" FontSize="12.5"
-                                                           Foreground="{DynamicResource TextSecondary}" VerticalAlignment="Center" MinWidth="56" TextAlignment="Right" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -97,39 +100,45 @@
                 </TabItem.Header>
                 <ScrollViewer>
                     <StackPanel Spacing="10" Margin="2">
-                        <Border Background="{DynamicResource CardBg}" CornerRadius="10" Padding="14" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
+                        <Border Background="{DynamicResource CardBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="14" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
                             <StackPanel Spacing="6">
-                                <TextBlock Text="{DynamicResource S.Mixer.Title}" FontSize="13.5" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimary}" />
-                                <TextBlock Text="{DynamicResource S.Mixer.Hint}" Foreground="{DynamicResource TextFaint}" TextWrapping="Wrap" FontSize="11.5" />
-                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Height="300">
+                                <TextBlock Text="{DynamicResource S.Mixer.Title}" FontSize="{DynamicResource Fz.Title}" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimary}" ToolTip.Tip="{DynamicResource S.Mixer.Hint}" />
+                                <!-- 高度自适应内容：固定高度会把第三张起的通道卡下缘裁掉 -->
+                                <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                                     <StackPanel Orientation="Horizontal">
                                         <!-- MASTER -->
                                         <Border Width="112" Background="{DynamicResource ItemBg}" BorderBrush="{DynamicResource Accent}"
-                                                BorderThickness="1" CornerRadius="9" Padding="10" Margin="0,4,10,4">
+                                                BorderThickness="1" CornerRadius="{DynamicResource Rad.Card}" Padding="10" Margin="0,4,10,4">
                                             <StackPanel>
-                                                <TextBlock Text="MASTER" FontSize="11" FontWeight="Bold" FontFamily="Consolas, monospace"
+                                                <TextBlock Text="MASTER" FontSize="{DynamicResource Fz.Micro}" FontWeight="Bold" FontFamily="Consolas, monospace"
                                                            Foreground="{DynamicResource Accent}" HorizontalAlignment="Center" Margin="0,6,0,10" />
                                                 <Slider x:Name="MasterSlider" Minimum="0" Maximum="100" Height="180" Orientation="Vertical"
                                                         HorizontalAlignment="Center" ValueChanged="OnMasterVolumeChanged" />
-                                                <TextBlock x:Name="MasterVolText" FontFamily="Consolas, monospace" FontSize="12" Margin="0,8,0,0"
+                                                <TextBlock x:Name="MasterVolText" FontFamily="Consolas, monospace" FontSize="{DynamicResource Fz.Small}" Margin="0,8,0,0"
                                                            HorizontalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
                                                 <Button x:Name="MasterMuteBtn" Content="{DynamicResource S.Mixer.Mute}" Width="82" Margin="0,8,0,4"
                                                         Click="OnMasterMuteClick" HorizontalAlignment="Center" />
                                             </StackPanel>
                                         </Border>
                                         <ItemsControl x:Name="VolumeList">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <!-- 横向通道行（与 WPF 版一致）；默认竖向堆叠是旧版被 Height 截断掩盖的坑 -->
+                                                    <StackPanel Orientation="Horizontal" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
                                                     <Border Width="112" Background="{DynamicResource ItemBg}" BorderBrush="{DynamicResource CardBorder}"
-                                                            BorderThickness="1" CornerRadius="9" Padding="10" Margin="0,4,10,4">
+                                                            BorderThickness="1" CornerRadius="{DynamicResource Rad.Card}" Padding="10" Margin="0,4,10,4">
                                                         <StackPanel>
-                                                            <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" TextAlignment="Center"
+                                                            <TextBlock Text="{Binding Name}" FontSize="{DynamicResource Fz.Small}" FontWeight="SemiBold" TextAlignment="Center"
                                                                        TextWrapping="Wrap" Height="34" Foreground="{DynamicResource TextPrimary}" />
                                                             <Slider Minimum="0" Maximum="100" Height="150" Orientation="Vertical"
                                                                     Value="{Binding VolumeDisplay, Mode=TwoWay}" HorizontalAlignment="Center"
                                                                     ValueChanged="OnChannelFaderChanged" Tag="{Binding InstanceId}" />
-                                                            <TextBlock Text="{Binding VolumeText}" FontFamily="Consolas, monospace" FontSize="12"
+                                                            <TextBlock Text="{Binding VolumeText}" FontFamily="Consolas, monospace" FontSize="{DynamicResource Fz.Small}"
                                                                        TextAlignment="Center" Margin="0,8,0,0" Foreground="{DynamicResource TextSecondary}" />
                                                             <Button Content="{Binding MuteText}" Width="82" Margin="0,8,0,4"
                                                                     Click="OnChannelMuteClick" Tag="{Binding InstanceId}" HorizontalAlignment="Center" />
@@ -142,15 +151,15 @@
                                 </ScrollViewer>
 
                                 <Separator Margin="0,8" />
-                                <StackPanel Orientation="Horizontal" Spacing="14">
-                                    <TextBlock Text="{DynamicResource S.Curve.Title}" FontSize="13.5" FontWeight="SemiBold"
+                                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Sp.Section}">
+                                    <TextBlock Text="{DynamicResource S.Curve.Title}" FontSize="{DynamicResource Fz.Title}" FontWeight="SemiBold"
                                                Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
                                     <ComboBox x:Name="VolumeCurveCombo" Width="170" SelectionChanged="OnVolumeCurveChanged">
                                         <ComboBoxItem Content="{DynamicResource S.Curve.Linear}" />
                                         <ComboBoxItem Content="{DynamicResource S.Curve.Square}" />
                                         <ComboBoxItem Content="{DynamicResource S.Curve.Log}" />
                                     </ComboBox>
-                                    <TextBlock x:Name="VolumeCurveHint" Foreground="{DynamicResource TextFaint}" FontSize="11.5"
+                                    <TextBlock x:Name="VolumeCurveHint" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Small}"
                                                VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="380" />
                                 </StackPanel>
                             </StackPanel>
@@ -175,23 +184,23 @@
                                 <DataTemplate>
                                     <StackPanel Margin="2,4">
                                         <StackPanel Orientation="Horizontal" Spacing="7">
-                                            <TextBlock Text="{Binding Group.Name}" FontWeight="SemiBold" FontSize="13" />
-                                            <Border Background="{DynamicResource AccentSoft}" CornerRadius="4" Padding="5,1"
+                                            <TextBlock Text="{Binding Group.Name}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Body}" />
+                                            <Border Background="{DynamicResource AccentSoft}" CornerRadius="{DynamicResource Rad.Chip}" Padding="5,1"
                                                     IsVisible="{Binding Group.IsDefault}">
-                                                <TextBlock Text="{DynamicResource S.Group.DefaultBadge}" FontSize="10" Foreground="{DynamicResource Accent}" />
+                                                <TextBlock Text="{DynamicResource S.Group.DefaultBadge}" FontSize="{DynamicResource Fz.Micro}" Foreground="{DynamicResource Accent}" />
                                             </Border>
                                         </StackPanel>
-                                        <TextBlock Text="{Binding CountText}" FontSize="11" Foreground="{DynamicResource TextFaint}" Margin="0,2,0,0" />
+                                        <TextBlock Text="{Binding CountText}" FontSize="{DynamicResource Fz.Micro}" Foreground="{DynamicResource TextFaint}" Margin="0,2,0,0" />
                                     </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </DockPanel>
-                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="10" Padding="18"
+                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="{DynamicResource M.Card}"
                             BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
                         <ScrollViewer>
-                            <StackPanel Spacing="14" MaxWidth="720" HorizontalAlignment="Center">
-                                <StackPanel Orientation="Horizontal" Spacing="14">
+                            <StackPanel Spacing="{DynamicResource Sp.Section}" MaxWidth="720" HorizontalAlignment="Center">
+                                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource Sp.Section}">
                                     <StackPanel Spacing="4" Grid.Column="0">
                                         <TextBlock Text="{DynamicResource S.Group.Name}" Foreground="{DynamicResource TextSecondary}" />
                                         <TextBox x:Name="GroupNameBox" Width="300" LostFocus="OnGroupNameChanged" />
@@ -200,10 +209,10 @@
                                               IsCheckedChanged="OnDefaultChanged" />
                                 </StackPanel>
 
-                                <Border Background="{DynamicResource ItemBg}" CornerRadius="9" Padding="14" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
+                                <Border Background="{DynamicResource ItemBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="14" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
                                     <StackPanel Spacing="8">
-                                        <TextBlock Text="{DynamicResource S.Group.ProcMatch}" FontWeight="SemiBold" FontSize="12.5" />
-                                        <TextBlock Text="{DynamicResource S.Group.ProcMatchHint}" Foreground="{DynamicResource TextFaint}" FontSize="11" TextWrapping="Wrap" />
+                                        <TextBlock Text="{DynamicResource S.Group.ProcMatch}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Base}" />
+                                        <TextBlock Text="{DynamicResource S.Group.ProcMatchHint}" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" TextWrapping="Wrap" />
                                         <ItemsControl x:Name="GroupProcesses">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
@@ -212,11 +221,11 @@
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate>
-                                                    <Border Background="{DynamicResource CardBg}" CornerRadius="6" Padding="9,4" Margin="0,0,6,6"
+                                                    <Border Background="{DynamicResource CardBg}" CornerRadius="{DynamicResource Rad.Control}" Padding="9,4" Margin="0,0,6,6"
                                                             BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <TextBlock Text="{Binding}" FontSize="12.5" VerticalAlignment="Center" />
-                                                            <Button Content="✕" FontSize="10" Padding="5,1" Tag="{Binding}" Click="OnProcRemoveItem"
+                                                            <TextBlock Text="{Binding}" FontSize="{DynamicResource Fz.Base}" VerticalAlignment="Center" />
+                                                            <Button Content="✕" FontSize="{DynamicResource Fz.Micro}" Padding="5,1" Tag="{Binding}" Click="OnProcRemoveItem"
                                                                     ToolTip.Tip="{DynamicResource S.Group.RemoveProcTip}" />
                                                         </StackPanel>
                                                     </Border>
@@ -224,18 +233,18 @@
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
                                         <TextBlock x:Name="GroupProcEmpty" Text="{DynamicResource S.Group.ProcEmpty}"
-                                                   Foreground="{DynamicResource TextFaint}" FontSize="11" />
+                                                   Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" />
                                     </StackPanel>
                                 </Border>
 
-                                <Border Background="{DynamicResource ItemBg}" CornerRadius="9" Padding="14" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
+                                <Border Background="{DynamicResource ItemBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="14" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
                                     <StackPanel Spacing="8">
-                                        <TextBlock Text="{DynamicResource S.Group.AddProc}" FontWeight="SemiBold" FontSize="12.5" />
+                                        <TextBlock Text="{DynamicResource S.Group.AddProc}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Base}" />
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <TextBox x:Name="NewProcBox" MinWidth="220" KeyDown="OnProcBoxKeyDown" />
                                             <Button Content="{DynamicResource S.Group.Add}" Click="OnProcAdd" />
                                         </StackPanel>
-                                        <TextBlock Text="{DynamicResource S.Group.FromRunning}" Foreground="{DynamicResource TextFaint}" FontSize="11" Margin="0,4,0,0" />
+                                        <TextBlock Text="{DynamicResource S.Group.FromRunning}" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" Margin="0,4,0,0" />
                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                             <ComboBox x:Name="RunningProcs" MinWidth="200" />
                                             <Button Content="{DynamicResource S.Group.Refresh}" Click="OnRefreshRunning" />
@@ -247,7 +256,7 @@
 
                                 <Grid ColumnDefinitions="*,Auto">
                                     <TextBlock Grid.Column="0" Text="{DynamicResource S.Group.BrowserHint}" Foreground="{DynamicResource TextFaint}"
-                                               FontSize="11" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,16,0" />
+                                               FontSize="{DynamicResource Fz.Micro}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,16,0" />
                                     <Button Grid.Column="1" Content="{DynamicResource S.Group.Delete}" Click="OnGroupDelete" />
                                 </Grid>
                             </StackPanel>
@@ -271,21 +280,25 @@
                             <ListBox.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Margin="2,4" Spacing="3">
-                                        <TextBlock Text="{Binding Sentence}" FontSize="12" TextWrapping="Wrap" />
-                                        <TextBlock Text="{Binding WarnText}" FontSize="10.5" TextWrapping="Wrap" Foreground="#B45309"
+                                        <TextBlock Text="{Binding Sentence}" FontSize="{DynamicResource Fz.Small}" TextWrapping="Wrap" />
+                                        <TextBlock Text="{Binding WarnText}" FontSize="{DynamicResource Fz.Micro}" TextWrapping="Wrap" Foreground="{DynamicResource AmberText}"
                                                    IsVisible="{Binding HasWarn}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
                     </DockPanel>
-                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="10" Padding="18"
+                    <Border Grid.Column="1" Background="{DynamicResource CardBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="{DynamicResource M.Card}"
                             BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
                         <ScrollViewer>
-                            <StackPanel Spacing="12" MaxWidth="720" HorizontalAlignment="Center">
-                                <TextBlock Text="{DynamicResource S.Rule.Header}" FontWeight="SemiBold" FontSize="13" TextWrapping="Wrap" />
+                            <StackPanel Spacing="{DynamicResource Sp.Row}" MaxWidth="720" HorizontalAlignment="Center">
+                                <TextBlock Text="{DynamicResource S.Rule.Header}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Body}" TextWrapping="Wrap" />
 
-                                <Grid ColumnDefinitions="90,*,16,110" Margin="0,6,0,0">
+                                <!-- ① 关系：谁触发、压谁 -->
+                                <TextBlock Text="{DynamicResource S.Rule.SecRelation}" FontSize="{DynamicResource Fz.Micro}" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AccentFg}" Margin="0,6,0,0" />
+                                <Separator />
+                                <Grid ColumnDefinitions="90,*,16,110">
                                     <TextBlock Text="{DynamicResource S.Rule.Trigger}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
                                     <ComboBox Grid.Column="1" x:Name="RuleTriggerType" SelectionChanged="OnRuleSelectorTypeChanged" MinWidth="100" HorizontalAlignment="Left">
                                         <ComboBoxItem Content="{DynamicResource S.Rule.SelGroup}" />
@@ -303,6 +316,11 @@
                                     <ComboBox Grid.Column="3" x:Name="RuleTargetValue" MinWidth="110" MaxWidth="360" HorizontalAlignment="Stretch"
                                               SelectionChanged="OnRuleSelectorChanged" />
                                 </Grid>
+
+                                <!-- ② 效果：压到多少、多快 -->
+                                <TextBlock Text="{DynamicResource S.Rule.SecEffect}" FontSize="{DynamicResource Fz.Micro}" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AccentFg}" Margin="0,8,0,0" />
+                                <Separator />
                                 <Grid ColumnDefinitions="90,*,16,110">
                                     <TextBlock Text="{DynamicResource S.Rule.TargetVolume}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
@@ -313,12 +331,12 @@
                                               IsCheckedChanged="OnRuleFieldChanged" VerticalAlignment="Center" />
                                 </Grid>
                                 <Grid ColumnDefinitions="90,*">
-                                    <TextBlock Text="{DynamicResource S.Rule.Priority}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
+                                    <TextBlock Text="{DynamicResource S.Rule.Priority}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"
+                                               ToolTip.Tip="{DynamicResource S.Rule.PriorityHint}" />
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
                                         <TextBox x:Name="RulePriority" Width="80" />
                                     </StackPanel>
                                 </Grid>
-                                <TextBlock Text="{DynamicResource S.Rule.PriorityHint}" Foreground="{DynamicResource TextFaint}" FontSize="11" TextWrapping="Wrap" />
                                 <Grid ColumnDefinitions="90,*">
                                     <TextBlock Text="{DynamicResource S.Rule.Rhythm}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"
                                                ToolTip.Tip="{DynamicResource S.Rule.RhythmTip}" />
@@ -329,7 +347,11 @@
                                         <TextBlock Text="{DynamicResource S.Rule.FadeInMs}" Foreground="{DynamicResource TextFaint}" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Grid>
-                                <TextBlock Text="{DynamicResource S.Rule.RhythmHint}" Foreground="{DynamicResource TextFaint}" FontSize="11" />
+
+                                <!-- ③ 条件：何时生效 -->
+                                <TextBlock Text="{DynamicResource S.Rule.SecCondition}" FontSize="{DynamicResource Fz.Micro}" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AccentFg}" Margin="0,8,0,0" />
+                                <Separator />
                                 <Grid ColumnDefinitions="90,*">
                                     <TextBlock Text="{DynamicResource S.Rule.Condition}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"
                                                ToolTip.Tip="{DynamicResource S.Rule.ConditionTip}" />
@@ -345,19 +367,121 @@
                                 <Grid ColumnDefinitions="90,*">
                                     <TextBlock Text="{DynamicResource S.Rule.Detection}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"
                                                ToolTip.Tip="{DynamicResource S.Rule.DetectionTip}" />
-                                    <ComboBox x:Name="RuleDetectionMode" Width="200" HorizontalAlignment="Left" SelectionChanged="OnRuleFieldChanged">
+                                    <ComboBox Grid.Column="1" x:Name="RuleDetectionMode" Width="200" HorizontalAlignment="Left" SelectionChanged="OnRuleFieldChanged">
                                         <ComboBoxItem Content="{DynamicResource S.Rule.DetectState}" />
                                         <ComboBoxItem Content="{DynamicResource S.Rule.DetectSound}" />
                                     </ComboBox>
                                 </Grid>
                                 <Grid ColumnDefinitions="*,Auto" Margin="0,8,0,0">
-                                    <TextBlock Text="{DynamicResource S.Rule.AutoSaveHint}" Foreground="{DynamicResource TextFaint}" FontSize="11" VerticalAlignment="Center" />
+                                    <TextBlock Text="{DynamicResource S.Rule.AutoSaveHint}" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" VerticalAlignment="Center" />
                                     <Button Grid.Column="1" Content="{DynamicResource S.Rule.Delete}" Click="OnRuleDelete" />
                                 </Grid>
                             </StackPanel>
                         </ScrollViewer>
                     </Border>
                 </Grid>
+            </TabItem>
+
+            <!-- ═══ 外观 ═══ -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="{DynamicResource S.Tab.Appearance}" Margin="4,0,0,0" />
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer>
+                    <StackPanel Spacing="{DynamicResource Sp.Row}" MaxWidth="640" HorizontalAlignment="Center" Margin="2">
+                        <!-- 实时预览：所有外观改动在这里即时可见 -->
+                        <Border Background="{DynamicResource CardBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="{DynamicResource M.Card}"
+                                BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
+                            <StackPanel Spacing="12">
+                                <TextBlock Text="{DynamicResource S.Ap.PreviewTitle}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Title}" />
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <StackPanel Grid.Column="0" Spacing="10">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button Content="{DynamicResource S.Ap.SamplePrimary}" Classes="accent" />
+                                            <Button Content="{DynamicResource S.Ap.SampleBtn}" />
+                                            <CheckBox IsChecked="True" Content="{DynamicResource S.Ap.SampleSwitch}" Margin="8,0,0,0" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="10">
+                                            <TextBlock Text="{DynamicResource S.Ap.SampleText}" FontSize="{DynamicResource Fz.Body}"
+                                                       Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
+                                            <TextBlock Text="{DynamicResource S.Ap.SampleHint}" Foreground="{DynamicResource TextFaint}"
+                                                       FontSize="{DynamicResource Fz.Small}" VerticalAlignment="Center" />
+                                            <TextBlock Text="63%" FontFamily="Consolas, Menlo, monospace" FontSize="{DynamicResource Fz.Num}"
+                                                       FontWeight="SemiBold" Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center" Margin="14,0,0,0">
+                                        <ComboBox SelectedIndex="0" Width="110">
+                                            <ComboBoxItem Content="{DynamicResource S.Ap.ThemeDark}" />
+                                        </ComboBox>
+                                        <Slider Orientation="Vertical" Minimum="0" Maximum="100" Value="60" Height="64" Width="30" />
+                                    </StackPanel>
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+
+                                <!-- 外观设置行（主题/强调色/字号/密度/圆角/动效/语言） -->
+                        <Border Background="{DynamicResource CardBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="{DynamicResource M.Card}"
+                                BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
+                            <StackPanel Spacing="{DynamicResource Sp.Section}">
+                                <TextBlock Text="{DynamicResource S.Ap.Title}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Title}" />
+                                <Grid ColumnDefinitions="210,*">
+                                    <TextBlock Text="{DynamicResource S.Ap.Theme}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
+                                    <ComboBox Grid.Column="1" x:Name="ThemeCombo" Width="180" HorizontalAlignment="Left" SelectionChanged="OnAppearancePrefChanged">
+                                        <ComboBoxItem Content="{DynamicResource S.Ap.ThemeDark}" />
+                                        <ComboBoxItem Content="{DynamicResource S.Ap.ThemeLight}" />
+                                        <ComboBoxItem Content="{DynamicResource S.Ap.ThemeSystem}" />
+                                    </ComboBox>
+                                </Grid>
+                                <Grid ColumnDefinitions="210,*">
+                                    <TextBlock Text="{DynamicResource S.Ap.Accent}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"
+                                               ToolTip.Tip="{DynamicResource S.Ap.AccentTip}" />
+                                    <StackPanel Grid.Column="1" x:Name="AccentPanel" Orientation="Horizontal" Spacing="8" />
+                                </Grid>
+                                <Grid ColumnDefinitions="210,*">
+                                    <TextBlock Text="{DynamicResource S.Ap.FontScale}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
+                                    <ComboBox Grid.Column="1" x:Name="FontScaleCombo" Width="180" HorizontalAlignment="Left" SelectionChanged="OnAppearancePrefChanged">
+                                        <ComboBoxItem Content="{DynamicResource S.Ap.ScaleSmall}" />
+                                        <ComboBoxItem Content="{DynamicResource S.Ap.ScaleStandard}" />
+                                        <ComboBoxItem Content="{DynamicResource S.Ap.ScaleLarge}" />
+                                    </ComboBox>
+                                </Grid>
+                                <Grid ColumnDefinitions="210,*">
+                                    <TextBlock Text="{DynamicResource S.Ap.Density}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
+                                    <ComboBox Grid.Column="1" x:Name="DensityCombo" Width="180" HorizontalAlignment="Left" SelectionChanged="OnAppearancePrefChanged">
+                                        <ComboBoxItem Content="{DynamicResource S.Ap.DensityComfortable}" />
+                                        <ComboBoxItem Content="{DynamicResource S.Ap.DensityCompact}" />
+                                    </ComboBox>
+                                </Grid>
+                                <Grid ColumnDefinitions="210,*">
+                                    <TextBlock Text="{DynamicResource S.Ap.Radius}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
+                                    <ComboBox Grid.Column="1" x:Name="RadiusCombo" Width="180" HorizontalAlignment="Left" SelectionChanged="OnAppearancePrefChanged">
+                                        <ComboBoxItem Content="{DynamicResource S.Ap.RadiusSharp}" />
+                                        <ComboBoxItem Content="{DynamicResource S.Ap.RadiusSoft}" />
+                                        <ComboBoxItem Content="{DynamicResource S.Ap.RadiusRound}" />
+                                    </ComboBox>
+                                </Grid>
+                                <Grid ColumnDefinitions="210,*">
+                                    <TextBlock Text="{DynamicResource S.Ap.Animations}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"
+                                               ToolTip.Tip="{DynamicResource S.Ap.AnimationsTip}" />
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                                        <CheckBox x:Name="AnimToggle" IsCheckedChanged="OnAnimationsChanged" />
+                                        <TextBlock Text="{DynamicResource S.Ap.AnimationsHint}" Foreground="{DynamicResource TextFaint}"
+                                                   FontSize="{DynamicResource Fz.Micro}" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Grid>
+                                <Separator />
+                                <Grid ColumnDefinitions="210,*">
+                                    <TextBlock Text="{DynamicResource S.Set.Language}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"
+                                               ToolTip.Tip="{DynamicResource S.Set.LanguageHint}" />
+                                    <ComboBox Grid.Column="1" x:Name="SetLanguage" Width="180" HorizontalAlignment="Left" SelectionChanged="OnLanguageChanged" />
+                                </Grid>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
 
             <!-- ═══ 设置 ═══ -->
@@ -368,36 +492,32 @@
                     </StackPanel>
                 </TabItem.Header>
                 <ScrollViewer>
-                    <StackPanel Spacing="12" MaxWidth="660" HorizontalAlignment="Center" Margin="2">
-                        <Border Background="{DynamicResource CardBg}" CornerRadius="10" Padding="20" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="{DynamicResource S.Set.Run}" FontWeight="SemiBold" FontSize="13.5" />
-                                <Grid ColumnDefinitions="220,*">
-                                    <TextBlock Text="{DynamicResource S.Set.Language}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
-                                    <ComboBox Grid.Column="1" x:Name="SetLanguage" Width="180" HorizontalAlignment="Left" SelectionChanged="OnLanguageChanged" />
-                                </Grid>
+                    <StackPanel Spacing="{DynamicResource Sp.Row}" MaxWidth="660" HorizontalAlignment="Center" Margin="2">
+                        <Border Background="{DynamicResource CardBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="{DynamicResource M.Card}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
+                            <StackPanel Spacing="{DynamicResource Sp.Section}">
+                                <TextBlock Text="{DynamicResource S.Set.Run}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Title}" />
                                 <Grid ColumnDefinitions="220,*">
                                     <TextBlock Text="{DynamicResource S.Set.Suspend}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
                                         <CheckBox x:Name="SetSuspend" IsCheckedChanged="OnSuspendSwitchChanged" />
-                                        <TextBlock Text="{DynamicResource S.Set.SuspendOffHint}" Foreground="{DynamicResource TextFaint}" FontSize="11" VerticalAlignment="Center" />
+                                        <TextBlock Text="{DynamicResource S.Set.SuspendOffHint}" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Grid>
                                 <Grid ColumnDefinitions="220,*">
                                     <TextBlock Text="{DynamicResource S.Set.RuleConflict}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
                                     <ComboBox Grid.Column="1" x:Name="SetRuleConflict" Width="230" HorizontalAlignment="Left" SelectionChanged="OnSettingsFieldChanged" />
                                 </Grid>
-                                <TextBlock Text="{DynamicResource S.Set.RuleConflictHint}" Foreground="{DynamicResource TextFaint}" FontSize="11" TextWrapping="Wrap" />
+                                <TextBlock Text="{DynamicResource S.Set.RuleConflictHint}" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" TextWrapping="Wrap" />
                                 <Grid ColumnDefinitions="220,*">
                                     <TextBlock Text="{DynamicResource S.Set.Takeover}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}"
                                                ToolTip.Tip="{DynamicResource S.Set.TakeoverTip}" />
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
                                         <CheckBox x:Name="SetManualTakeover" IsCheckedChanged="OnSettingsFieldChanged" />
-                                        <TextBlock Text="{DynamicResource S.Set.TakeoverHint}" Foreground="{DynamicResource TextFaint}" FontSize="11" VerticalAlignment="Center" />
+                                        <TextBlock Text="{DynamicResource S.Set.TakeoverHint}" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" VerticalAlignment="Center" />
                                     </StackPanel>
                                 </Grid>
                                 <Separator />
-                                <TextBlock Text="{DynamicResource S.Set.Fade}" FontWeight="SemiBold" FontSize="13.5" />
+                                <TextBlock Text="{DynamicResource S.Set.Fade}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Title}" />
                                 <Grid ColumnDefinitions="220,80,*">
                                     <TextBlock Text="{DynamicResource S.Set.FadeOutLabel}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
                                     <TextBox Grid.Column="1" x:Name="SetFadeOut" TextInput="OnSettingsFieldChanged" />
@@ -406,13 +526,13 @@
                                     <TextBlock Text="{DynamicResource S.Set.FadeInLabel}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
                                     <TextBox Grid.Column="1" x:Name="SetFadeIn" TextInput="OnSettingsFieldChanged" />
                                 </Grid>
-                                <TextBlock Text="{DynamicResource S.Set.FadeHint}" Foreground="{DynamicResource TextFaint}" FontSize="11" TextWrapping="Wrap" />
+                                <TextBlock Text="{DynamicResource S.Set.FadeHint}" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
 
-                        <Border Background="{DynamicResource CardBg}" CornerRadius="10" Padding="20" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="{DynamicResource S.Set.Config}" FontWeight="SemiBold" FontSize="13.5" />
+                        <Border Background="{DynamicResource CardBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="{DynamicResource M.Card}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
+                            <StackPanel Spacing="{DynamicResource Sp.Section}">
+                                <TextBlock Text="{DynamicResource S.Set.Config}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Title}" />
                                 <Grid ColumnDefinitions="220,*">
                                     <TextBlock Text="{DynamicResource S.Set.ImportExport}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
                                     <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
@@ -420,37 +540,37 @@
                                         <Button Content="{DynamicResource S.Set.Import}" Click="OnConfigImport" />
                                     </StackPanel>
                                 </Grid>
-                                <TextBlock x:Name="ConfigPathText" Foreground="{DynamicResource TextFaint}" FontSize="11" TextWrapping="Wrap" />
-                                <TextBlock x:Name="PortableModeText" Foreground="{DynamicResource TextFaint}" FontSize="11" TextWrapping="Wrap" />
+                                <TextBlock x:Name="ConfigPathText" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" TextWrapping="Wrap" />
+                                <TextBlock x:Name="PortableModeText" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" TextWrapping="Wrap" />
                             </StackPanel>
                         </Border>
 
-                        <Border Background="{DynamicResource CardBg}" CornerRadius="10" Padding="20" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
-                            <StackPanel Spacing="14">
-                                <TextBlock Text="{DynamicResource S.Set.About}" FontWeight="SemiBold" FontSize="13.5" />
+                        <Border Background="{DynamicResource CardBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="{DynamicResource M.Card}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
+                            <StackPanel Spacing="{DynamicResource Sp.Section}">
+                                <TextBlock Text="{DynamicResource S.Set.About}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Title}" />
                                 <Grid ColumnDefinitions="220,*">
                                     <TextBlock Text="{DynamicResource S.Set.CheckUpdate}" VerticalAlignment="Center" Foreground="{DynamicResource TextSecondary}" />
-                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+                                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource Sp.Row}">
                                         <Button x:Name="UpdateCheckButton" Content="{DynamicResource S.Set.CheckUpdate}" Click="OnCheckUpdate" />
                                         <TextBlock x:Name="UpdateStatusText" Text="{DynamicResource S.Set.UpdateInitialHint}"
-                                                   Foreground="{DynamicResource TextFaint}" FontSize="11" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="280" />
+                                                   Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="280" />
                                     </StackPanel>
                                 </Grid>
-                                <TextBlock Text="{DynamicResource S.Set.ReleasesHint}" Foreground="{DynamicResource TextFaint}" FontSize="11" />
+                                <TextBlock Text="{DynamicResource S.Set.ReleasesHint}" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" />
                             </StackPanel>
                         </Border>
 
                         <Expander x:Name="DiagToggle" Header="{DynamicResource S.Set.DiagToggleClosed}" IsExpanded="False" Expanded="OnDiagExpanded" Collapsed="OnDiagCollapsed">
-                            <Border Background="{DynamicResource CardBg}" CornerRadius="10" Padding="14" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
+                            <Border Background="{DynamicResource CardBg}" CornerRadius="{DynamicResource Rad.Card}" Padding="14" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1">
                                 <StackPanel Spacing="8">
                                     <Grid ColumnDefinitions="*,Auto,Auto">
-                                        <TextBlock Text="{DynamicResource S.Set.DiagTitle}" FontWeight="SemiBold" FontSize="12" VerticalAlignment="Center" />
+                                        <TextBlock Text="{DynamicResource S.Set.DiagTitle}" FontWeight="SemiBold" FontSize="{DynamicResource Fz.Small}" VerticalAlignment="Center" />
                                         <Button Grid.Column="1" Content="{DynamicResource S.Set.DiagCopy}" Click="OnDiagCopy" />
                                         <Button Grid.Column="2" Content="{DynamicResource S.Set.DiagClear}" Click="OnDiagClear" Margin="8,0,0,0" />
                                     </Grid>
-                                    <TextBox x:Name="DiagBox" IsReadOnly="True" Height="220" FontFamily="Consolas, Menlo, monospace" FontSize="11.5"
+                                    <TextBox x:Name="DiagBox" IsReadOnly="True" Height="220" FontFamily="Consolas, Menlo, monospace" FontSize="{DynamicResource Fz.Small}"
                                              TextWrapping="NoWrap" />
-                                    <TextBlock x:Name="DiagPathText" Foreground="{DynamicResource TextFaint}" FontSize="11" TextWrapping="Wrap" />
+                                    <TextBlock x:Name="DiagPathText" Foreground="{DynamicResource TextFaint}" FontSize="{DynamicResource Fz.Micro}" TextWrapping="Wrap" />
                                 </StackPanel>
                             </Border>
                         </Expander>
@@ -458,12 +578,19 @@
                 </ScrollViewer>
             </TabItem>
         </TabControl>
+            <!-- 滑动胶囊导航指示层（外观页「动效」开：胶囊随指针流式滑动、离开回落选中项；关：隐藏＝Fluent 静态高亮）。
+                 必须显式 HorizontalAlignment=Left：设了显式 Width 后默认 Stretch 会变居中（WPF 版同款坑，胶囊会整体漂移） -->
+            <Border x:Name="NavIndicator" CornerRadius="{DynamicResource Rad.Chip}" IsVisible="False" IsHitTestVisible="False"
+                    HorizontalAlignment="Left" VerticalAlignment="Top"
+                    Background="{DynamicResource AccentSoft}" Opacity="0.9"
+                    Width="60" Height="32" />
+        </Grid>
 
         <!-- 底栏 -->
         <DockPanel Grid.Row="2" Margin="2,12,2,0">
-            <TextBlock x:Name="VersionText" DockPanel.Dock="Right" FontFamily="Consolas, monospace" FontSize="12"
+            <TextBlock x:Name="VersionText" DockPanel.Dock="Right" FontFamily="Consolas, monospace" FontSize="{DynamicResource Fz.Small}"
                        Foreground="{DynamicResource TextFaint}" Margin="12,0,0,0" />
-            <TextBlock x:Name="SaveStatus" FontSize="12" Foreground="{DynamicResource TextSecondary}" />
+            <TextBlock x:Name="SaveStatus" FontSize="{DynamicResource Fz.Small}" Foreground="{DynamicResource TextSecondary}" />
         </DockPanel>
     </Grid>
 </Window>

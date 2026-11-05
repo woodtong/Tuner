@@ -2,59 +2,6 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
 
-    <!-- ═══ 调色板（分层材质：深窗口底 → 悬浮面板 → 面上抬升块 → 井内凹陷）═══
-         颜色与画刷成对定义：样式引用画刷，过渡动效引用颜色。画刷全部冻结。 -->
-    <Color x:Key="CardBgColor">#171C24</Color>
-    <Color x:Key="ItemBgColor">#1F2530</Color>
-    <Color x:Key="ItemHoverColor">#262E3B</Color>
-    <Color x:Key="HoverSoftColor">#262E3B</Color>
-    <Color x:Key="PressedBgColor">#161B23</Color>
-    <Color x:Key="CardBorderColor">#242B37</Color>
-    <Color x:Key="FieldBorderColor">#374050</Color>
-    <Color x:Key="FieldBorderHoverColor">#4A5468</Color>
-    <Color x:Key="AccentColor">#E8A33D</Color>
-    <Color x:Key="AccentHoverColor">#F0B258</Color>
-    <Color x:Key="AccentPressedColor">#B87F1F</Color>
-    <Color x:Key="AccentSoftColor">#332B1C</Color>
-    <Color x:Key="SwitchTrackColor">#242A34</Color>
-    <Color x:Key="SwitchOnColor">#1B3A2E</Color>
-    <Color x:Key="GreenColor">#34D399</Color>
-    <Color x:Key="TextSecondaryColor">#98A2B3</Color>
-    <Color x:Key="CheckOnColor">#12241D</Color>
-    <Color x:Key="ScrollThumbColor">#3E4655</Color>
-    <Color x:Key="ScrollThumbHoverColor">#55607A</Color>
-
-    <!-- 窗口底：最深；内容面板悬浮其上 -->
-    <SolidColorBrush x:Key="PageBg" Color="#0E1218" po:Freeze="True" />
-    <SolidColorBrush x:Key="CardBg" Color="{StaticResource CardBgColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="ItemBg" Color="{StaticResource ItemBgColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="ItemHover" Color="{StaticResource ItemHoverColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="HoverSoft" Color="{StaticResource HoverSoftColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="PressedBg" Color="{StaticResource PressedBgColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="CardBorder" Color="{StaticResource CardBorderColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="TextPrimary" Color="#E8ECF4" po:Freeze="True" />
-    <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="TextFaint" Color="#7E889D" po:Freeze="True" />
-    <SolidColorBrush x:Key="Accent" Color="{StaticResource AccentColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="AccentHover" Color="{StaticResource AccentHoverColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="AccentPressed" Color="{StaticResource AccentPressedColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="AccentSoft" Color="{StaticResource AccentSoftColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="FieldBorder" Color="{StaticResource FieldBorderColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="FieldBorderHover" Color="{StaticResource FieldBorderHoverColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="Green" Color="{StaticResource GreenColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="Amber" Color="#F5B942" po:Freeze="True" />
-    <SolidColorBrush x:Key="AmberSoft" Color="#331B1E" po:Freeze="True" />
-    <SolidColorBrush x:Key="AmberBadgeBorder" Color="#5A2626" po:Freeze="True" />
-    <SolidColorBrush x:Key="AmberText" Color="#F8A0A0" po:Freeze="True" />
-    <SolidColorBrush x:Key="Danger" Color="#F87171" po:Freeze="True" />
-    <SolidColorBrush x:Key="DangerBorder" Color="#F3C9C9" po:Freeze="True" />
-    <SolidColorBrush x:Key="SwitchTrackBg" Color="{StaticResource SwitchTrackColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="SwitchOnBg" Color="{StaticResource SwitchOnColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="CheckOnBg" Color="{StaticResource CheckOnColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="ScrollThumbBg" Color="{StaticResource ScrollThumbColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="ScrollThumbHover" Color="{StaticResource ScrollThumbHoverColor}" po:Freeze="True" />
-    <SolidColorBrush x:Key="FaderGrooveBg" Color="#0C0F14" po:Freeze="True" />
-    <SolidColorBrush x:Key="FaderGrooveRim" Color="#04060A" po:Freeze="True" />
 
     <!-- ═══ 状态过渡统一约定（2026-10-22 UI 柔化返工）═══
          1) 多状态控件（悬停/选中/按下叠加）一律用"分层覆盖层 + 透明度动画"：
@@ -70,20 +17,20 @@
 
     <!-- 文本样式 -->
     <Style x:Key="Label" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fz.Small}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
     </Style>
     <Style x:Key="Hint" TargetType="TextBlock">
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="Foreground" Value="{StaticResource TextFaint}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fz.Small}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
         <Setter Property="TextWrapping" Value="Wrap" />
     </Style>
 
     <!-- 复选框（深色全局：默认模板是黑字，深底下不可见）。
          悬停高亮用 Box 外圈叠层 + SourceName 判定：只在鼠标位于勾选框上时出现，标签文字不触发 -->
     <Style TargetType="CheckBox">
-        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fz.Body}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Template">
@@ -91,23 +38,23 @@
                 <ControlTemplate TargetType="CheckBox">
                     <StackPanel Orientation="Horizontal" Background="Transparent">
                         <Grid VerticalAlignment="Center">
-                            <Border x:Name="Box" Width="16" Height="16" CornerRadius="4.5" BorderThickness="1">
+                            <Border x:Name="Box" Width="16" Height="16" CornerRadius="{DynamicResource Rad.Chip}" BorderThickness="1">
                                 <Border.Background>
-                                    <SolidColorBrush Color="{StaticResource ItemBgColor}" />
+                                    <SolidColorBrush Color="{DynamicResource ItemBgColor}" />
                                 </Border.Background>
                                 <Border.BorderBrush>
-                                    <SolidColorBrush Color="{StaticResource FieldBorderColor}" />
+                                    <SolidColorBrush Color="{DynamicResource FieldBorderColor}" />
                                 </Border.BorderBrush>
                                 <Path x:Name="Check" Data="M3.5,8.5 L6.5,11.5 L12.5,4.5"
-                                      Stroke="{StaticResource Green}" StrokeThickness="1.8"
+                                      Stroke="{DynamicResource Green}" StrokeThickness="1.8"
                                       StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                                       StrokeLineJoin="Round" Opacity="0"
                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Border>
-                            <Border x:Name="BoxHover" Width="16" Height="16" CornerRadius="4.5"
+                            <Border x:Name="BoxHover" Width="16" Height="16" CornerRadius="{DynamicResource Rad.Chip}"
                                     BorderThickness="1" Opacity="0" IsHitTestVisible="False">
                                 <Border.BorderBrush>
-                                    <SolidColorBrush Color="{StaticResource FieldBorderHoverColor}" />
+                                    <SolidColorBrush Color="{DynamicResource FieldBorderHoverColor}" />
                                 </Border.BorderBrush>
                             </Border>
                         </Grid>
@@ -120,7 +67,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="BoxHover" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.12" />
+                                                         To="1" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -128,30 +75,24 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="BoxHover" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.18" />
+                                                         To="0" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
                         </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Check" Property="Opacity" Value="1" />
-                            <Setter TargetName="Box" Property="BorderBrush" Value="{StaticResource Green}" />
-                            <Setter TargetName="Box" Property="Background" Value="{StaticResource CheckOnBg}" />
+                            <Setter TargetName="Box" Property="BorderBrush" Value="{DynamicResource Green}" />
+                            <Setter TargetName="Box" Property="Background" Value="{DynamicResource CheckOnBg}" />
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.16">
+                                                         To="1" Duration="0:0:0.15">
                                             <DoubleAnimation.EasingFunction>
                                                 <CubicEase EasingMode="EaseOut" />
                                             </DoubleAnimation.EasingFunction>
                                         </DoubleAnimation>
-                                        <ColorAnimation Storyboard.TargetName="Box"
-                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
-                                                        To="{StaticResource GreenColor}" Duration="0:0:0.16" />
-                                        <ColorAnimation Storyboard.TargetName="Box"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource CheckOnColor}" Duration="0:0:0.16" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -159,13 +100,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="Check" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.1" />
-                                        <ColorAnimation Storyboard.TargetName="Box"
-                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
-                                                        To="{StaticResource FieldBorderColor}" Duration="0:0:0.12" />
-                                        <ColorAnimation Storyboard.TargetName="Box"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource ItemBgColor}" Duration="0:0:0.12" />
+                                                         To="0" Duration="0:0:0.08" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -182,25 +117,25 @@
     <!-- 滑块开关（流块）：启停类开关用（规则启停等）。槽内圆钮左右换位，开=绿；
          换位/槽底/描边/圆钮填色全部带过渡；悬停判定收窄到槽本体（SourceName=Track） -->
     <Style x:Key="Switch" TargetType="CheckBox">
-        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
-        <Setter Property="FontSize" Value="12.5" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fz.Base}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="CheckBox">
                     <StackPanel Orientation="Horizontal" Background="Transparent">
-                        <Border x:Name="Track" Width="40" Height="22" CornerRadius="11" BorderThickness="1"
+                        <Border x:Name="Track" Width="40" Height="22" CornerRadius="{DynamicResource Rad.Card}" BorderThickness="1"
                                 VerticalAlignment="Center">
                             <Border.Background>
-                                <SolidColorBrush Color="{StaticResource SwitchTrackColor}" />
+                                <SolidColorBrush Color="{DynamicResource SwitchTrackColor}" />
                             </Border.Background>
                             <Border.BorderBrush>
-                                <SolidColorBrush Color="{StaticResource FieldBorderColor}" />
+                                <SolidColorBrush Color="{DynamicResource FieldBorderColor}" />
                             </Border.BorderBrush>
                             <Ellipse x:Name="Knob" Width="15" Height="15" HorizontalAlignment="Left" Margin="3,0,0,0">
                                 <Ellipse.Fill>
-                                    <SolidColorBrush Color="{StaticResource TextSecondaryColor}" />
+                                    <SolidColorBrush Color="{DynamicResource TextSecondaryColor}" />
                                 </Ellipse.Fill>
                             </Ellipse>
                         </Border>
@@ -209,48 +144,22 @@
                     </StackPanel>
                     <ControlTemplate.Triggers>
                         <Trigger SourceName="Track" Property="IsMouseOver" Value="True">
-                            <Trigger.EnterActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Track"
-                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
-                                                        To="{StaticResource FieldBorderHoverColor}" Duration="0:0:0.12" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.EnterActions>
-                            <Trigger.ExitActions>
-                                <BeginStoryboard>
-                                    <Storyboard>
-                                        <ColorAnimation Storyboard.TargetName="Track"
-                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
-                                                        To="{StaticResource FieldBorderColor}" Duration="0:0:0.15" />
-                                    </Storyboard>
-                                </BeginStoryboard>
-                            </Trigger.ExitActions>
-                        </Trigger>
+                                <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource FieldBorderHover}" />
+                            </Trigger>
                         <Trigger Property="IsChecked" Value="True">
                             <Setter TargetName="Knob" Property="Margin" Value="20,0,0,0" />
-                            <Setter TargetName="Knob" Property="Fill" Value="{StaticResource Green}" />
-                            <Setter TargetName="Track" Property="Background" Value="{StaticResource SwitchOnBg}" />
-                            <Setter TargetName="Track" Property="BorderBrush" Value="{StaticResource Green}" />
+                            <Setter TargetName="Knob" Property="Fill" Value="{DynamicResource Green}" />
+                            <Setter TargetName="Track" Property="Background" Value="{DynamicResource SwitchOnBg}" />
+                            <Setter TargetName="Track" Property="BorderBrush" Value="{DynamicResource Green}" />
                             <Trigger.EnterActions>
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <ThicknessAnimation Storyboard.TargetName="Knob" Storyboard.TargetProperty="Margin"
-                                                            To="20,0,0,0" Duration="0:0:0.18">
+                                                            To="20,0,0,0" Duration="0:0:0.15">
                                             <ThicknessAnimation.EasingFunction>
                                                 <CubicEase EasingMode="EaseOut" />
                                             </ThicknessAnimation.EasingFunction>
                                         </ThicknessAnimation>
-                                        <ColorAnimation Storyboard.TargetName="Track"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource SwitchOnColor}" Duration="0:0:0.18" />
-                                        <ColorAnimation Storyboard.TargetName="Track"
-                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
-                                                        To="{StaticResource GreenColor}" Duration="0:0:0.18" />
-                                        <ColorAnimation Storyboard.TargetName="Knob"
-                                                        Storyboard.TargetProperty="Fill.(SolidColorBrush.Color)"
-                                                        To="{StaticResource GreenColor}" Duration="0:0:0.18" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -263,15 +172,6 @@
                                                 <CubicEase EasingMode="EaseOut" />
                                             </ThicknessAnimation.EasingFunction>
                                         </ThicknessAnimation>
-                                        <ColorAnimation Storyboard.TargetName="Track"
-                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                        To="{StaticResource SwitchTrackColor}" Duration="0:0:0.15" />
-                                        <ColorAnimation Storyboard.TargetName="Track"
-                                                        Storyboard.TargetProperty="BorderBrush.(SolidColorBrush.Color)"
-                                                        To="{StaticResource FieldBorderColor}" Duration="0:0:0.15" />
-                                        <ColorAnimation Storyboard.TargetName="Knob"
-                                                        Storyboard.TargetProperty="Fill.(SolidColorBrush.Color)"
-                                                        To="{StaticResource TextSecondaryColor}" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -290,13 +190,13 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ToolTip">
-                    <Border Background="{StaticResource ItemBg}" BorderBrush="{StaticResource FieldBorder}"
-                            BorderThickness="1" CornerRadius="8" Padding="12,9" Margin="0,4,8,8">
+                    <Border Background="{DynamicResource ItemBg}" BorderBrush="{DynamicResource FieldBorder}"
+                            BorderThickness="1" CornerRadius="{DynamicResource Rad.Card}" Padding="12,9" Margin="0,4,8,8">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="14" ShadowDepth="2" Opacity="0.3" />
                         </Border.Effect>
-                        <ContentPresenter TextElement.Foreground="{StaticResource TextSecondary}"
-                                          TextElement.FontSize="12" />
+                        <ContentPresenter TextElement.Foreground="{DynamicResource TextSecondary}"
+                                          TextElement.FontSize="{DynamicResource Fz.Small}" />
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
@@ -305,20 +205,20 @@
 
     <!-- 卡片（面板上的抬升块）：表面色差代替描边，仅留极淡发丝线 -->
     <Style x:Key="Card" TargetType="Border">
-        <Setter Property="Background" Value="{StaticResource ItemBg}" />
-        <Setter Property="BorderBrush" Value="{StaticResource CardBorder}" />
+        <Setter Property="Background" Value="{DynamicResource ItemBg}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="10" />
+        <Setter Property="CornerRadius" Value="{DynamicResource Rad.Card}" />
     </Style>
 
     <!-- 按钮（次要）：分层结构＝底板（实例可覆写底色/描边）＋悬停层＋按压层＋内容层。
          悬停/按压为独立覆盖层透明度渐变，互不抢写；按压缩放动画作用于整体。 -->
     <Style x:Key="Btn" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource ItemBg}" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
-        <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}" />
+        <Setter Property="Background" Value="{DynamicResource ItemBg}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource FieldBorder}" />
         <Setter Property="Padding" Value="12,6" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{DynamicResource Fz.Body}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
@@ -330,19 +230,19 @@
                         <Border Background="{TemplateBinding Background}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="7" />
-                        <Border x:Name="HoverOv" CornerRadius="7" Opacity="0" IsHitTestVisible="False"
+                                CornerRadius="{DynamicResource Rad.Control}" />
+                        <Border x:Name="HoverOv" CornerRadius="{DynamicResource Rad.Control}" Opacity="0" IsHitTestVisible="False"
                                 BorderThickness="{TemplateBinding BorderThickness}">
                             <Border.Background>
-                                <SolidColorBrush Color="{StaticResource ItemHoverColor}" />
+                                <SolidColorBrush Color="{DynamicResource ItemHoverColor}" />
                             </Border.Background>
                             <Border.BorderBrush>
-                                <SolidColorBrush Color="{StaticResource FieldBorderHoverColor}" />
+                                <SolidColorBrush Color="{DynamicResource FieldBorderHoverColor}" />
                             </Border.BorderBrush>
                         </Border>
-                        <Border x:Name="PressOv" CornerRadius="7" Opacity="0" IsHitTestVisible="False">
+                        <Border x:Name="PressOv" CornerRadius="{DynamicResource Rad.Control}" Opacity="0" IsHitTestVisible="False">
                             <Border.Background>
-                                <SolidColorBrush Color="{StaticResource PressedBgColor}" />
+                                <SolidColorBrush Color="{DynamicResource PressedBgColor}" />
                             </Border.Background>
                         </Border>
                         <Border Padding="{TemplateBinding Padding}">
@@ -355,7 +255,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.14" />
+                                                         To="1" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -363,7 +263,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.18" />
+                                                         To="0" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -373,7 +273,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="PressOv" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.05" />
+                                                         To="1" Duration="0:0:0.08" />
                                         <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleX"
                                                          To="0.97" Duration="0:0:0.08" />
                                         <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleY"
@@ -405,10 +305,10 @@
 
     <!-- 按钮（主要强调）：同分层结构，悬停/按压作用于琥珀主色 -->
     <Style x:Key="BtnPrimary" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource Accent}" />
-        <Setter Property="Foreground" Value="White" />
+        <Setter Property="Background" Value="{DynamicResource Accent}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextOnAccent}" />
         <Setter Property="Padding" Value="14,7" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{DynamicResource Fz.Body}" />
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
@@ -418,15 +318,15 @@
                         <Grid.RenderTransform>
                             <ScaleTransform />
                         </Grid.RenderTransform>
-                        <Border Background="{TemplateBinding Background}" CornerRadius="7" />
-                        <Border x:Name="HoverOv" CornerRadius="7" Opacity="0" IsHitTestVisible="False">
+                        <Border Background="{TemplateBinding Background}" CornerRadius="{DynamicResource Rad.Control}" />
+                        <Border x:Name="HoverOv" CornerRadius="{DynamicResource Rad.Control}" Opacity="0" IsHitTestVisible="False">
                             <Border.Background>
-                                <SolidColorBrush Color="{StaticResource AccentHoverColor}" />
+                                <SolidColorBrush Color="{DynamicResource AccentHoverColor}" />
                             </Border.Background>
                         </Border>
-                        <Border x:Name="PressOv" CornerRadius="7" Opacity="0" IsHitTestVisible="False">
+                        <Border x:Name="PressOv" CornerRadius="{DynamicResource Rad.Control}" Opacity="0" IsHitTestVisible="False">
                             <Border.Background>
-                                <SolidColorBrush Color="{StaticResource AccentPressedColor}" />
+                                <SolidColorBrush Color="{DynamicResource AccentPressedColor}" />
                             </Border.Background>
                         </Border>
                         <Border Padding="{TemplateBinding Padding}">
@@ -439,7 +339,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.14" />
+                                                         To="1" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -447,7 +347,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.18" />
+                                                         To="0" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -457,7 +357,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="PressOv" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.05" />
+                                                         To="1" Duration="0:0:0.08" />
                                         <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleX"
                                                          To="0.97" Duration="0:0:0.08" />
                                         <DoubleAnimation Storyboard.TargetName="Root" Storyboard.TargetProperty="RenderTransform.ScaleY"
@@ -489,36 +389,39 @@
 
     <!-- 按钮（危险操作，幽灵样式） -->
     <Style x:Key="BtnDanger" TargetType="Button" BasedOn="{StaticResource Btn}">
-        <Setter Property="Foreground" Value="{StaticResource Danger}" />
-        <Setter Property="BorderBrush" Value="{StaticResource DangerBorder}" />
+        <Setter Property="Foreground" Value="{DynamicResource Danger}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource DangerBorder}" />
     </Style>
 
     <!-- 输入框：井内凹陷。悬停/聚焦描边各用独立描边环叠层渐变（互不抢写） -->
     <Style x:Key="Tb" TargetType="TextBox">
-        <Setter Property="Background" Value="#131820" />
-        <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="Background" Value="{DynamicResource FieldBg}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource FieldBorder}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="SelectionBrush" Value="{DynamicResource Accent}" />
+        <Setter Property="SelectionTextBrush" Value="{DynamicResource TextOnAccent}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource TextPrimary}" />
         <Setter Property="Padding" Value="8,6" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{DynamicResource Fz.Body}" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TextBox">
                     <Grid>
                         <Border x:Name="Bd" Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="7">
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource Rad.Control}">
                             <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
                         </Border>
-                        <Border x:Name="HoverRing" CornerRadius="7" BorderThickness="1" Opacity="0"
+                        <Border x:Name="HoverRing" CornerRadius="{DynamicResource Rad.Control}" BorderThickness="1" Opacity="0"
                                 IsHitTestVisible="False">
                             <Border.BorderBrush>
-                                <SolidColorBrush Color="{StaticResource FieldBorderHoverColor}" />
+                                <SolidColorBrush Color="{DynamicResource FieldBorderHoverColor}" />
                             </Border.BorderBrush>
                         </Border>
-                        <Border x:Name="FocusRing" CornerRadius="7" BorderThickness="1" Opacity="0"
+                        <Border x:Name="FocusRing" CornerRadius="{DynamicResource Rad.Control}" BorderThickness="1" Opacity="0"
                                 IsHitTestVisible="False">
                             <Border.BorderBrush>
-                                <SolidColorBrush Color="{StaticResource AccentColor}" />
+                                <SolidColorBrush Color="{DynamicResource AccentColor}" />
                             </Border.BorderBrush>
                         </Border>
                     </Grid>
@@ -528,7 +431,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.12" />
+                                                         To="1" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -536,7 +439,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.18" />
+                                                         To="0" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -547,7 +450,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="FocusRing" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.12" />
+                                                         To="1" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -555,7 +458,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="FocusRing" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.2" />
+                                                         To="0" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -571,8 +474,8 @@
 
     <!-- 下拉框：触发器悬停描边环渐变；列表项悬停底色渐变、选中着色胶囊叠层渐变 -->
     <Style x:Key="Combo" TargetType="ComboBox">
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fz.Body}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
@@ -583,16 +486,16 @@
                             <ToggleButton.Template>
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Grid>
-                                        <Border x:Name="Bd" Background="{StaticResource ItemBg}" BorderBrush="{StaticResource FieldBorder}"
-                                                BorderThickness="1" CornerRadius="7" Padding="0,6">
-                                            <Path Data="M0,0 L4,4 8,0" Stroke="{StaticResource TextSecondary}"
+                                        <Border x:Name="Bd" Background="{DynamicResource ItemBg}" BorderBrush="{DynamicResource FieldBorder}"
+                                                BorderThickness="1" CornerRadius="{DynamicResource Rad.Control}" Padding="0,6">
+                                            <Path Data="M0,0 L4,4 8,0" Stroke="{DynamicResource TextSecondary}"
                                                   StrokeThickness="1.5" HorizontalAlignment="Right"
                                                   VerticalAlignment="Center" Margin="0,0,10,0" />
                                         </Border>
-                                        <Border x:Name="HoverRing" CornerRadius="7" BorderThickness="1" Opacity="0"
+                                        <Border x:Name="HoverRing" CornerRadius="{DynamicResource Rad.Control}" BorderThickness="1" Opacity="0"
                                                 IsHitTestVisible="False">
                                             <Border.BorderBrush>
-                                                <SolidColorBrush Color="{StaticResource FieldBorderHoverColor}" />
+                                                <SolidColorBrush Color="{DynamicResource FieldBorderHoverColor}" />
                                             </Border.BorderBrush>
                                         </Border>
                                     </Grid>
@@ -602,7 +505,7 @@
                                                 <BeginStoryboard>
                                                     <Storyboard>
                                                         <DoubleAnimation Storyboard.TargetName="HoverRing" Storyboard.TargetProperty="Opacity"
-                                                                         To="1" Duration="0:0:0.12" />
+                                                                         To="1" Duration="0:0:0.15" />
                                                     </Storyboard>
                                                 </BeginStoryboard>
                                             </Trigger.EnterActions>
@@ -624,11 +527,14 @@
                         <TextBox x:Name="PART_EditableTextBox" Margin="9,0,28,0" VerticalAlignment="Center"
                                  Background="Transparent" BorderThickness="0" Padding="0"
                                  Foreground="{TemplateBinding Foreground}" FontSize="{TemplateBinding FontSize}"
+                                 SelectionBrush="{DynamicResource Accent}"
+                                 SelectionTextBrush="{DynamicResource TextOnAccent}"
+                                 CaretBrush="{DynamicResource TextPrimary}"
                                  Visibility="Hidden" />
                         <Popup IsOpen="{TemplateBinding IsDropDownOpen}" Placement="Bottom"
                                AllowsTransparency="True" PopupAnimation="None" StaysOpen="False">
-                            <Border Background="{StaticResource ItemBg}" BorderBrush="{StaticResource FieldBorder}"
-                                    BorderThickness="1" CornerRadius="9" Margin="0,4,8,8"
+                            <Border Background="{DynamicResource ItemBg}" BorderBrush="{DynamicResource FieldBorder}"
+                                    BorderThickness="1" CornerRadius="{DynamicResource Rad.Card}" Margin="0,4,8,8"
                                     MinWidth="{TemplateBinding ActualWidth}" MaxHeight="260" Padding="4">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.3" />
@@ -658,16 +564,16 @@
                         <Setter.Value>
                             <ControlTemplate TargetType="ComboBoxItem">
                                 <!-- 与导航同款分层：底板透明 + 选中层 + 悬停层（悬停叠于选中之上），各自透明度渐变 -->
-                                <Border x:Name="Bd" CornerRadius="6" Padding="9,6" Margin="0,1" Background="Transparent">
+                                <Border x:Name="Bd" CornerRadius="{DynamicResource Rad.Control}" Padding="9,6" Margin="0,1" Background="Transparent">
                                     <Grid>
-                                        <Border x:Name="SelOv" CornerRadius="6" Opacity="0" IsHitTestVisible="False">
+                                        <Border x:Name="SelOv" CornerRadius="{DynamicResource Rad.Control}" Opacity="0" IsHitTestVisible="False">
                                             <Border.Background>
-                                                <SolidColorBrush Color="{StaticResource AccentSoftColor}" />
+                                                <SolidColorBrush Color="{DynamicResource AccentSoftColor}" />
                                             </Border.Background>
                                         </Border>
-                                        <Border x:Name="HoverOv" CornerRadius="6" Opacity="0" IsHitTestVisible="False">
+                                        <Border x:Name="HoverOv" CornerRadius="{DynamicResource Rad.Control}" Opacity="0" IsHitTestVisible="False">
                                             <Border.Background>
-                                                <SolidColorBrush Color="{StaticResource ItemHoverColor}" />
+                                                <SolidColorBrush Color="{DynamicResource ItemHoverColor}" />
                                             </Border.Background>
                                         </Border>
                                         <ContentPresenter />
@@ -679,7 +585,7 @@
                                             <BeginStoryboard>
                                                 <Storyboard>
                                                     <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
-                                                                     To="1" Duration="0:0:0.12" />
+                                                                     To="1" Duration="0:0:0.15" />
                                                 </Storyboard>
                                             </BeginStoryboard>
                                         </Trigger.EnterActions>
@@ -694,12 +600,12 @@
                                     </Trigger>
                                     <Trigger Property="IsSelected" Value="True">
                                         <Setter TargetName="SelOv" Property="Opacity" Value="1" />
-                                        <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                                        <Setter Property="Foreground" Value="{DynamicResource Accent}" />
                                         <Trigger.EnterActions>
                                             <BeginStoryboard>
                                                 <Storyboard>
                                                     <DoubleAnimation Storyboard.TargetName="SelOv" Storyboard.TargetProperty="Opacity"
-                                                                     To="1" Duration="0:0:0.12" />
+                                                                     To="1" Duration="0:0:0.15" />
                                                 </Storyboard>
                                             </BeginStoryboard>
                                         </Trigger.EnterActions>
@@ -727,23 +633,23 @@
             <Setter.Value>
                 <ControlTemplate TargetType="ListBoxItem">
                     <Grid Margin="0,0,0,7">
-                        <Border Background="{StaticResource ItemBg}" BorderBrush="{StaticResource CardBorder}"
-                                BorderThickness="1" CornerRadius="9" />
-                        <Border x:Name="SelOv" CornerRadius="9" BorderThickness="1" Opacity="0"
+                        <Border Background="{DynamicResource ItemBg}" BorderBrush="{DynamicResource CardBorder}"
+                                BorderThickness="1" CornerRadius="{DynamicResource Rad.Card}" />
+                        <Border x:Name="SelOv" CornerRadius="{DynamicResource Rad.Card}" BorderThickness="1" Opacity="0"
                                 IsHitTestVisible="False">
                             <Border.Background>
-                                <SolidColorBrush Color="{StaticResource AccentSoftColor}" />
+                                <SolidColorBrush Color="{DynamicResource AccentSoftColor}" />
                             </Border.Background>
                             <Border.BorderBrush>
-                                <SolidColorBrush Color="{StaticResource AccentColor}" />
+                                <SolidColorBrush Color="{DynamicResource AccentColor}" />
                             </Border.BorderBrush>
                         </Border>
-                        <Border x:Name="HoverOv" CornerRadius="9" Opacity="0" IsHitTestVisible="False">
+                        <Border x:Name="HoverOv" CornerRadius="{DynamicResource Rad.Card}" Opacity="0" IsHitTestVisible="False">
                             <Border.Background>
-                                <SolidColorBrush Color="{StaticResource ItemHoverColor}" />
+                                <SolidColorBrush Color="{DynamicResource ItemHoverColor}" />
                             </Border.Background>
                         </Border>
-                        <Border Padding="11,9">
+                        <Border Padding="{DynamicResource M.Item}">
                             <ContentPresenter />
                         </Border>
                     </Grid>
@@ -753,7 +659,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="HoverOv" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.12" />
+                                                         To="1" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -772,7 +678,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="SelOv" Storyboard.TargetProperty="Opacity"
-                                                         To="1" Duration="0:0:0.16" />
+                                                         To="1" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.EnterActions>
@@ -780,7 +686,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="SelOv" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.16" />
+                                                         To="0" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -801,23 +707,23 @@
          （参考 cogent-gui useSlideHighlight：单个色块在条目间平滑滑动，鼠标离开回落到选中项），
          条目自身只保留文字颜色变化，不再各自画胶囊——多元素各画各的必然是"闪现"而非"滑动" -->
     <Style TargetType="TabItem">
-        <Setter Property="Foreground" Value="{StaticResource TextSecondary}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
-                    <Border x:Name="Bd" CornerRadius="7" Background="Transparent" Padding="12,9" Margin="0,0,0,2">
+                    <Border x:Name="Bd" CornerRadius="{DynamicResource Rad.Control}" Background="Transparent" Padding="12,9" Margin="0,0,0,2">
                         <ContentPresenter x:Name="Header" ContentSource="Header"
-                                          TextElement.FontSize="13.5"
+                                          TextElement.FontSize="{DynamicResource Fz.Title}"
                                           TextElement.Foreground="{TemplateBinding Foreground}" />
                     </Border>
                     <ControlTemplate.Triggers>
                         <Trigger Property="IsSelected" Value="True">
-                            <Setter Property="Foreground" Value="{StaticResource Accent}" />
+                            <Setter Property="Foreground" Value="{DynamicResource Accent}" />
                             <Setter TargetName="Header" Property="TextElement.FontWeight" Value="SemiBold" />
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
-                            <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
+                            <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -841,28 +747,28 @@
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
                         <Grid x:Name="NavRoot" Grid.Column="0">
-                            <Border x:Name="NavIndicator" CornerRadius="7" IsHitTestVisible="False"
+                            <Border x:Name="NavIndicator" CornerRadius="{DynamicResource Rad.Control}" IsHitTestVisible="False"
                                     VerticalAlignment="Top" HorizontalAlignment="Stretch">
                                 <Border.RenderTransform>
                                     <TranslateTransform />
                                 </Border.RenderTransform>
                                 <Border.Background>
-                                    <SolidColorBrush Color="{StaticResource AccentSoftColor}" />
+                                    <SolidColorBrush Color="{DynamicResource AccentSoftColor}" />
                                 </Border.Background>
                             </Border>
                             <StackPanel IsItemsHost="True" Orientation="Vertical" Margin="2,10,14,10" />
                         </Grid>
                         <Grid Grid.Column="1">
-                            <Border CornerRadius="12" Background="#14000000" Margin="0,3,6,-3">
+                            <Border CornerRadius="{DynamicResource Rad.Panel}" Background="{DynamicResource PanelShadowBg}" Margin="0,3,6,-3">
                                 <Border.Effect>
                                     <DropShadowEffect BlurRadius="18" ShadowDepth="2" Direction="270" Opacity="0.5" />
                                 </Border.Effect>
                             </Border>
-                            <Border CornerRadius="12" Background="{StaticResource CardBg}" BorderThickness="1">
+                            <Border CornerRadius="{DynamicResource Rad.Panel}" Background="{DynamicResource CardBg}" BorderThickness="1">
                                 <Border.BorderBrush>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                        <GradientStop Color="#22FFFFFF" Offset="0" />
-                                        <GradientStop Color="#00FFFFFF" Offset="1" />
+                                        <GradientStop Color="{DynamicResource PanelEdgeTopColor}" Offset="0" />
+                                        <GradientStop Color="{DynamicResource PanelEdgeBottomColor}" Offset="1" />
                                     </LinearGradientBrush>
                                 </Border.BorderBrush>
                                 <ContentPresenter ContentSource="SelectedContent" Margin="16,14" />
@@ -894,29 +800,12 @@
                                         <Thumb>
                                             <Thumb.Template>
                                                 <ControlTemplate TargetType="Thumb">
-                                                    <Border x:Name="ThumbBd" Background="{StaticResource ScrollThumbBg}"
-                                                            CornerRadius="4" Margin="2,0" />
+                                                    <Border x:Name="ThumbBd" Background="{DynamicResource ScrollThumbBg}"
+                                                            CornerRadius="{DynamicResource Rad.Chip}" Margin="2,0" />
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Trigger.EnterActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <ColorAnimation Storyboard.TargetName="ThumbBd"
-                                                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                                                        To="{StaticResource ScrollThumbHoverColor}" Duration="0:0:0.1" />
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.EnterActions>
-                                                            <Trigger.ExitActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <ColorAnimation Storyboard.TargetName="ThumbBd"
-                                                                                        Storyboard.TargetProperty="Background.(SolidColorBrush.Color)"
-                                                                                        To="{StaticResource ScrollThumbColor}" Duration="0:0:0.12" />
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.ExitActions>
-                                                        </Trigger>
+                                                        <Setter TargetName="ThumbBd" Property="Background" Value="{DynamicResource ScrollThumbHoverBg}" />
+                                                    </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Thumb.Template>
@@ -938,7 +827,7 @@
             <Setter.Value>
                 <ControlTemplate TargetType="Slider">
                     <Grid Background="Transparent">
-                        <Border Width="4" CornerRadius="2" Background="{StaticResource SwitchTrackBg}" HorizontalAlignment="Center" />
+                        <Border Width="4" CornerRadius="2" Background="{DynamicResource SwitchTrackBg}" HorizontalAlignment="Center" />
                         <Track x:Name="PART_Track" IsDirectionReversed="False">
                             <Track.DecreaseRepeatButton>
                                 <RepeatButton Command="Slider.DecreaseLarge" Focusable="False" IsTabStop="False">
@@ -953,7 +842,7 @@
                                 <RepeatButton Command="Slider.IncreaseLarge" Focusable="False" IsTabStop="False">
                                     <RepeatButton.Template>
                                         <ControlTemplate TargetType="RepeatButton">
-                                            <Border Background="{StaticResource Accent}" Width="4" CornerRadius="2,2,0,0"
+                                            <Border Background="{DynamicResource Accent}" Width="4" CornerRadius="2,2,0,0"
                                                     HorizontalAlignment="Center" VerticalAlignment="Top" />
                                         </ControlTemplate>
                                     </RepeatButton.Template>
@@ -965,7 +854,7 @@
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
                                             <Grid Background="Transparent">
-                                                <Border Width="20" Height="10" Background="{StaticResource TextPrimary}"
+                                                <Border Width="20" Height="10" Background="{DynamicResource TextPrimary}"
                                                         CornerRadius="3" HorizontalAlignment="Center"
                                                         VerticalAlignment="Center" />
                                             </Grid>
@@ -986,8 +875,8 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ContextMenu">
-                    <Border Background="{StaticResource ItemBg}" BorderBrush="{StaticResource FieldBorder}"
-                            BorderThickness="1" CornerRadius="9" Padding="5" Margin="0,4,8,8">
+                    <Border Background="{DynamicResource ItemBg}" BorderBrush="{DynamicResource FieldBorder}"
+                            BorderThickness="1" CornerRadius="{DynamicResource Rad.Card}" Padding="5" Margin="0,4,8,8">
                         <Border.Effect>
                             <DropShadowEffect BlurRadius="16" ShadowDepth="2" Opacity="0.3" />
                         </Border.Effect>
@@ -998,19 +887,19 @@
         </Setter>
     </Style>
     <Style TargetType="MenuItem">
-        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="FontSize" Value="{DynamicResource Fz.Body}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="MenuItem">
                     <Grid>
-                        <Border x:Name="HlOv" CornerRadius="6" Margin="0,1" Opacity="0" IsHitTestVisible="False">
+                        <Border x:Name="HlOv" CornerRadius="{DynamicResource Rad.Control}" Margin="0,1" Opacity="0" IsHitTestVisible="False">
                             <Border.Background>
-                                <SolidColorBrush Color="{StaticResource AccentSoftColor}" />
+                                <SolidColorBrush Color="{DynamicResource AccentSoftColor}" />
                             </Border.Background>
                         </Border>
-                        <Border Background="Transparent" CornerRadius="6" Padding="10,7" Margin="0,1">
+                        <Border Background="Transparent" CornerRadius="{DynamicResource Rad.Control}" Padding="10,7" Margin="0,1">
                             <ContentPresenter ContentSource="Header" VerticalAlignment="Center" />
                         </Border>
                     </Grid>
@@ -1029,7 +918,7 @@
                                 <BeginStoryboard>
                                     <Storyboard>
                                         <DoubleAnimation Storyboard.TargetName="HlOv" Storyboard.TargetProperty="Opacity"
-                                                         To="0" Duration="0:0:0.12" />
+                                                         To="0" Duration="0:0:0.15" />
                                     </Storyboard>
                                 </BeginStoryboard>
                             </Trigger.ExitActions>
@@ -1045,18 +934,18 @@
 
     <!-- 按钮（扁平无悬停变换，静音键用） -->
     <Style x:Key="BtnFlat" TargetType="Button">
-        <Setter Property="Background" Value="{StaticResource ItemBg}" />
-        <Setter Property="Foreground" Value="{StaticResource TextPrimary}" />
-        <Setter Property="BorderBrush" Value="{StaticResource FieldBorder}" />
+        <Setter Property="Background" Value="{DynamicResource ItemBg}" />
+        <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource FieldBorder}" />
         <Setter Property="Padding" Value="12,6" />
-        <Setter Property="FontSize" Value="13" />
+        <Setter Property="FontSize" Value="{DynamicResource Fz.Body}" />
         <Setter Property="Cursor" Value="Hand" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="Button">
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1"
-                            CornerRadius="7" Padding="{TemplateBinding Padding}">
+                            CornerRadius="{DynamicResource Rad.Control}" Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
                     </Border>
                 </ControlTemplate>

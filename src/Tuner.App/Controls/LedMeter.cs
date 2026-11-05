@@ -40,6 +40,7 @@ public sealed class LedMeter : FrameworkElement
         set => SetValue(OrientationProperty, value);
     }
 
+    // 深色字面值仅作资源缺席时的兜底；正常路径从应用资源取（外观模块热切换时随主题变色）
     private static readonly Brush Unlit = Freeze(new SolidColorBrush(Color.FromRgb(0x24, 0x2A, 0x34)));
     private static readonly Brush Green = Freeze(new SolidColorBrush(Color.FromRgb(0x2F, 0xD0, 0x8C)));
     private static readonly Brush Amber = Freeze(new SolidColorBrush(Color.FromRgb(0xF5, 0xB9, 0x42)));
@@ -51,11 +52,17 @@ public sealed class LedMeter : FrameworkElement
         return b;
     }
 
+    private Brush Res(string key, Brush fallback) => TryFindResource(key) as Brush ?? fallback;
+
     protected override void OnRender(DrawingContext dc)
     {
         double w = ActualWidth, h = ActualHeight;
         if (w <= 0 || h <= 0)
             return;
+        var unlit = Res("LedUnlit", Unlit);
+        var green = Res("Green", Green);
+        var amber = Res("Amber", Amber);
+        var red = Res("Danger", Red);
         int segs = Math.Max(4, Segments);
         int lit = (int)Math.Round(Math.Clamp(Value, 0, 100) / 100.0 * segs);
         double gap = 1.6;
@@ -76,7 +83,7 @@ public sealed class LedMeter : FrameworkElement
             }
             bool on = i < lit;
             double frac = (i + 1) / (double)segs;
-            var brush = !on ? Unlit : frac >= 0.9 ? Red : frac >= 0.7 ? Amber : Green;
+            var brush = !on ? unlit : frac >= 0.9 ? red : frac >= 0.7 ? amber : green;
             dc.DrawRoundedRectangle(brush, null, rect, 1, 1);
         }
     }

@@ -4,8 +4,35 @@ namespace Tuner.Core.Config;
 public sealed class TunerConfig
 {
     public EngineSettings Settings { get; set; } = new();
+
+    /// <summary>界面外观（仅 UI 消费，引擎不读）：主题/强调色/字号/密度/圆角/动效。</summary>
+    public AppearanceSettings Appearance { get; set; } = new();
+
     public List<AppGroupConfig> Groups { get; set; } = new();
     public List<DuckingRuleConfig> Rules { get; set; } = new();
+}
+
+/// <summary>外观模块的全部可调项（主流清单：主题/强调色/字号/密度/圆角/动效；语言在 Settings.Language）。</summary>
+public sealed class AppearanceSettings
+{
+    /// <summary>"dark"=深色（默认）；"light"=浅色；"system"=跟随系统明暗。</summary>
+    public string Theme { get; set; } = "dark";
+
+    /// <summary>强调色（"#RRGGBB"）；""=默认琥珀。hover/pressed/soft/文字变体由 UI 端推导。</summary>
+    public string Accent { get; set; } = "";
+
+    /// <summary>字号档："small" / "standard"（默认）/ "large"。</summary>
+    public string FontScale { get; set; } = "standard";
+
+    /// <summary>界面密度："comfortable"（默认）/ "compact"。</summary>
+    public string Density { get; set; } = "comfortable";
+
+    /// <summary>圆角风格："sharp" / "soft"（默认）/ "round"。</summary>
+    public string Radius { get; set; } = "soft";
+
+    /// <summary>界面过渡动效总开关。默认关（用户 2026-10-24 三次明确表态"一闪一闪很难受/不应该出现"，
+    /// 动效改为想要者手动开启；开关逻辑＝Theme/Theme.NoAnim 字典热切换）。</summary>
+    public bool Animations { get; set; }
 }
 
 public sealed class EngineSettings
@@ -57,6 +84,7 @@ public sealed class EngineSettings
 
     /// <summary>界面语言：""=跟随系统；"zh-CN"；"en-US"。</summary>
     public string Language { get; set; } = "";
+
 
     /// <summary>
     /// 音量曲线（全局）："linear"=线性；"square"=平方；"log"=对数（等响度）；"custom"=自定义（CustomCurve 控制点）。

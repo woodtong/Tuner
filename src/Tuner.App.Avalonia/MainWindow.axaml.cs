@@ -2,10 +2,13 @@ using System.ComponentModel;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Avalonia;
+using Avalonia.Animation;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Tuner.Core.Audio;
 using Tuner.Core.Config;
 
@@ -32,8 +35,12 @@ public partial class MainWindow : Window
         _refreshTimer.Start();
 
         RefreshGroups();
+        RefreshRules(); // 启动即填充规则列表（此前要等首次交互才有内容）
         LoadSettings();
+        LoadAppearance();
         SetSaveStatus(null);
+
+        InitNav(); // 导航滑动胶囊（动效开关控制）
 
         Closing += (_, e) =>
         {
@@ -665,6 +672,7 @@ public partial class MainWindow : Window
                 return;
             Lang.Apply(Lang.Resolve(App.Config.Settings.Language));
             LoadSettings();
+            LoadAppearance(); // 色板选中环等随语言/主题重建
             RefreshGroups();
             RefreshRules();
             App.Log("界面语言已切换：" + Lang.Current);
@@ -672,12 +680,219 @@ public partial class MainWindow : Window
         });
     }
 
+    // ================= 外观页（主题/强调色/字号/密度/圆角；语言行同页） =================
+
+    private void LoadAppearance()
+    {
+        var a = App.Config.Appearance;
+        _loadingUi = true;
+        ThemeCombo.SelectedIndex = a.Theme switch { "light" => 1, "system" => 2, _ => 0 };
+        FontScaleCombo.SelectedIndex = a.FontScale switch { "small" => 0, "large" => 2, _ => 1 };
+        DensityCombo.SelectedIndex = a.Density == "compact" ? 1 : 0;
+        RadiusCombo.SelectedIndex = a.Radius switch { "sharp" => 0, "round" => 2, _ => 1 };
+        AnimToggle.IsChecked = a.Animations;
+        _loadingUi = false;
+        BuildAccentSwatches();
+    }
+
+    private void OnAnimationsChanged(object? sender, RoutedEventArgs e)
+    {
+        if (_loadingUi)
+            return;
+        App.Config.Appearance.Animations = AnimToggle.IsChecked == true;
+        ApplyNavAnimations();
+        App.Log("界面动效已" + (App.Config.Appearance.Animations ? "开启" : "关闭"));
+        MarkDirty();
+    }
+
+    // ================= 导航滑动胶囊（cogent/WPF 同款手感的 Avalonia 移植） =================
+    //
+    // 单胶囊覆盖层：悬停 → 滑到悬停页签；离开导航/切换选中 → 滑回选中项；
+    // 动效关（默认）→ 胶囊隐藏，回落 Fluent 静态高亮。X 走 RenderTransform 平移（TransformOperationsTransition），
+    // 宽高/纵向位置即时设置；布局变化（字号/缩放）经 LayoutUpdated 校位。
+
+    private TabItem? _navHover;
+
+    private void InitNav()
+    {
+        Tabs.Loaded += (_, _) =>
+        {
+            ApplyNavAnimations();
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => NavSlideTo(NavSelectedItem(), animate: false));
+        };
+        Tabs.SelectionChanged += (_, _) => NavSlideTo(NavSelectedItem(), animate: true);
+        Tabs.PointerExited += (_, _) =>
+        {
+            _navHover = null;
+            NavSlideTo(NavSelectedItem(), animate: true);
+        };
+        Tabs.AddHandler(Avalonia.Input.InputElement.PointerMovedEvent, OnNavPointerMoved,
+            Avalonia.Interactivity.RoutingStrategies.Tunnel);
+        Tabs.LayoutUpdated += (_, _) => NavSlideTo(_navHover ?? NavSelectedItem(), animate: false);
+    }
+
+    private void OnNavPointerMoved(object? sender, Avalonia.Input.PointerEventArgs e)
+    {
+        if (!App.Config.Appearance.Animations || e.Source is not Avalonia.Visual src)
+            return;
+        var item = src.GetSelfAndVisualAncestors().OfType<TabItem>().FirstOrDefault();
+        if (item is null)
+        {
+            // 指针已离开页签头（进入内容区/页签间隙）：回落到选中项（WPF 版同款"离开导航回落"手感）
+            if (_navHover is not null)
+            {
+                _navHover = null;
+                NavSlideTo(NavSelectedItem(), animate: true);
+            }
+            return;
+        }
+        if (ReferenceEquals(item, _navHover))
+            return;
+        _navHover = item;
+        NavSlideTo(item, animate: true);
+    }
+
+    private TabItem? NavSelectedItem() =>
+        Tabs.ItemContainerGenerator.ContainerFromIndex(Tabs.SelectedIndex) as TabItem;
+
+    /// <summary>动效开关生效：开＝胶囊可见 + 220ms 平移过渡；关＝隐藏（Fluent 静态高亮）。</summary>
+    private void ApplyNavAnimations()
+    {
+        if (App.Config.Appearance.Animations)
+        {
+            NavIndicator.Transitions = new Transitions
+            {
+                new TransformOperationsTransition
+                {
+                    Property = Visual.RenderTransformProperty,
+                    Duration = TimeSpan.FromMilliseconds(220),
+                    Easing = new Avalonia.Animation.Easings.CubicEaseOut(),
+                },
+            };
+            NavIndicator.IsVisible = true;
+        }
+        else
+        {
+            NavIndicator.Transitions = null;
+            NavIndicator.IsVisible = false;
+            _navHover = null;
+        }
+    }
+
+    private void NavSlideTo(TabItem? item, bool animate)
+    {
+        if (item is null || !App.Config.Appearance.Animations)
+            return;
+        var m = item.TransformToVisual(NavHost);
+        if (m is null)
+            return;
+        var r = new Rect(item.Bounds.Size).TransformToAABB(m.Value);
+        NavIndicator.Width = r.Width;
+        NavIndicator.Height = r.Height;
+        NavIndicator.Margin = new Thickness(0, r.Top, 0, 0);
+        var tr = NavIndicator.Transitions;
+        if (!animate && tr is not null)
+            NavIndicator.Transitions = null; // 瞬时定位：临时摘过渡直接落位，随后恢复（下次滑动仍带动画）
+        NavIndicator.RenderTransform = new TranslateTransform(r.X, 0);
+        if (!animate && tr is not null)
+            NavIndicator.Transitions = tr;
+    }
+
+    /// <summary>强调色预设色板（圆形色块 + 选中描环）。</summary>
+    private void BuildAccentSwatches()
+    {
+        AccentPanel.Children.Clear();
+        var current = App.Config.Appearance.Accent;
+        if (string.IsNullOrEmpty(current))
+            current = Appearance.AccentPresets[0];
+        foreach (var hex in Appearance.AccentPresets)
+        {
+            var selected = hex == current;
+            var fill = new SolidColorBrush(Color.Parse(hex));
+            IBrush Ring(string key, IBrush fb) =>
+                this.TryFindResource(key, out var v) && v is IBrush b ? b : fb;
+            var swatch = new Avalonia.Controls.Border
+            {
+                Width = 26,
+                Height = 26,
+                CornerRadius = new CornerRadius(13),
+                Background = fill,
+                BorderThickness = new Thickness(selected ? 2 : 1),
+                BorderBrush = selected ? Ring("TextPrimary", fill) : Ring("CardBorder", Brushes.Gray),
+                Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+                Tag = hex,
+            };
+            Avalonia.Controls.ToolTip.SetTip(swatch, hex);
+            swatch.PointerPressed += OnAccentSwatchClick;
+            AccentPanel.Children.Add(swatch);
+        }
+    }
+
+    private void OnAccentSwatchClick(object? sender, Avalonia.Input.PointerPressedEventArgs e)
+    {
+        if (_loadingUi || (sender as Avalonia.Controls.Control)?.Tag is not string hex)
+            return;
+        App.Config.Appearance.Accent = hex == Appearance.AccentPresets[0] ? "" : hex;
+        Appearance.Apply(App.Config.Appearance);
+        BuildAccentSwatches();
+        App.Log("强调色已切换：" + hex);
+        MarkDirty();
+    }
+
+    private void OnAppearancePrefChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        if (_loadingUi)
+            return;
+        var a = App.Config.Appearance;
+        a.Theme = ThemeCombo.SelectedIndex switch { 1 => "light", 2 => "system", _ => "dark" };
+        a.FontScale = FontScaleCombo.SelectedIndex switch { 0 => "small", 2 => "large", _ => "standard" };
+        a.Density = DensityCombo.SelectedIndex == 1 ? "compact" : "comfortable";
+        a.Radius = RadiusCombo.SelectedIndex switch { 0 => "sharp", 2 => "round", _ => "soft" };
+        Appearance.Apply(a);
+        App.Log($"外观已切换：主题 {a.Theme} / 字号 {a.FontScale} / 密度 {a.Density} / 圆角 {a.Radius}");
+        MarkDirty();
+    }
+
+    // ---------- 截图模式（--screenshot：自动遍历页签渲染 PNG 后退出） ----------
+
+    public async System.Threading.Tasks.Task CaptureAndExitAsync(string dir)
+    {
+        try
+        {
+            System.IO.Directory.CreateDirectory(dir);
+            // 与 WPF 版同理：屏蔽真实鼠标悬停对导航选中态取证的污染
+            Tabs.IsHitTestVisible = false;
+            var names = new[] { "1-实时状态", "2-音量", "3-分组", "4-规则", "5-外观", "6-设置" };
+            for (int i = 0; i < Tabs.ItemCount && i < names.Length; i++)
+            {
+                Tabs.SelectedIndex = i;
+                await System.Threading.Tasks.Task.Delay(450);
+                const double scale = 1.5;
+                var rtb = new Avalonia.Media.Imaging.RenderTargetBitmap(
+                    new Avalonia.PixelSize((int)(Bounds.Width * scale), (int)(Bounds.Height * scale)),
+                    new Avalonia.Vector(96 * scale, 96 * scale));
+                rtb.Render(this);
+                rtb.Save(System.IO.Path.Combine(dir, $"tab{names[i]}.png"));
+                rtb.Dispose();
+            }
+            App.Log("截图完成");
+        }
+        catch (Exception ex)
+        {
+            App.Log("截图失败: " + ex.Message);
+        }
+        finally
+        {
+            App.ExitApp();
+        }
+    }
+
     /// <summary>语言切换自动化复现（--langtest 诊断模式）：逐步打点，崩溃时 app.log 停在死点。
     /// 第二阶段模拟真实交互：弹出框打开状态下改 SelectedIndex（触发真正的 OnLanguageChanged 路径）。</summary>
     public void RunLangTest()
     {
         App.Log("[langtest] step0 切到设置页");
-        Tabs.SelectedIndex = 4;
+        Tabs.SelectedIndex = 5; // 设置页（外观页之后第 6 个页签）
         App.Log("[langtest] step1 Apply(en-US)");
         Lang.Apply("en-US");
         App.Log("[langtest] step2 Apply(zh-CN)");
@@ -737,6 +952,8 @@ public partial class MainWindow : Window
         _autoSaveTimer.Stop();
         if (!_dirty)
             return;
+        if (App.DevAppearanceActive)
+            return; // 取证运行（dev 外观参数）：绝不把内存里的 dev 配置写进用户真实配置
         if (!TryParseSettings())
         {
             SetSaveStatus(Lang.Get("S.Save.Invalid"));

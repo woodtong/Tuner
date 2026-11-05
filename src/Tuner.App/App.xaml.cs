@@ -87,12 +87,13 @@ public partial class App : Application
     {
         var shot = e.Args.Contains("--screenshot");
         var probe = e.Args.Contains("--probe");
-        if (!shot && !probe) // 截图/探针/开发模式跳过单实例互斥，便于在运行中的实例旁做 UI 检查
+        var dev = shot || probe || e.Args.Contains("--animtest");
+        if (!dev) // 截图/探针/动效诊断等开发模式跳过单实例互斥，便于在运行中的实例旁做 UI 检查
         {
             _singleInstanceMutex = new Mutex(true, @"Local\Tuner_SingleInstance", out var createdNew);
             if (!createdNew)
             {
-                MessageBox.Show(Lang.Get("S.App.AlreadyRunning"), "Tuner");
+                MsgBox.Show(null, Lang.Get("S.App.AlreadyRunning"));
                 Shutdown();
                 return;
             }
@@ -105,6 +106,8 @@ public partial class App : Application
 
         Config = ConfigStore.Load(ConfigStore.ActivePath);
         Lang.Apply(Lang.Resolve(Config.Settings.Language)); // 界面语言：MainWindow 创建前装载（DynamicResource 首次取值即正确）
+        ApplyDevAppearanceArgs(e.Args); // 开发取证参数：--appearance/--accent/...（仅内存，不落盘）
+        Appearance.Apply(Config.Appearance); // 外观：MainWindow 创建前装载（深浅字典+令牌覆写一次到位）
         {
             // 开发参数 --lang <code>：强制界面语言（英文渲染截图验证用；不落盘）
             var li = Array.IndexOf(e.Args, "--lang");
@@ -136,7 +139,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             Log("启动失败: " + ex.Message);
-            MessageBox.Show(Lang.Get("S.App.StartFail", ex.Message), "Tuner");
+            MsgBox.Show(null, Lang.Get("S.App.StartFail", ex.Message));
             Shutdown();
             return;
         }
@@ -161,6 +164,18 @@ public partial class App : Application
         {
             // 探针模式：先隔离引擎，再由探针自身施加临时规则做对照实验
             Engine.ApplyConfig(ConfigStore.CreateDefault());
+        }
+
+        if (e.Args.Contains("--animtest"))
+        {
+            // 动效开关诊断模式：程序化 开→关→开，逐步探测隐式样式来自哪本主题字典
+            var animTimer = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromSeconds(1.2) };
+            animTimer.Tick += (_, _) =>
+            {
+                animTimer.Stop();
+                _ = AnimTestAsync();
+            };
+            animTimer.Start();
         }
 
         var smoke = e.Args.Contains("--smoke");
@@ -200,6 +215,40 @@ public partial class App : Application
             timer.Start();
         }
 
+        if (e.Args.Contains("--anim-cycle"))
+        {
+            // 动效开关切换机取证：关→开→关逐段打点当前样式实例哈希——三段哈希必须各不相同，
+            // 证明每次切换都物化了新字典（BAML 同 URI 实例缓存会让第二程静默失效的历史 bug）
+            string StyleHash() => TryFindResource("Btn") is { } s ? s.GetHashCode().ToString("X8") : "null";
+            Log($"[animcycle] 启动态 animations={Config.Appearance.Animations} Btn#{StyleHash()}");
+            var step = 0;
+            var cycle = new System.Windows.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1200) };
+            cycle.Tick += (_, _) =>
+            {
+                step++;
+                if (step == 1)
+                {
+                    Config.Appearance.Animations = false;
+                    Appearance.Apply(Config.Appearance);
+                    Log($"[animcycle] step1 关动效 Btn#{StyleHash()}");
+                }
+                else if (step == 2)
+                {
+                    Config.Appearance.Animations = true;
+                    Appearance.Apply(Config.Appearance);
+                    Log($"[animcycle] step2 开动效 Btn#{StyleHash()}");
+                }
+                else
+                {
+                    cycle.Stop();
+                    Log("[animcycle] 完成退出（三段哈希应各不相同）");
+                    ForceExit = true;
+                    Shutdown();
+                }
+            };
+            cycle.Start();
+        }
+
         if (e.Args.Contains("--screenshot"))
         {
             // 截图模式：展示窗口并自动遍历页签渲染 PNG（供 UI 检查），完成后退出。
@@ -228,6 +277,123 @@ public partial class App : Application
             };
             timer.Start();
         }
+    }
+
+    /// <summary>开发取证参数（--appearance/--accent/...）是否生效。生效时禁止配置落盘：
+    /// 截图运行会因程序化设值触发 MarkDirty 链，若照常保存会把 dev 外观写进用户真实配置。</summary>
+    public static bool DevAppearanceActive { get; private set; }
+
+    /// <summary>开发取证参数：--appearance dark|light --accent #HEX --fontscale small|large --density compact --radius sharp。
+    /// 仅改内存配置（截图模式取证用），不落盘。</summary>
+    private static void ApplyDevAppearanceArgs(string[] args)
+    {
+        static string? Val(string[] a, string k)
+        {
+            var i = Array.IndexOf(a, k);
+            return i >= 0 && i + 1 < a.Length ? a[i + 1] : null;
+        }
+        var a = Config.Appearance;
+        var theme = Val(args, "--appearance");
+        if (theme is "dark" or "light" or "system") { a.Theme = theme; DevAppearanceActive = true; }
+        var accent = Val(args, "--accent");
+        if (accent is { Length: 7 } && accent[0] == '#') { a.Accent = accent; DevAppearanceActive = true; }
+        var fs = Val(args, "--fontscale");
+        if (fs is "small" or "standard" or "large") { a.FontScale = fs; DevAppearanceActive = true; }
+        var density = Val(args, "--density");
+        if (density is "comfortable" or "compact") { a.Density = density; DevAppearanceActive = true; }
+        var radius = Val(args, "--radius");
+        if (radius is "sharp" or "soft" or "round") { a.Radius = radius; DevAppearanceActive = true; }
+        if (Array.Exists(args, x => x.Equals("--noanim", StringComparison.OrdinalIgnoreCase)))
+        {
+            a.Animations = false;
+            DevAppearanceActive = true;
+        }
+    }
+
+    /// <summary>
+    /// 动效开关诊断（--animtest）：程序化 开→关→开。每步后探测 TabControl 隐式样式与模板的实例身份
+    /// （来自 Theme.xaml 还是 Theme.NoAnim.xaml），把"再开不回来"问题的失效环节钉死在日志里。
+    /// </summary>
+    private static async System.Threading.Tasks.Task AnimTestAsync()
+    {
+        Style ProbeStyle(string tag)
+        {
+            // 行为探测：取窗口内第一个 Button，扫其样式与模板两处触发器的动画时长（NoAnim 版全 0）
+            var btn = FindDescendant<System.Windows.Controls.Button>(_mainWindow!);
+            bool animated = false;
+            int timelines = 0;
+            void Scan(System.Windows.TriggerCollection? triggers)
+            {
+                if (triggers is null)
+                    return;
+                foreach (var trig in triggers)
+                {
+                    // 动画可能挂在 EnterActions/ExitActions（状态触发器）或 Actions（EventTrigger）三处
+                    var t = (System.Windows.TriggerBase)trig;
+                    var groups = new System.Windows.TriggerActionCollection[]
+                    {
+                        t.EnterActions,
+                        t.ExitActions,
+                        (trig as System.Windows.EventTrigger)?.Actions,
+                    };
+                    foreach (var group in groups)
+                        if (group is not null)
+                            foreach (var act in group)
+                                if (act is System.Windows.Media.Animation.BeginStoryboard bbs)
+                                    foreach (var tl in bbs.Storyboard.Children)
+                                    {
+                                        timelines++;
+                                        var d = tl.Duration;
+                                        if (d.HasTimeSpan && d.TimeSpan.TotalMilliseconds > 0)
+                                            animated = true;
+                                    }
+                }
+            }
+            Scan(btn?.Style?.Triggers);
+            Scan(btn?.Template?.Triggers);
+            Log($"[animtest] {tag}: 样式+模板时间线{timelines}条 非零时长={(animated ? "有(动画版)" : "无(NoAnim版)")}");
+            return (Style)_mainWindow.FindResource(typeof(System.Windows.Controls.TabControl));
+        }
+
+        var a = Config.Appearance;
+        Log("[animtest] === 开（初始） ===");
+        a.Animations = true;
+        Appearance.Apply(a);
+        await System.Threading.Tasks.Task.Delay(600);
+        ProbeStyle("开");
+
+        Log("[animtest] === 关 ===");
+        a.Animations = false;
+        Appearance.Apply(a);
+        await System.Threading.Tasks.Task.Delay(600);
+        ProbeStyle("关");
+
+        Log("[animtest] === 再开 ===");
+        a.Animations = true;
+        Appearance.Apply(a);
+        await System.Threading.Tasks.Task.Delay(600);
+        ProbeStyle("再开");
+
+        Log("[animtest] 完成，退出");
+        ForceExit = true;
+        Current.Shutdown();
+    }
+
+    private static T? FindDescendant<T>(System.Windows.DependencyObject? root) where T : System.Windows.DependencyObject
+    {
+        if (root is null)
+            return null;
+        int n = System.Windows.Media.VisualTreeHelper.GetChildrenCount(root);
+        for (int i = 0; i < n; i++)
+        {
+            var child = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            if (child is T hit)
+                return hit;
+            var deeper = FindDescendant<T>(child);
+            if (deeper is not null)
+                return deeper;
+        }
+        return null;
     }
 
     public static void ShowMainWindow()

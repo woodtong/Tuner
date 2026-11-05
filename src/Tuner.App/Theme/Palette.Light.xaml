@@ -1,0 +1,104 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+                    xmlns:po="http://schemas.microsoft.com/winfx/2006/xaml/presentation/options">
+
+    <!-- ═══ 浅色调色板（外观模块可选项）：与深色同名同义，仅换值 ═══ -->
+
+    <Color x:Key="PageBgColor">#EEF1F5</Color>
+    <Color x:Key="CardBgColor">#FAFBFD</Color>
+    <Color x:Key="ItemBgColor">#F4F6F9</Color>
+    <Color x:Key="ItemHoverColor">#E9EDF3</Color>
+    <Color x:Key="HoverSoftColor">#E9EDF3</Color>
+    <Color x:Key="PressedBgColor">#E1E6ED</Color>
+    <Color x:Key="CardBorderColor">#DFE4EB</Color>
+    <Color x:Key="FieldBorderColor">#C3CBD6</Color>
+    <Color x:Key="FieldBorderHoverColor">#8FA0B4</Color>
+    <Color x:Key="FieldBgColor">#FFFFFF</Color>
+    <Color x:Key="AccentColor">#E8A33D</Color>
+    <Color x:Key="AccentHoverColor">#F0B258</Color>
+    <Color x:Key="AccentPressedColor">#B87F1F</Color>
+    <Color x:Key="AccentSoftColor">#F3E7CE</Color>
+    <Color x:Key="AccentFgColor">#8A5D10</Color>
+    <Color x:Key="TextOnAccentColor">#241A05</Color>
+    <Color x:Key="SwitchTrackColor">#D6DCE4</Color>
+    <Color x:Key="SwitchOnColor">#D8F1E5</Color>
+    <Color x:Key="GreenColor">#17A268</Color>
+    <Color x:Key="TextPrimaryColor">#1E2530</Color>
+    <Color x:Key="TextSecondaryColor">#57626F</Color>
+    <Color x:Key="TextFaintColor">#8A94A2</Color>
+    <Color x:Key="CheckOnColor">#DFF4EA</Color>
+    <Color x:Key="ScrollThumbColor">#C4CCD6</Color>
+    <Color x:Key="ScrollThumbHoverColor">#A5B0BE</Color>
+    <Color x:Key="LedUnlitColor">#D8DEE7</Color>
+    <Color x:Key="AmberColor">#D97706</Color>
+    <Color x:Key="AmberSoftColor">#FBEFD6</Color>
+    <Color x:Key="AmberBadgeBorderColor">#E4C98F</Color>
+    <Color x:Key="AmberTextColor">#916114</Color>
+    <Color x:Key="DangerColor">#DC2626</Color>
+    <Color x:Key="DangerBorderColor">#F1B8B8</Color>
+    <Color x:Key="FaderGrooveBgColor">#E3E8EF</Color>
+    <Color x:Key="FaderGrooveRimColor">#C9D2DE</Color>
+    <Color x:Key="PanelShadowColor">#1F000000</Color>
+    <Color x:Key="PanelEdgeTopColor">#FFFFFF</Color>
+    <Color x:Key="PanelEdgeBottomColor">#00FFFFFF</Color>
+
+    <SolidColorBrush x:Key="PageBg" Color="{StaticResource PageBgColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="CardBg" Color="{StaticResource CardBgColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="ItemBg" Color="{StaticResource ItemBgColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="ItemHover" Color="{StaticResource ItemHoverColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="HoverSoft" Color="{StaticResource HoverSoftColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="PressedBg" Color="{StaticResource PressedBgColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="CardBorder" Color="{StaticResource CardBorderColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="FieldBorder" Color="{StaticResource FieldBorderColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="FieldBorderHover" Color="{StaticResource FieldBorderHoverColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="FieldBg" Color="{StaticResource FieldBgColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Accent" Color="{StaticResource AccentColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="AccentHover" Color="{StaticResource AccentHoverColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="AccentPressed" Color="{StaticResource AccentPressedColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="AccentSoft" Color="{StaticResource AccentSoftColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="AccentFg" Color="{StaticResource AccentFgColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="TextOnAccent" Color="{StaticResource TextOnAccentColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="SwitchTrackBg" Color="{StaticResource SwitchTrackColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="SwitchOnBg" Color="{StaticResource SwitchOnColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="CheckOnBg" Color="{StaticResource CheckOnColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="ScrollThumbBg" Color="{StaticResource ScrollThumbColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="ScrollThumbHoverBg" Color="{StaticResource ScrollThumbHoverColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="LedUnlit" Color="{StaticResource LedUnlitColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="TextPrimary" Color="{StaticResource TextPrimaryColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="TextSecondary" Color="{StaticResource TextSecondaryColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="TextFaint" Color="{StaticResource TextFaintColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Green" Color="{StaticResource GreenColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Amber" Color="{StaticResource AmberColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="AmberSoft" Color="{StaticResource AmberSoftColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="AmberBadgeBorder" Color="{StaticResource AmberBadgeBorderColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="AmberText" Color="{StaticResource AmberTextColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="Danger" Color="{StaticResource DangerColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="DangerBorder" Color="{StaticResource DangerBorderColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="FaderGrooveBg" Color="{StaticResource FaderGrooveBgColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="FaderGrooveRim" Color="{StaticResource FaderGrooveRimColor}" po:Freeze="True" />
+    <SolidColorBrush x:Key="PanelShadowBg" Color="{StaticResource PanelShadowColor}" po:Freeze="True" />
+
+    <sys:Double x:Key="Fz.Micro">10.5</sys:Double>
+    <sys:Double x:Key="Fz.Small">12</sys:Double>
+    <sys:Double x:Key="Fz.Base">12.5</sys:Double>
+    <sys:Double x:Key="Fz.Body">13</sys:Double>
+    <sys:Double x:Key="Fz.Title">13.5</sys:Double>
+    <sys:Double x:Key="Fz.Stat">14</sys:Double>
+    <sys:Double x:Key="Fz.Num">13</sys:Double>
+    <sys:Double x:Key="Fz.Brand">18</sys:Double>
+
+    <Thickness x:Key="M.Page">20,14,20,12</Thickness>
+    <Thickness x:Key="M.Card">20</Thickness>
+    <Thickness x:Key="M.Section">0,14,0,0</Thickness>
+    <Thickness x:Key="M.Row">0,10,0,0</Thickness>
+    <Thickness x:Key="M.Item">11,9</Thickness>
+
+    <CornerRadius x:Key="Rad.Chip">5</CornerRadius>
+    <CornerRadius x:Key="Rad.Control">7</CornerRadius>
+    <CornerRadius x:Key="Rad.Card">9</CornerRadius>
+    <CornerRadius x:Key="Rad.Panel">12</CornerRadius>
+
+    <Duration x:Key="Dur.Press">0:0:0.08</Duration>
+    <Duration x:Key="Dur.Hover">0:0:0.15</Duration>
+</ResourceDictionary>

@@ -57,13 +57,26 @@ public class App : Application
             Log("未观察任务异常: " + e.Exception);
 
         _singleInstance = new Mutex(true, "Tuner-SingleInstance", out var createdNew);
-        if (!createdNew)
+        // 截图/取证模式允许与运行中的实例共存（引擎已隔离为空规则，只读会话）
+        var bypass = ((ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Args ?? Array.Empty<string>())
+            .Any(a => a is "--screenshot" or "--langtest");
+        if (!createdNew && !bypass)
         {
             Environment.Exit(0); // 已有实例：直接退出（托盘常驻工具，多开会双份闪避）
         }
 
         Config = ConfigStore.Load(ConfigStore.ActivePath);
         Lang.Apply(Lang.Resolve(Config.Settings.Language));
+        {
+            // 开发取证参数：--lang <code> / --appearance / --accent / --fontscale / --density / --radius（仅内存，不落盘）
+            var args = (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Args
+                       ?? Array.Empty<string>();
+            var li = Array.IndexOf(args, "--lang");
+            if (li >= 0 && li + 1 < args.Length)
+                Lang.Apply(args[li + 1]);
+            ApplyDevAppearanceArgs(args);
+        }
+        Appearance.Apply(Config.Appearance); // 外观：MainWindow 创建前装载（主题变体 + 令牌覆写一次到位）
         int poll = Math.Max(10, Config.Settings.PollIntervalMs);
 #if WINDOWS
         Monitor = new AudioSessionMonitor(poll);
@@ -113,6 +126,35 @@ public class App : Application
         AttachTray();
         _main.Show();
 
+        var cmdArgs = (ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.Args
+                      ?? Array.Empty<string>();
+        if (cmdArgs.Contains("--screenshot"))
+        {
+            // 截图模式：引擎隔离为空规则（只读会话、绝不写音量），自动遍历页签渲染 PNG 后退出
+            try { Engine.ApplyConfig(ConfigStore.CreateDefault()); } catch { }
+            var idx = Array.IndexOf(cmdArgs, "--shot-dir");
+            var dir = idx >= 0 && idx + 1 < cmdArgs.Length ? cmdArgs[idx + 1] : "ui-preview-avalonia";
+            var sIdx = Array.IndexOf(cmdArgs, "--shot-size");
+            if (sIdx >= 0 && sIdx + 1 < cmdArgs.Length)
+            {
+                var parts = cmdArgs[sIdx + 1].Split('x');
+                if (parts.Length == 2
+                    && double.TryParse(parts[0], out var w) && double.TryParse(parts[1], out var h))
+                {
+                    _main.Width = w;
+                    _main.Height = h;
+                }
+            }
+            Log("截图模式：输出到 " + System.IO.Path.GetFullPath(dir));
+            var timer = new Avalonia.Threading.DispatcherTimer { Interval = TimeSpan.FromMilliseconds(1400) };
+            timer.Tick += (_, _) =>
+            {
+                timer.Stop();
+                _ = _main.CaptureAndExitAsync(dir);
+            };
+            timer.Start();
+        }
+
         if ((Avalonia.Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)
             ?.Args is { } appArgs && appArgs.Contains("--langtest"))
         {
@@ -143,6 +185,30 @@ public class App : Application
             t1.Start();
         }
         base.OnFrameworkInitializationCompleted();
+    }
+
+    /// <summary>开发取证参数（--appearance/--accent/...）是否生效。生效时禁止配置落盘（同 WPF 端防污染挡板）。</summary>
+    public static bool DevAppearanceActive { get; private set; }
+
+    /// <summary>开发取证参数（外观）：与 WPF 端同参，截图矩阵取证用，不落盘。</summary>
+    private static void ApplyDevAppearanceArgs(string[] args)
+    {
+        static string? Val(string[] a, string k)
+        {
+            var i = Array.IndexOf(a, k);
+            return i >= 0 && i + 1 < a.Length ? a[i + 1] : null;
+        }
+        var a = Config.Appearance;
+        var theme = Val(args, "--appearance");
+        if (theme is "dark" or "light" or "system") { a.Theme = theme; DevAppearanceActive = true; }
+        var accent = Val(args, "--accent");
+        if (accent is { Length: 7 } && accent[0] == '#') { a.Accent = accent; DevAppearanceActive = true; }
+        var fs = Val(args, "--fontscale");
+        if (fs is "small" or "standard" or "large") { a.FontScale = fs; DevAppearanceActive = true; }
+        var density = Val(args, "--density");
+        if (density is "comfortable" or "compact") { a.Density = density; DevAppearanceActive = true; }
+        var radius = Val(args, "--radius");
+        if (radius is "sharp" or "soft" or "round") { a.Radius = radius; DevAppearanceActive = true; }
     }
 
     // ---------- 托盘（Avalonia TrayIcon；Linux 环境不支持时静默降级为仅任务栏） ----------

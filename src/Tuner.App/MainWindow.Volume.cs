@@ -300,15 +300,18 @@ public partial class MainWindow
         }
         catch (Exception ex)
         {
-            MessageBox.Show(Lang.Get("S.Device.SwitchFail", ex.Message), "Tuner");
+            MsgBox.Show(this, Lang.Get("S.Device.SwitchFail", ex.Message));
         }
     }
 
     // ---------- 推子交互 ----------
 
-    /// <summary>唯一动效入口：从当前显示位置平滑滑向目标。期间该通道显示由动画驱动。</summary>
+    /// <summary>唯一动效入口：从当前显示位置平滑滑向目标。期间该通道显示由动画驱动。
+    /// 动效总开关关闭时时长归零（瞬时到位），不沿用渐变。</summary>
     private void ApplyFader(VolumeChannel ch, double target, int durationMs)
     {
+        if (!Appearance.AnimationsEnabled)
+            durationMs = 0;
         ch.FaderTarget = target;
         if (!_faderByInstance.TryGetValue(ch.InstanceId, out var slider))
         {

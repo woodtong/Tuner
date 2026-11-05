@@ -300,7 +300,10 @@ public partial class MainWindow
         try
         {
             Directory.CreateDirectory(dir);
-            var names = new[] { "1-实时状态", "2-音量", "3-分组", "4-规则", "5-设置" };
+            // 关掉导航命中测试：截图窗口弹在屏幕中央，真实鼠标可能恰好悬停其上——
+            // 悬停态会把胶囊/文字染成悬停色，污染"选中态"取证（D1/D2 教训）
+            Tabs.IsHitTestVisible = false;
+            var names = new[] { "1-实时状态", "2-音量", "3-分组", "4-规则", "5-外观", "6-设置" };
             for (int i = 0; i < Tabs.Items.Count && i < names.Length; i++)
             {
                 Tabs.SelectedIndex = i;
@@ -338,7 +341,7 @@ public partial class MainWindow
     {
         try
         {
-            Tabs.SelectedIndex = 4;
+            Tabs.SelectedIndex = 5; // 设置页（外观页之后）
             UpdateLayout();
             var lines = new List<string>();
             void Check(string name, bool ok, string detail) =>

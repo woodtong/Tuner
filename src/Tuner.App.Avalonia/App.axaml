@@ -1,8 +1,9 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Tuner.Cross.App"
-             RequestedThemeVariant="Light">
-    <!-- 控件主题（缺了它全部控件无模板不渲染 = 空白窗口） -->
+             RequestedThemeVariant="Dark">
+    <!-- 控件主题（缺了它全部控件无模板不渲染 = 空白窗口）。
+         RequestedThemeVariant 由外观模块按配置驱动：dark/light/system(Default)。 -->
     <Application.Styles>
         <FluentTheme />
     </Application.Styles>
@@ -12,20 +13,78 @@
                 <ResourceInclude Source="avares://Tuner.Cross/Lang/Strings.zh-CN.axaml" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- 全局配色（与 WPF 版同源的浅色系） -->
-            <SolidColorBrush x:Key="PageBg" Color="#F4F5F7" />
-            <SolidColorBrush x:Key="CardBg" Color="#FFFFFF" />
-            <SolidColorBrush x:Key="CardBorder" Color="#E4E7EC" />
-            <SolidColorBrush x:Key="ItemBg" Color="#F8F9FB" />
-            <SolidColorBrush x:Key="TextPrimary" Color="#1F2328" />
-            <SolidColorBrush x:Key="TextSecondary" Color="#57606A" />
-            <SolidColorBrush x:Key="TextFaint" Color="#8B949E" />
-            <SolidColorBrush x:Key="Accent" Color="#2563EB" />
-            <SolidColorBrush x:Key="AccentSoft" Color="#DDEBFF" />
-            <SolidColorBrush x:Key="Amber" Color="#F59E0B" />
-            <SolidColorBrush x:Key="AmberSoft" Color="#FEF3C7" />
-            <SolidColorBrush x:Key="Green" Color="#22C55E" />
-            <SolidColorBrush x:Key="Danger" Color="#DC2626" />
+            <!-- 深浅两套调色板（与 WPF 版同 token 同值）：ThemeDictionaries 随主题变体自动切换 -->
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Dark">
+                    <SolidColorBrush x:Key="PageBg" Color="#0E1218" />
+                    <SolidColorBrush x:Key="CardBg" Color="#171C24" />
+                    <SolidColorBrush x:Key="ItemBg" Color="#1F2530" />
+                    <SolidColorBrush x:Key="ItemHover" Color="#262E3B" />
+                    <SolidColorBrush x:Key="HoverSoft" Color="#262E3B" />
+                    <SolidColorBrush x:Key="CardBorder" Color="#242B37" />
+                    <SolidColorBrush x:Key="TextPrimary" Color="#E8ECF4" />
+                    <SolidColorBrush x:Key="TextSecondary" Color="#98A2B3" />
+                    <SolidColorBrush x:Key="TextFaint" Color="#7E889D" />
+                    <SolidColorBrush x:Key="Accent" Color="#E8A33D" />
+                    <SolidColorBrush x:Key="AccentHover" Color="#F0B258" />
+                    <SolidColorBrush x:Key="AccentPressed" Color="#B87F1F" />
+                    <SolidColorBrush x:Key="AccentSoft" Color="#332B1C" />
+                    <SolidColorBrush x:Key="AccentFg" Color="#F0B258" />
+                    <SolidColorBrush x:Key="TextOnAccent" Color="#241A05" />
+                    <SolidColorBrush x:Key="Amber" Color="#F5B942" />
+                    <SolidColorBrush x:Key="AmberSoft" Color="#331B1E" />
+                    <SolidColorBrush x:Key="AmberText" Color="#F8A0A0" />
+                    <SolidColorBrush x:Key="AmberBadgeBorder" Color="#5A2626" />
+                    <SolidColorBrush x:Key="Green" Color="#34D399" />
+                    <SolidColorBrush x:Key="Danger" Color="#F87171" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Light">
+                    <SolidColorBrush x:Key="PageBg" Color="#EEF1F5" />
+                    <SolidColorBrush x:Key="CardBg" Color="#FAFBFD" />
+                    <SolidColorBrush x:Key="ItemBg" Color="#F4F6F9" />
+                    <SolidColorBrush x:Key="ItemHover" Color="#E9EDF3" />
+                    <SolidColorBrush x:Key="HoverSoft" Color="#E9EDF3" />
+                    <SolidColorBrush x:Key="CardBorder" Color="#DFE4EB" />
+                    <SolidColorBrush x:Key="TextPrimary" Color="#1E2530" />
+                    <SolidColorBrush x:Key="TextSecondary" Color="#57626F" />
+                    <SolidColorBrush x:Key="TextFaint" Color="#8A94A2" />
+                    <SolidColorBrush x:Key="Accent" Color="#E8A33D" />
+                    <SolidColorBrush x:Key="AccentHover" Color="#F0B258" />
+                    <SolidColorBrush x:Key="AccentPressed" Color="#B87F1F" />
+                    <SolidColorBrush x:Key="AccentSoft" Color="#F3E7CE" />
+                    <SolidColorBrush x:Key="AccentFg" Color="#8A5D10" />
+                    <SolidColorBrush x:Key="TextOnAccent" Color="#241A05" />
+                    <SolidColorBrush x:Key="Amber" Color="#D97706" />
+                    <SolidColorBrush x:Key="AmberSoft" Color="#FBEFD6" />
+                    <SolidColorBrush x:Key="AmberText" Color="#916114" />
+                    <SolidColorBrush x:Key="AmberBadgeBorder" Color="#E4C98F" />
+                    <SolidColorBrush x:Key="Green" Color="#17A268" />
+                    <SolidColorBrush x:Key="Danger" Color="#DC2626" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
+            <!-- 主题无关偏好令牌（外观模块运行时在 Application.Resources 直接覆写）：
+                 字号档（标准）/ 密度（舒适）/ 圆角（柔和） -->
+            <x:Double x:Key="Fz.Micro">10.5</x:Double>
+            <x:Double x:Key="Fz.Small">12</x:Double>
+            <x:Double x:Key="Fz.Base">12.5</x:Double>
+            <x:Double x:Key="Fz.Body">13</x:Double>
+            <x:Double x:Key="Fz.Title">13.5</x:Double>
+            <x:Double x:Key="Fz.Stat">14</x:Double>
+            <x:Double x:Key="Fz.Num">13</x:Double>
+            <x:Double x:Key="Fz.Brand">18</x:Double>
+
+            <x:Double x:Key="Sp.Row">12</x:Double>
+            <x:Double x:Key="Sp.Section">14</x:Double>
+
+            <Thickness x:Key="M.Page">16,12,16,10</Thickness>
+            <Thickness x:Key="M.Card">20</Thickness>
+            <Thickness x:Key="M.Item">12,10</Thickness>
+
+            <CornerRadius x:Key="Rad.Chip">5</CornerRadius>
+            <CornerRadius x:Key="Rad.Control">7</CornerRadius>
+            <CornerRadius x:Key="Rad.Card">9</CornerRadius>
+            <CornerRadius x:Key="Rad.Panel">12</CornerRadius>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

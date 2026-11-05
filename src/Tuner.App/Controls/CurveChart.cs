@@ -56,17 +56,24 @@ public sealed class CurveChart : FrameworkElement
     /// <summary>控制点被编辑（拖动/新增/删除）后触发。</summary>
     public event Action? CurveEdited;
 
+    // 深色字面值仅作资源缺席时的兜底；正常路径从应用资源取（外观模块热切换时随主题变色）
     private static readonly Brush PlotBg = Freeze(new SolidColorBrush(Color.FromRgb(0x10, 0x15, 0x1D)));
     private static readonly Brush GridBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x26, 0x2E, 0x3B)));
     private static readonly Brush AccentBrushC = Freeze(new SolidColorBrush(Color.FromRgb(0xE8, 0xA3, 0x3D)));
     private static readonly Brush FaintBrush = Freeze(new SolidColorBrush(Color.FromRgb(0x7E, 0x88, 0x9D)));
-    private static readonly Pen PlotBorderPen = FreezePen(new Pen(Freeze(new SolidColorBrush(Color.FromRgb(0x24, 0x2B, 0x37))), 1));
-    private static readonly Pen GridPen = FreezePen(new Pen(GridBrush, 1));
-    private static readonly Pen CurvePen = FreezePen(new Pen(AccentBrushC, 2) { StartLineCap = PenLineCap.Round, EndLineCap = PenLineCap.Round, LineJoin = PenLineJoin.Round });
-    private static readonly Pen PointRimPen = FreezePen(new Pen(PlotBg, 1.5));
 
     private static Brush Freeze(Brush b) { b.Freeze(); return b; }
     private static Pen FreezePen(Pen p) { p.Freeze(); return p; }
+
+    /// <summary>从应用资源取主题画刷；缺席时退回深色字面值（外观模块热切换随主题变色）。</summary>
+    private Brush Res(string key, Brush fallback) => TryFindResource(key) as Brush ?? fallback;
+
+    private static Pen PenOf(Brush b, double thickness, PenLineCap cap = PenLineCap.Flat)
+    {
+        var p = new Pen(b, thickness) { StartLineCap = cap, EndLineCap = cap, LineJoin = PenLineJoin.Round };
+        p.Freeze();
+        return p;
+    }
 
     private const double MarginL = 34, MarginR = 10, MarginT = 18, MarginB = 20;
     private const double HitRadius = 9, MinStepX = 0.01;
@@ -93,7 +100,16 @@ public sealed class CurveChart : FrameworkElement
         var r = PlotRect;
         var dpi = VisualTreeHelper.GetDpi(this).PixelsPerDip;
 
-        dc.DrawRoundedRectangle(PlotBg, PlotBorderPen, r, 4, 4);
+        var plotBg = Res("FaderGrooveBg", PlotBg);
+        var gridBrush = Res("ItemHover", GridBrush);
+        var accent = Res("Accent", AccentBrushC);
+        var faint = Res("TextFaint", FaintBrush);
+        var borderPen = PenOf(Res("CardBorder", PlotBg), 1);
+        var gridPen = PenOf(gridBrush, 1);
+        var curvePen = PenOf(accent, 2, PenLineCap.Round);
+        var rimPen = PenOf(plotBg, 1.5);
+
+        dc.DrawRoundedRectangle(plotBg, borderPen, r, 4, 4);
 
         // 曲线主体（裁剪在绘图区内）
         dc.PushClip(new RectangleGeometry(r));
@@ -102,14 +118,14 @@ public sealed class CurveChart : FrameworkElement
             var t = i / 5.0;
             var gx = r.X + t * r.Width;
             var gy = r.Bottom - t * r.Height;
-            dc.DrawLine(GridPen, new Point(gx, r.Top), new Point(gx, r.Bottom));
-            dc.DrawLine(GridPen, new Point(r.Left, gy), new Point(r.Right, gy));
+            dc.DrawLine(gridPen, new Point(gx, r.Top), new Point(gx, r.Bottom));
+            dc.DrawLine(gridPen, new Point(r.Left, gy), new Point(r.Right, gy));
         }
         var pts = Points;
         if (CurveId == "custom" && pts is { Count: >= 2 })
-            DrawPolyline(dc, pts, CurvePen);
+            DrawPolyline(dc, pts, curvePen);
         else
-            DrawPreset(dc, CurveId, CurvePen);
+            DrawPreset(dc, CurveId, curvePen);
         dc.Pop();
 
         // 控制点（custom 且可编辑时；不足 2 个点也画出来，便于从空白起步）
@@ -119,23 +135,23 @@ public sealed class CurveChart : FrameworkElement
             {
                 var c = ToScreen(pts[i].X, pts[i].Y);
                 var rad = i == _dragIndex ? 6 : 4.5;
-                dc.DrawEllipse(AccentBrushC, PointRimPen, c, rad, rad);
+                dc.DrawEllipse(accent, rimPen, c, rad, rad);
             }
         }
 
         // 坐标刻度与轴名
         foreach (var (v, label) in new[] { (0.0, "0"), (0.5, "50"), (1.0, "100") })
         {
-            var yt = Text(label, 9, FaintBrush, dpi);
+            var yt = Text(label, 9, faint, dpi);
             yt.TextAlignment = TextAlignment.Right;
             dc.DrawText(yt, new Point(r.Left - 5, r.Bottom - v * r.Height - yt.Height / 2));
-            var xt = Text(label, 9, FaintBrush, dpi);
+            var xt = Text(label, 9, faint, dpi);
             xt.TextAlignment = TextAlignment.Center;
             dc.DrawText(xt, new Point(r.Left + v * r.Width, r.Bottom + 4));
         }
-        var yName = Text("实际响度%", 9.5, FaintBrush, dpi);
+        var yName = Text("实际响度%", 9.5, faint, dpi);
         dc.DrawText(yName, new Point(0, 0));
-        var xName = Text("音量%", 9.5, FaintBrush, dpi);
+        var xName = Text("音量%", 9.5, faint, dpi);
         dc.DrawText(xName, new Point(ActualWidth - xName.Width - 2, 0)); // 右上角：与 Y 轴名对称，避开底部"100"刻度
     }
 

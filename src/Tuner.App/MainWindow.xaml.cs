@@ -68,6 +68,7 @@ public partial class MainWindow : Window
         RefreshRuleTab();
         _loadingUi = true;
         LoadSettingsTab();
+        LoadAppearanceTab();
         _loadingUi = false;
         SetSaveStatus(null);
         VersionText.Text = "v" + (typeof(MainWindow).Assembly
@@ -121,6 +122,9 @@ public partial class MainWindow : Window
         // 鼠标离开导航回落到选中项（悬停色→选中色随位过渡）。模板取件要等模板应用完（Loaded）
         Tabs.Loaded += (_, _) => InitNavIndicator();
 
+        // 外观变化（主题/强调色/动效字典热切换）：模板可能整套重建，重新取件并原位校准
+        Appearance.Changed += () => Dispatcher.BeginInvoke(InitNavIndicator);
+
         // 语言切换即时刷新：XAML 静态串走 DynamicResource 自动换；这里只处理代码拼接的动态串
         // （状态页/曲线提示随 250ms 刷新自然跟上；分组/规则 VM 整表重建）
         Lang.LanguageChanged += () => Dispatcher.BeginInvoke(() =>
@@ -132,6 +136,7 @@ public partial class MainWindow : Window
             RefreshGroupTab();
             RefreshRuleTab();
             UpdateVolumeCurveHint();
+            LoadAppearanceTab(); // 外观页条目文本随语言重灌（选中态不变）
         });
 
         _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(800) };
@@ -257,22 +262,48 @@ public partial class MainWindow : Window
 
     private System.Windows.Controls.Border? _navIndicator;
     private System.Windows.Controls.Grid? _navRoot;
+    private System.Windows.Controls.Grid? _navRootHooked;
+    private bool _navEventsHooked;
+
+    private bool _navRetryOnLayout;
 
     private void InitNavIndicator()
     {
-        _navIndicator = Tabs.Template.FindName("NavIndicator", Tabs) as System.Windows.Controls.Border;
-        _navRoot = Tabs.Template.FindName("NavRoot", Tabs) as System.Windows.Controls.Grid;
-        if (_navIndicator is null || _navRoot is null)
-            return; // 模板缺件（理论上不可达）：指示器缺席，导航退化为纯文字高亮
+        // 先取局部件再落字段：字典热切换后新模板可能尚未应用到视觉树，
+        // FindName 此刻取不到（返回 null）——若直接把 null 写进 _navIndicator，
+        // 胶囊从此丢失（"关动效再开，侧边栏不动了"的残余根源）。改为等下一次布局再取。
+        var indicator = Tabs.Template.FindName("NavIndicator", Tabs) as System.Windows.Controls.Border;
+        var root = Tabs.Template.FindName("NavRoot", Tabs) as System.Windows.Controls.Grid;
+        if (indicator is null || root is null)
+        {
+            if (_navRetryOnLayout)
+                return; // 已挂等待，不重复挂
+            _navRetryOnLayout = true;
+            Tabs.LayoutUpdated += NavIndicatorRetryOnLayout;
+            return; // 模板缺件或未应用：指示器暂缺，布局完成后重试
+        }
+        _navIndicator = indicator;
+        _navRoot = root;
+        _navRetryOnLayout = false;
+        Tabs.LayoutUpdated -= NavIndicatorRetryOnLayout;
         // 模板里声明的 Freezable（RenderTransform/Background 画刷）随模板密封被冻结，
         // 代码里 BeginAnimation 会抛"已密封或已冻结"（Storyboard 触发器路径才自动克隆）。
         // 换成本代码创建的可变实例后再驱动动画。
         _navIndicator.RenderTransform = new System.Windows.Media.TranslateTransform();
-        _navIndicator.Background = new System.Windows.Media.SolidColorBrush(ColorsFromTheme.NavSelected);
-        foreach (TabItem item in Tabs.Items)
-            item.MouseEnter += (s, _) => SlideNavIndicator(s as TabItem, resting: false);
-        _navRoot.MouseLeave += (_, _) => SlideNavIndicator(Tabs.SelectedItem as TabItem, resting: true);
-        Tabs.SizeChanged += (_, _) => SnapNavIndicator(); // 窗口缩放/DPI 变化后原地校准（不带动画）
+        _navIndicator.Background = new System.Windows.Media.SolidColorBrush(ResColor("AccentSoftColor", "#332B1C"));
+        // 条目级事件只挂一次（页签实例跨模板重建复用）；NavRoot 随模板重建需按实例重挂
+        if (!_navEventsHooked)
+        {
+            _navEventsHooked = true;
+            foreach (TabItem item in Tabs.Items)
+                item.MouseEnter += (s, _) => SlideNavIndicator(s as TabItem, resting: false);
+            Tabs.SizeChanged += (_, _) => SnapNavIndicator(); // 窗口缩放/DPI 变化后原地校准（不带动画）
+        }
+        if (!ReferenceEquals(_navRootHooked, _navRoot))
+        {
+            _navRootHooked = _navRoot;
+            _navRoot.MouseLeave += (_, _) => SlideNavIndicator(Tabs.SelectedItem as TabItem, resting: true);
+        }
         try
         {
             SnapNavIndicator();
@@ -283,6 +314,9 @@ public partial class MainWindow : Window
         }
     }
 
+    /// <summary>模板换血后的一次性取件重试：新模板应用完成（LayoutUpdated）后重挂胶囊。</summary>
+    private void NavIndicatorRetryOnLayout(object? sender, EventArgs e) => InitNavIndicator();
+
     /// <summary>胶囊滑动到目标条目：resting=选中态（选中色），否则悬停态（悬停色）。目标为空则不动。</summary>
     private void SlideNavIndicator(TabItem? target, bool resting)
     {
@@ -291,7 +325,7 @@ public partial class MainWindow : Window
         if (target.TransformToVisual(_navRoot) is not { } toRoot)
             return; // 尚未布局完成
         var y = toRoot.Transform(new System.Windows.Point(0, 0)).Y;
-        var duration = TimeSpan.FromMilliseconds(200);
+        var duration = TimeSpan.FromMilliseconds(Appearance.AnimationsEnabled ? 200 : 0);
         var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
         (_navIndicator.RenderTransform as System.Windows.Media.TranslateTransform)?.BeginAnimation(
             System.Windows.Media.TranslateTransform.YProperty,
@@ -301,8 +335,8 @@ public partial class MainWindow : Window
         if (_navIndicator.Background is System.Windows.Media.SolidColorBrush brush)
             brush.BeginAnimation(System.Windows.Media.SolidColorBrush.ColorProperty,
                 new System.Windows.Media.Animation.ColorAnimation(
-                    resting ? ColorsFromTheme.NavSelected : ColorsFromTheme.NavHover,
-                    TimeSpan.FromMilliseconds(180)));
+                    resting ? ResColor("AccentSoftColor", "#332B1C") : ResColor("HoverSoftColor", "#262E3B"),
+                    TimeSpan.FromMilliseconds(Appearance.AnimationsEnabled ? 180 : 0)));
     }
 
     /// <summary>无动画校准胶囊位置（启动落位、窗口尺寸变化后）。</summary>
@@ -321,16 +355,13 @@ public partial class MainWindow : Window
         if (_navIndicator.Background is System.Windows.Media.SolidColorBrush brush)
         {
             brush.BeginAnimation(System.Windows.Media.SolidColorBrush.ColorProperty, null);
-            brush.Color = ColorsFromTheme.NavSelected;
+            brush.Color = ResColor("AccentSoftColor", "#332B1C");
         }
     }
 
-    /// <summary>导航指示器两态颜色（与 Theme.xaml 的 AccentSoft/HoverSoft 保持一致的字面值）。</summary>
-    private static class ColorsFromTheme
-    {
-        public static readonly System.Windows.Media.Color NavSelected =
-            (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#332B1C");
-        public static readonly System.Windows.Media.Color NavHover =
-            (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString("#262E3B");
-    }
+    /// <summary>从应用资源取主题色；资源缺席（极早期/异常）时用字面值兜底，绝不抛异常。</summary>
+    private static System.Windows.Media.Color ResColor(string key, string fallback) =>
+        System.Windows.Application.Current?.TryFindResource(key) is System.Windows.Media.Color c
+            ? c
+            : (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(fallback);
 }
