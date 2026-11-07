@@ -35,7 +35,7 @@ git switch main && git merge --no-ff dev/windows && git tag v0.1.2-eta
 | Linux 功能 | 基于 `dev/linux` |
 | 共享核心（`src/Tuner.Core`、配置模型） | 一律基于 `dev/windows`（主线）进行，再 merge / cherry-pick 同步到 `dev/linux` |
 | 合并进 `main` | 人工检查确认后才执行；AI 不自行合并/推送 main |
-| 版本发布 | main 上打 tag；打包产物按 `dist/windows`、`dist/linux`、`dist/console`、`dist/archive` 归档 |
+| 版本发布 | main 上打 tag；打包产物按平台分目录归档：**已发布版** → `release/<windows\|linux>/<版本>/`，**开发版** → `dev/<windows\|linux>/<版本>/`，弃用实验 → `archive/`（三者均不入库） |
 
 ## 为什么共享核心走 dev/windows
 

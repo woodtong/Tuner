@@ -12,6 +12,8 @@
 - `Tuner-v0.1.1-win-x64.zip` — 主程序（托盘应用）
 - `Tuner-Console-v0.1.1-win-x64.zip` — 控制台诊断工具（可选：实时表格 / `--selftest` 自测 / `--setvol`）
 
+本地的已发布包副本在 `release/windows/v0.1.1/`。
+
 ## 界面预览
 
 | 实时状态 | 音量（调音台） |
@@ -41,14 +43,51 @@
 
 ## 版本
 
-| 版本 | 内容 |
-|---|---|
-| **v0.1.1**（2026-10-18，当前） | v0.1 以来的全部迭代合并发布，**替代 v0.1**（旧版已下架）。要点：自研应用图标；闪避开始/结束时长解耦；规则触发/目标可选"应用"方式；**音量曲线**（线性 / 平方 / 对数等响度 / 自定义，曲线图可视化编辑）；**界面整体重设计**（材质分层：悬浮内容面板 / 胶囊导航 / 表面色差层级）；引擎与界面性能优化；配置原子写入 + 备份回退；防抖自动保存 |
-| v0.1（2026-10-08） | 首个公开版本（MVP）：分组闪避引擎 + WPF 托盘应用 + 调音台界面 |
+当前公开版本 **v0.1.1**（2026-10-18）。完整历史见 [CHANGELOG.md](CHANGELOG.md)。
+
+> 版本号单一来源是 `src/Directory.Build.props`（开发期为 `0.1.1-eta`）；正式版以 `main` 上的 tag 与 GitHub Releases 为准。
+
+## 仓库结构
+
+```
+Tuner/
+├─ Tuner.sln                    解决方案（8 个工程）
+├─ README.md                    本文件：项目说明 + 目录地图（唯一入口）
+├─ CHANGELOG.md                 版本历史
+├─ src/                         源码
+│  ├─ Tuner.Core/               核心库（跨平台）：闪避引擎 / 配置 / 音量曲线 + 平台接口
+│  ├─ Tuner.Core.Windows/       Windows 平台层（WASAPI 会话监控 / SMTC 状态）
+│  ├─ Tuner.Core.Linux/         Linux 平台层（PulseAudio，P/Invoke libpulse）
+│  ├─ Tuner.App/                WPF 托盘应用（Tuner.exe，Windows 主程序）
+│  ├─ Tuner.App.Avalonia/       Avalonia 跨平台 UI（Linux 主用；macOS 已撤下）
+│  ├─ Tuner.Console/            控制台诊断工具
+│  ├─ Tuner.PauseProbe/         SMTC「暂停目标应用」探针
+│  └─ Tuner.LinuxProbe/         Linux 音频层探针
+├─ docs/                        说明文档：实现细节 / 计划 / 验证记录 / 截图（索引见 docs/README.md）
+├─ tools/                       开发脚本：图标生成、主题 token、UI 校验
+├─ tests/fixtures/              测试夹具（test-ducking.json 自动化验收配置）
+├─ release/                     已发布制品（不入库）
+│  ├─ windows/v0.1.1/           GitHub Releases v0.1.1 的主程序 + 控制台包
+│  └─ linux/                    暂无（Linux 尚未发布正式版）
+├─ dev/                         开发版制品（不入库）
+│  ├─ windows/v0.1.1-eta/       主程序 + 控制台诊断
+│  └─ linux/v0.1.1-eta/         Avalonia 版
+└─ archive/                     弃用实验（不入库，可整目录删除）
+```
+
+**制品三者分工**（`release/`、`dev/`、`archive/` 都被 `.gitignore` 排除，不进 Git）：
+
+| 目录 | 放什么 | 命名 |
+|---|---|---|
+| `release/<平台>/<版本>/` | 已发布到 GitHub Releases 的正式包 | 与 tag 一致，如 `v0.1.1` |
+| `dev/<平台>/<版本>/` | 开发/内测构建 | 如 `v0.1.1-eta` |
+| `archive/` | 判定弃用的实验包（当前是 2026-10-24 白色主题重设计，201 MB） | — |
+
+每个版本目录内同时保留「解压目录 + 同名 zip」；Windows 的控制台诊断工具与主程序放在同一版本目录下。
 
 ## 开发
 
-环境：Windows 10/11 + .NET 8 SDK。内部实现要点与踩坑记录见 [docs/dev-notes.md](docs/dev-notes.md)。
+环境：Windows 10/11 + .NET 8 SDK。内部实现要点与踩坑记录见 [docs/dev-notes.md](docs/dev-notes.md)，文档总索引见 [docs/README.md](docs/README.md)。
 
 ```bash
 dotnet build -c Release
@@ -63,49 +102,35 @@ dotnet run --project src/Tuner.Console -c Release -- --selftest
 dotnet run --project src/Tuner.Console -c Release -- --setvol qqmusic 61
 ```
 
-### 目录结构
-
-```
-Tuner.sln
-config/test-ducking.json     自动化验收用测试配置
-src/
-  Tuner.Core/                核心库（纯跨平台）：闪避引擎 / 配置 / 音量曲线 + 平台接口
-  Tuner.Core.Windows/        Windows 平台层（WASAPI 会话监控 / SMTC 状态）
-  Tuner.Core.Linux/          Linux 平台层（PulseAudio，P/Invoke libpulse）
-  Tuner.Core.macOS/          macOS 骨架（公开 API 设备级，完整方案见 docs/macOS-plan.md）
-  Tuner.App/                 WPF 托盘应用（Tuner.exe，Windows 主程序）
-  Tuner.App.Avalonia/        Avalonia 跨平台 UI（Windows/Linux 双目标）
-  Tuner.Console/             控制台诊断工具
-  Tuner.PauseProbe/          SMTC「暂停目标应用」探针
-  Tuner.LinuxProbe/          Linux 音频层探针
-```
-
 ### 分支模型（2026-11-05 起）
 
 ```
 main            稳定线：只接受来自开发线的合并，保持随时可发布
-├─ dev/windows  Windows 开发线（WPF 主线，src/Tuner.App + Tuner.Core.Windows）
-└─ dev/linux    Linux 开发线（Avalonia，src/Tuner.App.Avalonia + Tuner.Core.Linux）
+├─ dev/windows  Windows 开发线（WPF 主线，src/Tuner.App + src/Tuner.Core.Windows）
+└─ dev/linux    Linux 开发线（Avalonia，src/Tuner.App.Avalonia + src/Tuner.Core.Linux）
 ```
 
-- 细小功能/修复一律从所属开发线派生短命分支：`feat/<描述>`（新功能）、`fix/<描述>`（修复）、`docs/<描述>`（文档），完成合并回开发线后删除。
+- 细小功能/修复一律从所属开发线派生短命分支：`feat/<描述>`、`fix/<描述>`、`docs/<描述>`、`refactor/<描述>`，合并回开发线后删除。
 - **共享核心**（`src/Tuner.Core`、配置模型）的改动基于 `dev/windows`（主线）进行，再以 merge 或 cherry-pick 同步到 `dev/linux`，避免双向漂移。
-- 开发线阶段性稳定后合并进 `main` 并打 tag（如 `v0.1.1-eta`）。
-- 单端开发就切到对应开发线工作，不要直接提交 `main`。
+- 开发线阶段性稳定后合并进 `main` 并打 tag（如 `v0.1.1`）。
+- 单端开发就切到对应开发线工作，不要直接提交 `main`。详细操作见 [docs/git-workflow.md](docs/git-workflow.md)。
 
 ### 打包发布
 
+版本号统一在 `src/Directory.Build.props`。产物统一输出到 `dev/<平台>/<版本>/`，正式发布时再挪进 `release/<平台>/<版本>/`。
+
 ```bash
-# 主程序（自包含单文件），输出目录以实际版本号命名
+# 主程序（自包含单文件）
 dotnet publish src/Tuner.App -c Release -r win-x64 --self-contained true `
   -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
   -p:EnableCompressionInSingleFile=true -p:DebugType=none -p:DebugSymbols=false `
-  -o dist/windows/Tuner-<版本>-win-x64
+  -o dev/windows/<版本>/Tuner-<版本>-win-x64
 
-# 控制台诊断：同参数，输出到 dist/console/Tuner-Console-<版本>-win-x64
+# 控制台诊断：同参数，输出到 dev/windows/<版本>/Tuner-Console-<版本>-win-x64
 
 # 跨平台 UI（Avalonia）：linux 目标必须显式 -f net8.0；单文件发布不内嵌 libSkiaSharp，用目录发布
-dotnet publish src/Tuner.App.Avalonia -c Release -f net8.0 -r linux-x64 --self-contained true -o dist/linux/Tuner-<版本>-linux-x64
+dotnet publish src/Tuner.App.Avalonia -c Release -f net8.0 -r linux-x64 --self-contained true `
+  -o dev/linux/<版本>/Tuner-Avalonia-<版本>-linux-x64
 ```
 
-版本号统一在 `src/Directory.Build.props`（四个工程共用）。
+打包后把目录压成同名 zip 放在同一版本目录下；确认可发布，再把整个版本目录移到 `release/<平台>/<版本>/`。

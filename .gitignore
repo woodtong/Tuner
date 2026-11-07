@@ -1,7 +1,10 @@
 bin/
 obj/
 .vs/
-dist/
+# 制品目录：不入库，仅本地保留
+/release/
+/dev/
+/archive/
 *.user
 *.suo
 ui-preview/

@@ -170,3 +170,4 @@ WPF 应用冒烟（`--smoke`）：启动绑定设备、枚举会话、优雅退�
 - 配置持久化：原子写入（tmp + `File.Replace` + `.bak`）；加载端主文件损坏自动回退 `.bak` 再回退默认。
 - 版本号单一来源：`src/Directory.Build.props`。
 - **dist 制品管理（2026-11-05 用户定型，替代 2026-10-22 旧约）**：按平台归档。`dist/windows/`（WPF 主线）、`dist/linux/`（Avalonia）、`dist/console/`（控制台诊断）各放"目录 + zip"四件套（保留 `-win-x64`/`-linux-x64` 命名，目录内＝exe + README.md）；旧版本与弃用实验（如白色主题重设计）收进 `dist/archive/`。dist/ 不入库（git 忽略）。
+- **制品目录改版（2026-11-07 用户要求，取代上一条的 dist/ 约定）**：取消 `dist/`，改为三目录 + 平台优先：`release/<windows|linux>/<版本>/`= 已发布到 GitHub Releases 的正式包；`dev/<windows|linux>/<版本>/`= 开发/内测构建；`archive/`= 弃用实验（如白色主题重设计，201 MB，可整目录删除）。每个版本目录内同时存"解压目录 + 同名 zip"；控制台诊断工具随 Windows 平台放在同一版本目录下。三个目录均不入库。测试配置从 `config/test-ducking.json` 移到 `tests/fixtures/test-ducking.json`。
