@@ -73,7 +73,7 @@ if (selftest)
 else
 {
     // 仅从默认位置（%APPDATA%\Tuner\config.json）加载配置；
-    // 手动复现测试时把 config/test-ducking.json 复制过去即可
+    // 手动复现测试时把 tests/fixtures/test-ducking.json 复制过去即可
     var defaultConfigPath = File.Exists(ConfigStore.ActivePath) ? ConfigStore.ActivePath : null;
     config = defaultConfigPath is not null ? ConfigStore.Load(defaultConfigPath) : ConfigStore.CreateDefault();
     configPath = defaultConfigPath;

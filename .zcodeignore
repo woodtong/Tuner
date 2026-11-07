@@ -1,7 +1,9 @@
 bin/
 obj/
 .vs/
-dist/
+/release/
+/dev/
+/archive/
 *.user
 *.suo
 ui-preview/
