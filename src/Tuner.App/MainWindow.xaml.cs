@@ -299,14 +299,19 @@ public partial class MainWindow : Window
         if (!_navEventsHooked)
         {
             _navEventsHooked = true;
-            foreach (TabItem item in Tabs.Items)
-                item.MouseEnter += (s, _) => SlideNavIndicator(s as TabItem, resting: false);
             Tabs.SizeChanged += (_, _) => SnapNavIndicator(); // 窗口缩放/DPI 变化后原地校准（不带动画）
         }
         if (!ReferenceEquals(_navRootHooked, _navRoot))
         {
             _navRootHooked = _navRoot;
-            _navRoot.MouseLeave += (_, _) => SlideNavIndicator(Tabs.SelectedItem as TabItem, resting: true);
+            // Cogent 式指针命中：X/Y 均落在条目矩形内才算悬停（边距/菜单一旁的空隙不判定）；
+            // 空隙期间回落选中项；目标不变不重启动画
+            _navRoot.MouseMove += NavRootMouseMove;
+            _navRoot.MouseLeave += (_, _) =>
+            {
+                _navHoverItem = null;
+                SlideNavIndicator(Tabs.SelectedItem as TabItem, resting: true);
+            };
         }
         try
         {
@@ -321,6 +326,50 @@ public partial class MainWindow : Window
     /// <summary>模板换血后的一次性取件重试：新模板应用完成（LayoutUpdated）后重挂胶囊。</summary>
     private void NavIndicatorRetryOnLayout(object? sender, EventArgs e) => InitNavIndicator();
 
+    private TabItem? _navHoverItem;
+
+    /// <summary>NavRoot 内指针命中判定：X/Y 均在条目矩形内才算悬停；空隙回落选中项。</summary>
+    private void NavRootMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (_navRoot is null) return;
+        var pos = e.GetPosition(_navRoot);
+        TabItem? hit = null;
+        foreach (TabItem it in Tabs.Items)
+        {
+            if (it.TransformToVisual(_navRoot) is not { } m) continue;
+            var p = m.Transform(new System.Windows.Point(0, 0));
+            if (pos.X >= p.X && pos.X < p.X + it.ActualWidth
+                && pos.Y >= p.Y && pos.Y < p.Y + it.ActualHeight)
+            {
+                hit = it;
+                break;
+            }
+        }
+        if (ReferenceEquals(hit, _navHoverItem))
+            return; // 目标未变：不重启动画（悬停中不抖）
+        _navHoverItem = hit;
+        SlideNavIndicator(hit ?? Tabs.SelectedItem as TabItem, resting: hit is null);
+    }
+
+    /// <summary>条目几何（相对 NavRoot）：优先取模板 Bd 本体——开/关动效两种模式的方框
+    /// 位置与大小完全一致（以关动效时的 Bd 灰框为基准；TabItem 高度含 2px 底边距，偏大）。</summary>
+    private bool TryGetNavItemGeom(TabItem item, out double y, out double height)
+    {
+        y = height = 0;
+        if (item.Template?.FindName("Bd", item) is System.Windows.Controls.Border bd
+            && bd.ActualHeight > 0 && bd.TransformToVisual(_navRoot!) is { } mb)
+        {
+            y = mb.Transform(new System.Windows.Point(0, 0)).Y;
+            height = bd.ActualHeight;
+            return true;
+        }
+        if (item.ActualHeight <= 0 || item.TransformToVisual(_navRoot!) is not { } mi)
+            return false; // 尚未布局完成
+        y = mi.Transform(new System.Windows.Point(0, 0)).Y;
+        height = item.ActualHeight;
+        return true;
+    }
+
     /// <summary>胶囊滑动到目标条目：resting=选中态（选中色），否则悬停态（悬停色）。目标为空则不动。
     /// 仅回归选中项（resting）放慢到 420ms，缓动曲线与悬停一致（200ms ease-out cubic），其余行为不变；
     /// 显式 From=属性当前值（依赖属性读取返回含动画层的现值）——与 cogent 的 CSS transition
@@ -329,9 +378,8 @@ public partial class MainWindow : Window
     {
         if (_navIndicator is null || _navRoot is null || target is null)
             return;
-        if (target.TransformToVisual(_navRoot) is not { } toRoot)
+        if (!TryGetNavItemGeom(target, out var y, out var h))
             return; // 尚未布局完成
-        var y = toRoot.Transform(new System.Windows.Point(0, 0)).Y;
         var duration = TimeSpan.FromMilliseconds(!Appearance.AnimationsEnabled ? 0 : resting ? 420 : 200);
         var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
         if (_navIndicator.RenderTransform is System.Windows.Media.TranslateTransform rt)
@@ -342,8 +390,8 @@ public partial class MainWindow : Window
         // 高度当前值（Snap 校准后为具体数；未布局时可能 NaN，此时回退 To-only）
         var fromHeight = _navIndicator.Height;
         var heightAnim = double.IsNaN(fromHeight)
-            ? new DoubleAnimation(target.ActualHeight, duration) { EasingFunction = ease }
-            : new DoubleAnimation(fromHeight, target.ActualHeight, duration) { EasingFunction = ease };
+            ? new DoubleAnimation(h, duration) { EasingFunction = ease }
+            : new DoubleAnimation(fromHeight, h, duration) { EasingFunction = ease };
         _navIndicator.BeginAnimation(System.Windows.Controls.Border.HeightProperty, heightAnim);
         if (_navIndicator.Background is System.Windows.Media.SolidColorBrush brush)
             brush.BeginAnimation(System.Windows.Media.SolidColorBrush.ColorProperty,
@@ -357,11 +405,10 @@ public partial class MainWindow : Window
     {
         if (_navIndicator is null || _navRoot is null || Tabs.SelectedItem is not TabItem target)
             return;
-        if (target.ActualHeight <= 0 || target.TransformToVisual(_navRoot) is not { } toRoot)
+        if (!TryGetNavItemGeom(target, out var y, out var h))
             return; // 尚未完成布局，等下一次尺寸事件再校准
-        var y = toRoot.Transform(new System.Windows.Point(0, 0)).Y;
         _navIndicator.BeginAnimation(System.Windows.Controls.Border.HeightProperty, null);
-        _navIndicator.Height = target.ActualHeight;
+        _navIndicator.Height = h;
         (_navIndicator.RenderTransform as System.Windows.Media.TranslateTransform)?.BeginAnimation(
             System.Windows.Media.TranslateTransform.YProperty, null);
         (_navIndicator.RenderTransform as System.Windows.Media.TranslateTransform)!.Y = y;
