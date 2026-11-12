@@ -291,6 +291,10 @@ public partial class MainWindow : Window
         // 换成本代码创建的可变实例后再驱动动画。
         _navIndicator.RenderTransform = new System.Windows.Media.TranslateTransform();
         _navIndicator.Background = new System.Windows.Media.SolidColorBrush(ResColor("AccentSoftColor", "#332B1C"));
+        // 关动效：隐藏滑动胶囊（选中=黄字、悬停=浅灰底，由 NoAnim 模板条目层承担）
+        _navIndicator.Visibility = Appearance.AnimationsEnabled
+            ? System.Windows.Visibility.Visible
+            : System.Windows.Visibility.Collapsed;
         // 条目级事件只挂一次（页签实例跨模板重建复用）；NavRoot 随模板重建需按实例重挂
         if (!_navEventsHooked)
         {

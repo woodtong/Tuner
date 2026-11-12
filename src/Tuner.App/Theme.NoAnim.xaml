@@ -729,6 +729,8 @@
                         </Trigger>
                         <Trigger Property="IsMouseOver" Value="True">
                             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+                            <!-- 关动效模式：无滑动胶囊，悬停以浅灰底标识选中候选 -->
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ItemHover}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
