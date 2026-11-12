@@ -319,7 +319,8 @@ public partial class MainWindow : Window
 
     /// <summary>胶囊滑动到目标条目：resting=选中态（选中色），否则悬停态（悬停色）。目标为空则不动。
     /// 仅回归选中项（resting）放慢到 420ms，缓动曲线与悬停一致（200ms ease-out cubic），其余行为不变；
-    /// From 省略时动画从属性当前值出发，回归途中再次悬停会从胶囊现位置重新落回光标下（保持既有行为）。</summary>
+    /// 显式 From=属性当前值（依赖属性读取返回含动画层的现值）——与 cogent 的 CSS transition
+    /// "从当前计算样式出发"同语义，杜绝 To-only 动画在替换旧动画时起点解析歧义导致的"闪现不滑动"。</summary>
     private void SlideNavIndicator(TabItem? target, bool resting)
     {
         if (_navIndicator is null || _navRoot is null || target is null)
@@ -329,11 +330,17 @@ public partial class MainWindow : Window
         var y = toRoot.Transform(new System.Windows.Point(0, 0)).Y;
         var duration = TimeSpan.FromMilliseconds(!Appearance.AnimationsEnabled ? 0 : resting ? 420 : 200);
         var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-        (_navIndicator.RenderTransform as System.Windows.Media.TranslateTransform)?.BeginAnimation(
-            System.Windows.Media.TranslateTransform.YProperty,
-            new DoubleAnimation(y, duration) { EasingFunction = ease });
-        _navIndicator.BeginAnimation(System.Windows.Controls.Border.HeightProperty,
-            new DoubleAnimation(target.ActualHeight, duration) { EasingFunction = ease });
+        if (_navIndicator.RenderTransform is System.Windows.Media.TranslateTransform rt)
+        {
+            var anim = new DoubleAnimation(rt.Y, y, duration) { EasingFunction = ease };
+            rt.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, anim);
+        }
+        // 高度当前值（Snap 校准后为具体数；未布局时可能 NaN，此时回退 To-only）
+        var fromHeight = _navIndicator.Height;
+        var heightAnim = double.IsNaN(fromHeight)
+            ? new DoubleAnimation(target.ActualHeight, duration) { EasingFunction = ease }
+            : new DoubleAnimation(fromHeight, target.ActualHeight, duration) { EasingFunction = ease };
+        _navIndicator.BeginAnimation(System.Windows.Controls.Border.HeightProperty, heightAnim);
         if (_navIndicator.Background is System.Windows.Media.SolidColorBrush brush)
             brush.BeginAnimation(System.Windows.Media.SolidColorBrush.ColorProperty,
                 new System.Windows.Media.Animation.ColorAnimation(
