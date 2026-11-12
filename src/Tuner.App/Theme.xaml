@@ -724,7 +724,8 @@
                             <Setter Property="Foreground" Value="{DynamicResource Accent}" />
                             <Setter TargetName="Header" Property="TextElement.FontWeight" Value="SemiBold" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <!-- 悬停看 Bd 自身：TabItem.IsMouseOver 会被"鼠标在选中页签内容上"经内容桥接置真（WPF 怪癖），导致悬停内容区时菜单项误亮 -->
+                        <Trigger SourceName="Bd" Property="IsMouseOver" Value="True">
                             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
@@ -750,7 +751,7 @@
                         </Grid.ColumnDefinitions>
                         <Grid x:Name="NavRoot" Grid.Column="0">
                             <Border x:Name="NavIndicator" CornerRadius="{DynamicResource Rad.Control}" IsHitTestVisible="False"
-                                    VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                                    VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="2,0,14,0">
                                 <Border.RenderTransform>
                                     <TranslateTransform />
                                 </Border.RenderTransform>

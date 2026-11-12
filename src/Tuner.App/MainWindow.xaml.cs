@@ -328,7 +328,8 @@ public partial class MainWindow : Window
 
     private TabItem? _navHoverItem;
 
-    /// <summary>NavRoot 内指针命中判定：X/Y 均在条目矩形内才算悬停；空隙回落选中项。</summary>
+    /// <summary>NavRoot 内指针命中判定：以可见的 Bd 圆角框为按键 block——X/Y 均落在 Bd 矩形内
+    /// 才算悬停（TabItem 矩形含条目间 2px 空隙，框外空隙不算命中）；空隙回落选中项。</summary>
     private void NavRootMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
     {
         if (_navRoot is null) return;
@@ -336,10 +337,22 @@ public partial class MainWindow : Window
         TabItem? hit = null;
         foreach (TabItem it in Tabs.Items)
         {
-            if (it.TransformToVisual(_navRoot) is not { } m) continue;
-            var p = m.Transform(new System.Windows.Point(0, 0));
-            if (pos.X >= p.X && pos.X < p.X + it.ActualWidth
-                && pos.Y >= p.Y && pos.Y < p.Y + it.ActualHeight)
+            // 命中矩形 = 模板 Bd（用户可见的圆角框），与关动效灰框逐像素一致；
+            // Bd 尚未布局（宽高为 0）时回退 TabItem 矩形
+            double x, y, w, h;
+            if (it.Template?.FindName("Bd", it) is System.Windows.Controls.Border bd
+                && bd.ActualWidth > 0 && bd.TransformToVisual(_navRoot) is { } mb)
+            {
+                var p = mb.Transform(new System.Windows.Point(0, 0));
+                x = p.X; y = p.Y; w = bd.ActualWidth; h = bd.ActualHeight;
+            }
+            else if (it.ActualWidth > 0 && it.TransformToVisual(_navRoot) is { } mi)
+            {
+                var p = mi.Transform(new System.Windows.Point(0, 0));
+                x = p.X; y = p.Y; w = it.ActualWidth; h = it.ActualHeight;
+            }
+            else continue;
+            if (pos.X >= x && pos.X < x + w && pos.Y >= y && pos.Y < y + h)
             {
                 hit = it;
                 break;
@@ -398,6 +411,13 @@ public partial class MainWindow : Window
                 new System.Windows.Media.Animation.ColorAnimation(
                     resting ? ResColor("AccentSoftColor", "#332B1C") : ResColor("HoverSoftColor", "#262E3B"),
                     TimeSpan.FromMilliseconds(Appearance.AnimationsEnabled ? 180 : 0)));
+        // 非悬停（resting）不常驻：胶囊随回归动画淡出，静止态选中只以黄字标识（与关动效形态一致）；
+        // 悬停时立即不透明，保证跟手滑动全程可见
+        _navIndicator.BeginAnimation(System.Windows.UIElement.OpacityProperty,
+            new System.Windows.Media.Animation.DoubleAnimation(
+                resting ? 0 : 1,
+                TimeSpan.FromMilliseconds(!Appearance.AnimationsEnabled ? 0 : resting ? 420 : 0))
+            { FillBehavior = System.Windows.Media.Animation.FillBehavior.HoldEnd });
     }
 
     /// <summary>无动画校准胶囊位置（启动落位、窗口尺寸变化后）。</summary>
@@ -417,6 +437,10 @@ public partial class MainWindow : Window
             brush.BeginAnimation(System.Windows.Media.SolidColorBrush.ColorProperty, null);
             brush.Color = ResColor("AccentSoftColor", "#332B1C");
         }
+        // 静止态不常驻：启动落位/尺寸校准后，非悬停时胶囊隐藏（选中只以黄字标识）；
+        // 正悬停时保持可见（尺寸变化不应吞掉当前悬停框）
+        _navIndicator.BeginAnimation(System.Windows.UIElement.OpacityProperty, null);
+        _navIndicator.Opacity = _navRoot.IsMouseOver ? 1 : 0;
     }
 
     /// <summary>从应用资源取主题色；资源缺席（极早期/异常）时用字面值兜底，绝不抛异常。</summary>
