@@ -709,6 +709,8 @@
     <Style TargetType="TabItem">
         <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
         <Setter Property="Cursor" Value="Hand" />
+        <!-- 选中条目的键盘焦点默认画黑色虚线矩形，与圆角胶囊冲突——交给胶囊表达选中，移除焦点框 -->
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">

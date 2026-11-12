@@ -317,7 +317,10 @@ public partial class MainWindow : Window
     /// <summary>模板换血后的一次性取件重试：新模板应用完成（LayoutUpdated）后重挂胶囊。</summary>
     private void NavIndicatorRetryOnLayout(object? sender, EventArgs e) => InitNavIndicator();
 
-    /// <summary>胶囊滑动到目标条目：resting=选中态（选中色），否则悬停态（悬停色）。目标为空则不动。</summary>
+    /// <summary>胶囊滑动到目标条目：resting=选中态（选中色），否则悬停态（悬停色）。目标为空则不动。
+    /// 悬停跟手仍为 200ms ease-out；回归选中项（resting）放慢到 420ms 并用 S 形（sigmoid）速度曲线——
+    /// 起步缓、中段快、临位缓停。From 省略时动画从属性当前值出发，故回归途中再次悬停会
+    /// 从胶囊现位置重新落回光标下（与既有行为一致）。</summary>
     private void SlideNavIndicator(TabItem? target, bool resting)
     {
         if (_navIndicator is null || _navRoot is null || target is null)
@@ -325,8 +328,10 @@ public partial class MainWindow : Window
         if (target.TransformToVisual(_navRoot) is not { } toRoot)
             return; // 尚未布局完成
         var y = toRoot.Transform(new System.Windows.Point(0, 0)).Y;
-        var duration = TimeSpan.FromMilliseconds(Appearance.AnimationsEnabled ? 200 : 0);
-        var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
+        var duration = TimeSpan.FromMilliseconds(!Appearance.AnimationsEnabled ? 0 : resting ? 420 : 200);
+        System.Windows.Media.Animation.IEasingFunction ease = resting
+            ? new SigmoidEase { Steepness = 7 }
+            : new CubicEase { EasingMode = EasingMode.EaseOut };
         (_navIndicator.RenderTransform as System.Windows.Media.TranslateTransform)?.BeginAnimation(
             System.Windows.Media.TranslateTransform.YProperty,
             new DoubleAnimation(y, duration) { EasingFunction = ease });
@@ -364,4 +369,23 @@ public partial class MainWindow : Window
         System.Windows.Application.Current?.TryFindResource(key) is System.Windows.Media.Color c
             ? c
             : (System.Windows.Media.Color)System.Windows.Media.ColorConverter.ConvertFromString(fallback);
+
+    /// <summary>S 形（sigmoid/逻辑斯蒂）缓动：两端慢、中段快，用于胶囊回归选中项的滑动。
+    /// 曲线 L(t)=1/(1+e^(-k·(t-0.5)))，再线性归一到 [0,1] 保证起止严格贴 0/1。
+    /// Steepness 即 k：越大 S 越陡（中段越快、两端越缓），7 约对应"起步/收尾各留 ~15% 时长的缓区"。</summary>
+    private sealed class SigmoidEase : System.Windows.Media.Animation.EasingFunctionBase
+    {
+        public double Steepness { get; set; } = 7;
+
+        protected override double EaseInCore(double normalizedTime)
+        {
+            var k = Steepness <= 0 ? 1 : Steepness;
+            static double L(double t, double k) => 1.0 / (1.0 + Math.Exp(-k * (t - 0.5)));
+            var lo = L(0, k);
+            var hi = L(1, k);
+            return hi <= lo ? normalizedTime : (L(normalizedTime, k) - lo) / (hi - lo);
+        }
+
+        protected override System.Windows.Freezable CreateInstanceCore() => new SigmoidEase();
+    }
 }
