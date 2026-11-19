@@ -201,10 +201,28 @@
 
                     <Border Grid.Row="1" Style="{DynamicResource Card}" Padding="14,12" VerticalAlignment="Top">
                         <StackPanel>
-                            <Grid Margin="0,0,0,12" ToolTip="{DynamicResource S.Mixer.Hint}">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
                                 <TextBlock Text="{DynamicResource S.Mixer.Title}" FontSize="{DynamicResource Fz.Title}" FontWeight="SemiBold"
                                            Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
-                            </Grid>
+                                <!-- 说明 ？ 圆圈：快速悬停提示 -->
+                                <Border Width="17" Height="17" CornerRadius="{DynamicResource Rad.Card}" Margin="8,1,0,0"
+                                        BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                                        Background="Transparent" VerticalAlignment="Center" Cursor="Hand"
+                                        ToolTip="{DynamicResource S.Mixer.Hint}"
+                                        ToolTipService.InitialShowDelay="100">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource FieldBorderHover}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="?" FontSize="{DynamicResource Fz.Micro}" Foreground="{DynamicResource TextFaint}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </StackPanel>
                             <ScrollViewer x:Name="ChannelsScroller"
                                           HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
                                           PreviewMouseWheel="OnChannelsMouseWheel">
@@ -303,14 +321,34 @@
                     <!-- 音量曲线卡（独立卡片）：百分比＝推子位置，实际振幅按曲线映射（对数为等响度，可自定义） -->
                     <Border Grid.Row="2" Style="{DynamicResource Card}" Padding="14,12" VerticalAlignment="Top">
                         <StackPanel>
-                            <Grid Margin="2,0,2,0" ToolTip="{DynamicResource S.Curve.Tooltip}">
+                            <Grid Margin="2,0,2,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{DynamicResource S.Curve.Title}" FontSize="{DynamicResource Fz.Title}" FontWeight="SemiBold"
-                                           Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{DynamicResource S.Curve.Title}" FontSize="{DynamicResource Fz.Title}" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
+                                    <!-- 说明 ？ 圆圈：快速悬停提示 -->
+                                    <Border Width="17" Height="17" CornerRadius="{DynamicResource Rad.Card}" Margin="8,1,0,0"
+                                            BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                                            Background="Transparent" VerticalAlignment="Center" Cursor="Hand"
+                                            ToolTip="{DynamicResource S.Curve.Tooltip}"
+                                            ToolTipService.InitialShowDelay="100">
+                                        <Border.Style>
+                                            <Style TargetType="Border">
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="BorderBrush" Value="{DynamicResource FieldBorderHover}" />
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Border.Style>
+                                        <TextBlock Text="?" FontSize="{DynamicResource Fz.Micro}" Foreground="{DynamicResource TextFaint}"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                    </Border>
+                                </StackPanel>
                                 <ComboBox x:Name="VolumeCurveCombo" Grid.Column="1" Style="{DynamicResource Combo}"
                                           Width="150" Margin="14,0,0,0" VerticalAlignment="Center"
                                           SelectionChanged="OnVolumeCurveChanged">
