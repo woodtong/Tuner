@@ -563,8 +563,9 @@
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ComboBoxItem">
-                                <!-- 与导航同款分层：底板透明 + 选中层 + 悬停层（悬停叠于选中之上），各自透明度渐变 -->
-                                <Border x:Name="Bd" CornerRadius="{DynamicResource Rad.Control}" Padding="9,10" Margin="0,1" Background="Transparent">
+                                <!-- 与导航同款分层：底板透明 + 选中层 + 悬停层（悬停叠于选中之上），各自透明度渐变；
+                                     高光层占满整行，文字再单独收进内边距 -->
+                                <Border x:Name="Bd" CornerRadius="{DynamicResource Rad.Control}" Margin="0,1" Background="Transparent">
                                     <Grid>
                                         <Border x:Name="SelOv" CornerRadius="{DynamicResource Rad.Control}" Opacity="0" IsHitTestVisible="False">
                                             <Border.Background>
@@ -576,7 +577,9 @@
                                                 <SolidColorBrush Color="{DynamicResource ItemHoverColor}" />
                                             </Border.Background>
                                         </Border>
-                                        <ContentPresenter />
+                                        <Border Padding="9,10">
+                                            <ContentPresenter />
+                                        </Border>
                                     </Grid>
                                 </Border>
                                 <ControlTemplate.Triggers>
