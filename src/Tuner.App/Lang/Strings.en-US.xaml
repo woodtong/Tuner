@@ -31,6 +31,7 @@
     <sys:String x:Key="S.Mixer.Title">Mixer</sys:String>
     <sys:String x:Key="S.Mixer.Hint">MASTER = default output device; ducked apps are managed by rules — adjusting them updates their restore target</sys:String>
     <sys:String x:Key="S.Mixer.MasterDevice">(device)</sys:String>
+    <sys:String x:Key="S.Mixer.WheelHint">Wheel: scroll the page; Shift+Wheel: scroll channels horizontally (up = left, down = right)</sys:String>
     <sys:String x:Key="S.Mixer.Mute">Mute</sys:String>
     <sys:String x:Key="S.Mixer.Unmute">Unmute</sys:String>
     <sys:String x:Key="S.Curve.Title">Volume curve</sys:String>
@@ -42,7 +43,29 @@
     <sys:String x:Key="S.Curve.Hint.Linear">Linear: percent = volume, most direct</sys:String>
     <sys:String x:Key="S.Curve.Hint.Square">Square: finer control at low volume</sys:String>
     <sys:String x:Key="S.Curve.Hint.Log">Log: equal steps, equal loudness (40 dB)</sys:String>
-    <sys:String x:Key="S.Curve.Hint.Custom">Custom: drag control points</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Custom">Custom: drag control points, double-click empty space to add one, right-click a point to remove it; straight lines by default, press Fit to smooth with the configured method</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Preset">Preset "{0}": currently {1}</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Catmull">Catmull-Rom spline (roundest)</sys:String>
+    <sys:String x:Key="S.Curve.Hint.CustomFitted">Custom: drag control points, double-click empty space to add one, right-click a point to remove it; fitted ({0}) — press Unfit for straight lines</sys:String>
+    <sys:String x:Key="S.Curve.Fit.None">Straight lines</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Pchip">Monotone PCHIP (no overshoot)</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Akima">Akima spline (overshoot-resistant)</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Natural">Natural cubic spline (smoothest)</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Poly3">Cubic polynomial fit (overall trend)</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Poly2">Quadratic polynomial fit (overall trend)</sys:String>
+    <sys:String x:Key="S.Curve.FitButton">Fit</sys:String>
+    <sys:String x:Key="S.Curve.FitButtonTip">Fit the current control points with "{0}" from settings (points unchanged, always reversible)</sys:String>
+    <sys:String x:Key="S.Curve.UnfitButton">Unfit</sys:String>
+    <sys:String x:Key="S.Curve.UnfitButtonTip">Drop the fit and go back to straight lines between control points</sys:String>
+    <sys:String x:Key="S.Curve.PresetSave">Save</sys:String>
+    <sys:String x:Key="S.Curve.PresetSaveTip">Save the current custom curve as a named preset (persisted across restarts and updates; same name overwrites)</sys:String>
+    <sys:String x:Key="S.Curve.PresetDelete">Delete</sys:String>
+    <sys:String x:Key="S.Curve.PresetDeleteTip">Delete the selected saved preset (the points on the chart stay unchanged)</sys:String>
+    <sys:String x:Key="S.Curve.PresetPrompt">Name this curve (an existing name gets overwritten).</sys:String>
+    <sys:String x:Key="S.Curve.PresetNameEmpty">Name cannot be empty.</sys:String>
+    <sys:String x:Key="S.Curve.PresetEmpty">The curve has no control points yet — double-click the chart to add one.</sys:String>
+    <sys:String x:Key="S.Curve.PresetOverwrite">A preset named "{0}" already exists. Overwrite it?</sys:String>
+    <sys:String x:Key="S.Curve.PresetDeleteConfirm">Delete preset "{0}"? The current points on the chart are kept.</sys:String>
 
     <!-- Groups page -->
     <sys:String x:Key="S.Group.New">＋ New group</sys:String>
@@ -151,6 +174,9 @@
     <sys:String x:Key="S.Set.Hotkeys">Global hotkeys</sys:String>
     <sys:String x:Key="S.Set.HotkeysTip">System-wide keys, work while in tray; registration failure is logged (key combo taken)</sys:String>
     <sys:String x:Key="S.Set.HotkeysHint">Ctrl+Alt+P pause · Ctrl+Alt+M show</sys:String>
+    <sys:String x:Key="S.Set.CurveFit">Fitting method</sys:String>
+    <sys:String x:Key="S.Set.CurveFitTip">Used by the Fit button on the volume page only: it fits the custom control points with this method; without pressing it the curve stays straight lines</sys:String>
+    <sys:String x:Key="S.Set.CurveFitHint">The curve stays straight lines by default; press Fit on the volume page to apply the method chosen here, press Unfit to go back. PCHIP = shape-preserving, never overshoots (recommended); Akima = overshoot-resistant, softer corners; natural cubic spline = globally smoothest but may overshoot; Catmull-Rom = roundest; polynomial = least-squares trend that does not pass through the points</sys:String>
     <sys:String x:Key="S.Set.Detect">Activity detection</sys:String>
     <sys:String x:Key="S.Set.Smtc">Prefer system playback state (recommended)</sys:String>
     <sys:String x:Key="S.Set.SmtcHint">No false triggers between tracks, instant restore; apps without media sessions fall back to peak detection</sys:String>
@@ -196,6 +222,7 @@
     <sys:String x:Key="S.Status.DuckBadge">Ducking → {0}%</sys:String>
     <sys:String x:Key="S.Status.TakeoverBadge">Manual takeover</sys:String>
     <sys:String x:Key="S.Volume.OutputTitle">Output: {0}</sys:String>
+    <sys:String x:Key="S.Volume.PageTitle">Volume Console</sys:String>
     <sys:String x:Key="S.Group.Count">{0} processes</sys:String>
     <sys:String x:Key="S.Group.DefaultCount">Catches unmatched apps</sys:String>
     <sys:String x:Key="S.Group.NeedName">Enter a group name first</sys:String>

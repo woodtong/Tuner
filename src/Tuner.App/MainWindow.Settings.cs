@@ -43,6 +43,10 @@ public partial class MainWindow
         SetRuleConflict.SelectedIndex = s.RuleConflict == "deepest" ? 1 : 0;
         SetManualTakeover.IsChecked = s.ManualTakeover;
         SetHotkeys.IsChecked = s.HotkeysEnabled;
+        if (SetCurveFit.Items.Count == 0)
+            foreach (var method in VolumeCurve.FitMethods)
+                SetCurveFit.Items.Add(FitMethodName(method));
+        SetCurveFit.SelectedIndex = FitMethodIndex(VolumeCurve.NormalizeFitMethod(s.CurveFit));
         SetSuspend.IsChecked = !App.Engine.Suspended; // 运行态开关：仅同步显示，不落盘
         try
         {
@@ -94,6 +98,15 @@ public partial class MainWindow
         };
         Lang.Apply(Lang.Resolve(App.Config.Settings.Language));
         App.Log("界面语言已切换：" + Lang.Current);
+        _loadingUi = true; // 切语言后整页重建：程序内建条目（曲线下拉/拟合方式）需手动换文案
+        try
+        {
+            LoadSettingsTab();
+        }
+        finally
+        {
+            _loadingUi = false;
+        }
         MarkDirty();
     }
 
@@ -303,6 +316,31 @@ public partial class MainWindow
     /// <summary>设置页字段变更：数值解析与钳制延后到自动保存时统一做（TryParseSettings）。</summary>
     private void OnSettingsFieldChanged(object sender, RoutedEventArgs e) => MarkDirty();
 
+    /// <summary>拟合算法变更：只改「点击拟合时用哪种算法」，曲线保持原状（默认折线，点拟合才生效）。</summary>
+    private void OnCurveFitChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (_loadingUi)
+            return;
+        App.Config.Settings.CurveFit = FitMethodAt(SetCurveFit.SelectedIndex);
+        UpdateFitButton(App.Config.Settings);
+        MarkDirty();
+    }
+
+    /// <summary>下拉序号 → 拟合算法标识（顺序同 VolumeCurve.FitMethods）。</summary>
+    private static string FitMethodAt(int index) =>
+        index >= 0 && index < VolumeCurve.FitMethods.Count
+            ? VolumeCurve.FitMethods[index]
+            : VolumeCurve.FitMethods[0];
+
+    /// <summary>拟合算法标识 → 下拉序号。</summary>
+    private static int FitMethodIndex(string method)
+    {
+        for (int i = 0; i < VolumeCurve.FitMethods.Count; i++)
+            if (VolumeCurve.FitMethods[i] == method)
+                return i;
+        return 0;
+    }
+
     private bool TryParseSettings()
     {
         // 峰值阈值/低电平保持/静音宽限为"未接入 SMTC 应用"的兜底参数，保留在配置文件中，界面不再暴露
@@ -318,6 +356,7 @@ public partial class MainWindow
         s.FadeInDurationMs = Math.Clamp(fadeIn, 50, 10_000);
         s.PollIntervalMs = Math.Clamp(poll, 10, 5_000);
         s.RuleConflict = SetRuleConflict.SelectedIndex == 1 ? "deepest" : "priority";
+        s.CurveFit = FitMethodAt(SetCurveFit.SelectedIndex);
         s.ManualTakeover = SetManualTakeover.IsChecked == true;
         s.HotkeysEnabled = SetHotkeys.IsChecked == true;
         return true;

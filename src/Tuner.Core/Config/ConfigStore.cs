@@ -155,8 +155,35 @@ public static class ConfigStore
         // 音量曲线：非法值回退线性；自定义点规整（custom 但点数不足同样回退线性）
         s.VolumeCurve = VolumeCurve.Normalize(s.VolumeCurve);
         s.CustomCurve = VolumeCurve.NormalizePoints(s.CustomCurve);
+        s.CurveFit = VolumeCurve.NormalizeFitMethod(s.CurveFit);          // 设置页选的拟合算法
+        s.CustomCurveFit = VolumeCurve.NormalizeFit(s.CustomCurveFit);    // 已应用的拟合（""/"linear"＝折线）
         if (s.VolumeCurve == "custom" && s.CustomCurve.Count < 2)
             s.VolumeCurve = "linear";
+
+        // 已保存曲线预设：去空名、去重名（后者加序号）、点集规整；点数不足 2 的预设丢弃
+        s.SavedCurves ??= new List<CurvePreset>();
+        var kept = new List<CurvePreset>();
+        foreach (var preset in s.SavedCurves)
+        {
+            if (preset is null)
+                continue;
+            preset.Name = (preset.Name ?? "").Trim();
+            if (preset.Name.Length == 0)
+                continue;
+            preset.Points = VolumeCurve.NormalizePoints(preset.Points);
+            if (preset.Points.Count < 2)
+                continue;
+            var name = preset.Name;
+            int dup = 2;
+            while (kept.Any(k => string.Equals(k.Name, name, StringComparison.OrdinalIgnoreCase)))
+                name = preset.Name + " (" + dup++ + ")";
+            preset.Name = name;
+            kept.Add(preset);
+        }
+        s.SavedCurves = kept;
+        if (s.ActiveCurvePreset is null ||
+            !s.SavedCurves.Any(p => p.Name == s.ActiveCurvePreset))
+            s.ActiveCurvePreset = "";
 
         foreach (var g in config.Groups)
         {

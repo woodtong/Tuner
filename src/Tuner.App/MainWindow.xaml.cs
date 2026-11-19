@@ -59,7 +59,7 @@ public partial class MainWindow : Window
         catch { /* 图标失败不影响功能 */ }
 
         DeviceText.Text = App.Monitor.DeviceName;
-        OutputTitle.Text = Lang.Get("S.Volume.OutputTitle", App.Monitor.DeviceName);
+        OutputTitle.Text = Lang.Get("S.Volume.PageTitle");   // 页面标题：音量控制台
         Title = Lang.Get("S.Win.Title");
         StatusList.ItemsSource = _statusRows;
         VolumeList.ItemsSource = _volumeRows;
@@ -130,7 +130,7 @@ public partial class MainWindow : Window
         Lang.LanguageChanged += () => Dispatcher.BeginInvoke(() =>
         {
             Title = Lang.Get("S.Win.Title");
-            OutputTitle.Text = Lang.Get("S.Volume.OutputTitle", App.Monitor.DeviceName);
+            OutputTitle.Text = Lang.Get("S.Volume.PageTitle");
             foreach (var row in _volumeRows)
                 row.UpdateMuteText();
             RefreshGroupTab();
@@ -291,18 +291,27 @@ public partial class MainWindow : Window
         // 换成本代码创建的可变实例后再驱动动画。
         _navIndicator.RenderTransform = new System.Windows.Media.TranslateTransform();
         _navIndicator.Background = new System.Windows.Media.SolidColorBrush(ResColor("AccentSoftColor", "#332B1C"));
+        // 关动效：隐藏滑动胶囊（选中=黄字、悬停=浅灰底，由 NoAnim 模板条目层承担）
+        _navIndicator.Visibility = Appearance.AnimationsEnabled
+            ? System.Windows.Visibility.Visible
+            : System.Windows.Visibility.Collapsed;
         // 条目级事件只挂一次（页签实例跨模板重建复用）；NavRoot 随模板重建需按实例重挂
         if (!_navEventsHooked)
         {
             _navEventsHooked = true;
-            foreach (TabItem item in Tabs.Items)
-                item.MouseEnter += (s, _) => SlideNavIndicator(s as TabItem, resting: false);
             Tabs.SizeChanged += (_, _) => SnapNavIndicator(); // 窗口缩放/DPI 变化后原地校准（不带动画）
         }
         if (!ReferenceEquals(_navRootHooked, _navRoot))
         {
             _navRootHooked = _navRoot;
-            _navRoot.MouseLeave += (_, _) => SlideNavIndicator(Tabs.SelectedItem as TabItem, resting: true);
+            // Cogent 式指针命中：X/Y 均落在条目矩形内才算悬停（边距/菜单一旁的空隙不判定）；
+            // 空隙期间回落选中项；目标不变不重启动画
+            _navRoot.MouseMove += NavRootMouseMove;
+            _navRoot.MouseLeave += (_, _) =>
+            {
+                _navHoverItem = null;
+                SlideNavIndicator(Tabs.SelectedItem as TabItem, resting: true);
+            };
         }
         try
         {
@@ -317,26 +326,98 @@ public partial class MainWindow : Window
     /// <summary>模板换血后的一次性取件重试：新模板应用完成（LayoutUpdated）后重挂胶囊。</summary>
     private void NavIndicatorRetryOnLayout(object? sender, EventArgs e) => InitNavIndicator();
 
-    /// <summary>胶囊滑动到目标条目：resting=选中态（选中色），否则悬停态（悬停色）。目标为空则不动。</summary>
+    private TabItem? _navHoverItem;
+
+    /// <summary>NavRoot 内指针命中判定：以可见的 Bd 圆角框为按键 block——X/Y 均落在 Bd 矩形内
+    /// 才算悬停（TabItem 矩形含条目间 2px 空隙，框外空隙不算命中）；空隙回落选中项。</summary>
+    private void NavRootMouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (_navRoot is null) return;
+        var pos = e.GetPosition(_navRoot);
+        TabItem? hit = null;
+        foreach (TabItem it in Tabs.Items)
+        {
+            // 命中矩形 = 模板 Bd（用户可见的圆角框），与关动效灰框逐像素一致；
+            // Bd 尚未布局（宽高为 0）时回退 TabItem 矩形
+            double x, y, w, h;
+            if (it.Template?.FindName("Bd", it) is System.Windows.Controls.Border bd
+                && bd.ActualWidth > 0 && bd.TransformToVisual(_navRoot) is { } mb)
+            {
+                var p = mb.Transform(new System.Windows.Point(0, 0));
+                x = p.X; y = p.Y; w = bd.ActualWidth; h = bd.ActualHeight;
+            }
+            else if (it.ActualWidth > 0 && it.TransformToVisual(_navRoot) is { } mi)
+            {
+                var p = mi.Transform(new System.Windows.Point(0, 0));
+                x = p.X; y = p.Y; w = it.ActualWidth; h = it.ActualHeight;
+            }
+            else continue;
+            if (pos.X >= x && pos.X < x + w && pos.Y >= y && pos.Y < y + h)
+            {
+                hit = it;
+                break;
+            }
+        }
+        if (ReferenceEquals(hit, _navHoverItem))
+            return; // 目标未变：不重启动画（悬停中不抖）
+        _navHoverItem = hit;
+        SlideNavIndicator(hit ?? Tabs.SelectedItem as TabItem, resting: hit is null);
+    }
+
+    /// <summary>条目几何（相对 NavRoot）：优先取模板 Bd 本体——开/关动效两种模式的方框
+    /// 位置与大小完全一致（以关动效时的 Bd 灰框为基准；TabItem 高度含 2px 底边距，偏大）。</summary>
+    private bool TryGetNavItemGeom(TabItem item, out double y, out double height)
+    {
+        y = height = 0;
+        if (item.Template?.FindName("Bd", item) is System.Windows.Controls.Border bd
+            && bd.ActualHeight > 0 && bd.TransformToVisual(_navRoot!) is { } mb)
+        {
+            y = mb.Transform(new System.Windows.Point(0, 0)).Y;
+            height = bd.ActualHeight;
+            return true;
+        }
+        if (item.ActualHeight <= 0 || item.TransformToVisual(_navRoot!) is not { } mi)
+            return false; // 尚未布局完成
+        y = mi.Transform(new System.Windows.Point(0, 0)).Y;
+        height = item.ActualHeight;
+        return true;
+    }
+
+    /// <summary>胶囊滑动到目标条目：resting=选中态（选中色），否则悬停态（悬停色）。目标为空则不动。
+    /// 仅回归选中项（resting）放慢到 420ms，缓动曲线与悬停一致（200ms ease-out cubic），其余行为不变；
+    /// 显式 From=属性当前值（依赖属性读取返回含动画层的现值）——与 cogent 的 CSS transition
+    /// "从当前计算样式出发"同语义，杜绝 To-only 动画在替换旧动画时起点解析歧义导致的"闪现不滑动"。</summary>
     private void SlideNavIndicator(TabItem? target, bool resting)
     {
         if (_navIndicator is null || _navRoot is null || target is null)
             return;
-        if (target.TransformToVisual(_navRoot) is not { } toRoot)
+        if (!TryGetNavItemGeom(target, out var y, out var h))
             return; // 尚未布局完成
-        var y = toRoot.Transform(new System.Windows.Point(0, 0)).Y;
-        var duration = TimeSpan.FromMilliseconds(Appearance.AnimationsEnabled ? 200 : 0);
+        var duration = TimeSpan.FromMilliseconds(!Appearance.AnimationsEnabled ? 0 : resting ? 420 : 200);
         var ease = new CubicEase { EasingMode = EasingMode.EaseOut };
-        (_navIndicator.RenderTransform as System.Windows.Media.TranslateTransform)?.BeginAnimation(
-            System.Windows.Media.TranslateTransform.YProperty,
-            new DoubleAnimation(y, duration) { EasingFunction = ease });
-        _navIndicator.BeginAnimation(System.Windows.Controls.Border.HeightProperty,
-            new DoubleAnimation(target.ActualHeight, duration) { EasingFunction = ease });
+        if (_navIndicator.RenderTransform is System.Windows.Media.TranslateTransform rt)
+        {
+            var anim = new DoubleAnimation(rt.Y, y, duration) { EasingFunction = ease };
+            rt.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, anim);
+        }
+        // 高度当前值（Snap 校准后为具体数；未布局时可能 NaN，此时回退 To-only）
+        var fromHeight = _navIndicator.Height;
+        var heightAnim = double.IsNaN(fromHeight)
+            ? new DoubleAnimation(h, duration) { EasingFunction = ease }
+            : new DoubleAnimation(fromHeight, h, duration) { EasingFunction = ease };
+        _navIndicator.BeginAnimation(System.Windows.Controls.Border.HeightProperty, heightAnim);
         if (_navIndicator.Background is System.Windows.Media.SolidColorBrush brush)
             brush.BeginAnimation(System.Windows.Media.SolidColorBrush.ColorProperty,
                 new System.Windows.Media.Animation.ColorAnimation(
                     resting ? ResColor("AccentSoftColor", "#332B1C") : ResColor("HoverSoftColor", "#262E3B"),
                     TimeSpan.FromMilliseconds(Appearance.AnimationsEnabled ? 180 : 0)));
+        // 非悬停（resting）不常驻：胶囊随回归动画淡出，静止态选中只以黄字标识（与关动效形态一致）；
+        // 悬停时立即不透明，保证跟手滑动全程可见
+        _navIndicator.BeginAnimation(System.Windows.UIElement.OpacityProperty,
+            new System.Windows.Media.Animation.DoubleAnimation(
+                resting ? 0 : 1,
+                TimeSpan.FromMilliseconds(!Appearance.AnimationsEnabled ? 0 : resting ? 420 : 0))
+            { FillBehavior = System.Windows.Media.Animation.FillBehavior.HoldEnd });
     }
 
     /// <summary>无动画校准胶囊位置（启动落位、窗口尺寸变化后）。</summary>
@@ -344,11 +425,10 @@ public partial class MainWindow : Window
     {
         if (_navIndicator is null || _navRoot is null || Tabs.SelectedItem is not TabItem target)
             return;
-        if (target.ActualHeight <= 0 || target.TransformToVisual(_navRoot) is not { } toRoot)
+        if (!TryGetNavItemGeom(target, out var y, out var h))
             return; // 尚未完成布局，等下一次尺寸事件再校准
-        var y = toRoot.Transform(new System.Windows.Point(0, 0)).Y;
         _navIndicator.BeginAnimation(System.Windows.Controls.Border.HeightProperty, null);
-        _navIndicator.Height = target.ActualHeight;
+        _navIndicator.Height = h;
         (_navIndicator.RenderTransform as System.Windows.Media.TranslateTransform)?.BeginAnimation(
             System.Windows.Media.TranslateTransform.YProperty, null);
         (_navIndicator.RenderTransform as System.Windows.Media.TranslateTransform)!.Y = y;
@@ -357,6 +437,10 @@ public partial class MainWindow : Window
             brush.BeginAnimation(System.Windows.Media.SolidColorBrush.ColorProperty, null);
             brush.Color = ResColor("AccentSoftColor", "#332B1C");
         }
+        // 静止态不常驻：启动落位/尺寸校准后，非悬停时胶囊隐藏（选中只以黄字标识）；
+        // 正悬停时保持可见（尺寸变化不应吞掉当前悬停框）
+        _navIndicator.BeginAnimation(System.Windows.UIElement.OpacityProperty, null);
+        _navIndicator.Opacity = _navRoot.IsMouseOver ? 1 : 0;
     }
 
     /// <summary>从应用资源取主题色；资源缺席（极早期/异常）时用字面值兜底，绝不抛异常。</summary>

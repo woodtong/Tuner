@@ -490,7 +490,7 @@
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Grid>
                                         <Border x:Name="Bd" Background="{DynamicResource ItemBg}" BorderBrush="{DynamicResource FieldBorder}"
-                                                BorderThickness="1" CornerRadius="{DynamicResource Rad.Control}" Padding="0,6">
+                                                BorderThickness="1" CornerRadius="{DynamicResource Rad.Control}" Padding="0,9">
                                             <Path Data="M0,0 L4,4 8,0" Stroke="{DynamicResource TextSecondary}"
                                                   StrokeThickness="1.5" HorizontalAlignment="Right"
                                                   VerticalAlignment="Center" Margin="0,0,10,0" />
@@ -566,8 +566,9 @@
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="ComboBoxItem">
-                                <!-- 与导航同款分层：底板透明 + 选中层 + 悬停层（悬停叠于选中之上），各自透明度渐变 -->
-                                <Border x:Name="Bd" CornerRadius="{DynamicResource Rad.Control}" Padding="9,6" Margin="0,1" Background="Transparent">
+                                <!-- 与导航同款分层：底板透明 + 选中层 + 悬停层（悬停叠于选中之上）；
+                                     高光层占满整行，文字再单独收进内边距 -->
+                                <Border x:Name="Bd" CornerRadius="{DynamicResource Rad.Control}" Margin="0,1" Background="Transparent">
                                     <Grid>
                                         <Border x:Name="SelOv" CornerRadius="{DynamicResource Rad.Control}" Opacity="0" IsHitTestVisible="False">
                                             <Border.Background>
@@ -579,7 +580,9 @@
                                                 <SolidColorBrush Color="{DynamicResource ItemHoverColor}" />
                                             </Border.Background>
                                         </Border>
-                                        <ContentPresenter />
+                                        <Border Padding="9,10">
+                                            <ContentPresenter />
+                                        </Border>
                                     </Grid>
                                 </Border>
                                 <ControlTemplate.Triggers>
@@ -712,6 +715,8 @@
     <Style TargetType="TabItem">
         <Setter Property="Foreground" Value="{DynamicResource TextSecondary}" />
         <Setter Property="Cursor" Value="Hand" />
+        <!-- 选中条目的键盘焦点默认画黑色虚线矩形，与圆角胶囊冲突——交给胶囊表达选中，移除焦点框 -->
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
@@ -725,8 +730,11 @@
                             <Setter Property="Foreground" Value="{DynamicResource Accent}" />
                             <Setter TargetName="Header" Property="TextElement.FontWeight" Value="SemiBold" />
                         </Trigger>
-                        <Trigger Property="IsMouseOver" Value="True">
+                        <!-- 悬停看 Bd 自身：TabItem.IsMouseOver 会被"鼠标在选中页签内容上"经内容桥接置真（WPF 怪癖），导致悬停内容区时菜单项误亮灰框 -->
+                        <Trigger SourceName="Bd" Property="IsMouseOver" Value="True">
                             <Setter Property="Foreground" Value="{DynamicResource TextPrimary}" />
+                            <!-- 关动效模式：无滑动胶囊，悬停以浅灰底标识选中候选 -->
+                            <Setter TargetName="Bd" Property="Background" Value="{DynamicResource ItemHover}" />
                         </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
@@ -751,7 +759,7 @@
                         </Grid.ColumnDefinitions>
                         <Grid x:Name="NavRoot" Grid.Column="0">
                             <Border x:Name="NavIndicator" CornerRadius="{DynamicResource Rad.Control}" IsHitTestVisible="False"
-                                    VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                                    VerticalAlignment="Top" HorizontalAlignment="Stretch" Margin="2,0,14,0">
                                 <Border.RenderTransform>
                                     <TranslateTransform />
                                 </Border.RenderTransform>
@@ -783,7 +791,7 @@
         </Setter>
     </Style>
 
-    <!-- 细滚动条（仅竖向，横向保持默认）：滑块悬停提亮 -->
+    <!-- 细滚动条（竖向 8px / 横向 6px，暗色滑块悬停提亮） -->
     <Style TargetType="ScrollBar">
         <Style.Triggers>
             <Trigger Property="Orientation" Value="Vertical">
@@ -805,6 +813,40 @@
                                                 <ControlTemplate TargetType="Thumb">
                                                     <Border x:Name="ThumbBd" Background="{DynamicResource ScrollThumbBg}"
                                                             CornerRadius="{DynamicResource Rad.Chip}" Margin="2,0" />
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="ThumbBd" Property="Background" Value="{DynamicResource ScrollThumbHoverBg}" />
+                                                    </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Thumb.Template>
+                                        </Thumb>
+                                    </Track.Thumb>
+                                </Track>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Trigger>
+            <Trigger Property="Orientation" Value="Horizontal">
+                <Setter Property="Height" Value="6" />
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="ScrollBar">
+                            <Grid Background="Transparent">
+                                <Track x:Name="PART_Track">
+                                    <Track.DecreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageLeftCommand" Opacity="0" Focusable="False" />
+                                    </Track.DecreaseRepeatButton>
+                                    <Track.IncreaseRepeatButton>
+                                        <RepeatButton Command="ScrollBar.PageRightCommand" Opacity="0" Focusable="False" />
+                                    </Track.IncreaseRepeatButton>
+                                    <Track.Thumb>
+                                        <Thumb>
+                                            <Thumb.Template>
+                                                <ControlTemplate TargetType="Thumb">
+                                                    <Border x:Name="ThumbBd" Background="{DynamicResource ScrollThumbBg}"
+                                                            CornerRadius="{DynamicResource Rad.Chip}" Margin="0,2" />
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
                                                         <Setter TargetName="ThumbBd" Property="Background" Value="{DynamicResource ScrollThumbHoverBg}" />

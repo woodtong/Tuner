@@ -94,6 +94,36 @@ public sealed class EngineSettings
 
     /// <summary>VolumeCurve=="custom" 时的自定义控制点（0..1 归一化，响度↔音量百分比映射）。</summary>
     public List<CurvePoint> CustomCurve { get; set; } = new();
+
+    /// <summary>
+    /// 设置页选择的「拟合算法」（点击音量页「拟合」按钮时使用）："monotone"=PCHIP（默认，保形不过冲）、
+    /// "akima"、 "natural"、 "catmull"、 "poly3"、 "poly2"。本身不影响曲线，只有点击拟合才生效。
+    /// </summary>
+    public string CurveFit { get; set; } = "monotone";
+
+    /// <summary>
+    /// 已应用到自定义曲线上的拟合方式：""/"linear"=折线直连（默认，未拟合）；
+    /// 其余取值同 CurveFit。点击「拟合」写入，点击「还原折线」清空。
+    /// </summary>
+    public string CustomCurveFit { get; set; } = "";
+
+    /// <summary>
+    /// 用户保存的自定义曲线预设（命名 + 控制点）。随配置文件持久化：重开应用、更新程序都不丢
+    /// （配置默认在 %APPDATA%\Tuner\config.json，便携模式在程序目录）。
+    /// </summary>
+    public List<CurvePreset> SavedCurves { get; set; } = new();
+
+    /// <summary>当前选中的已保存预设名（""=未选中，即"自定义"编辑态）。</summary>
+    public string ActiveCurvePreset { get; set; } = "";
+}
+
+/// <summary>一套命名的自定义音量曲线预设。</summary>
+public sealed class CurvePreset
+{
+    public string Name { get; set; } = "";
+
+    /// <summary>控制点（0..1 归一化，按 X 升序；保存时规整）。</summary>
+    public List<CurvePoint> Points { get; set; } = new();
 }
 
 public sealed class AppGroupConfig
