@@ -338,21 +338,67 @@ public partial class MainWindow
         slider.BeginAnimation(Slider.ValueProperty, anim);
     }
 
+    // 平滑滚动：滚轮只更新目标偏移，渲染帧定时器每帧向目标插值逼近，连续滚动无跳变
+    private System.Windows.Threading.DispatcherTimer? _vScrollTimer;
+    private double _vScrollTarget;
+    private System.Windows.Threading.DispatcherTimer? _hScrollTimer;
+    private double _hScrollTarget;
+
     /// <summary>调音台区滚轮：Shift 按下 → 横向滚动（上=左移，下=右移）；否则转交给页面纵向滚动。
     /// 内层 ScrollViewer 的 OnMouseWheel 无论能否纵向滚动都会把事件标为 Handled，必须手动代滚页面。</summary>
     private void OnChannelsMouseWheel(object sender, MouseWheelEventArgs e)
     {
         if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0 && ChannelsScroller.ScrollableWidth > 0)
         {
-            ChannelsScroller.ScrollToHorizontalOffset(ChannelsScroller.HorizontalOffset - e.Delta);
+            SmoothScroll(ChannelsScroller, ChannelsScroller.HorizontalOffset - e.Delta, horizontal: true);
             e.Handled = true;
             return;
         }
         if (VolumePageScroller.ScrollableHeight > 0)
         {
-            VolumePageScroller.ScrollToVerticalOffset(VolumePageScroller.VerticalOffset - e.Delta);
+            SmoothScroll(VolumePageScroller, VolumePageScroller.VerticalOffset - e.Delta, horizontal: false);
             e.Handled = true;
         }
+    }
+
+    /// <summary>滚轮平滑滚动：每帧向目标偏移按比例逼近（指数缓出），滚轮只改目标、打断即重定向。</summary>
+    private void SmoothScroll(ScrollViewer sv, double target, bool horizontal)
+    {
+        double max = horizontal ? sv.ScrollableWidth : sv.ScrollableHeight;
+        target = Math.Max(0, Math.Min(target, max));
+
+        var timer = horizontal ? _hScrollTimer : _vScrollTimer;
+        if (timer is null)
+        {
+            timer = new System.Windows.Threading.DispatcherTimer(
+                System.Windows.Threading.DispatcherPriority.Render)
+            {
+                Interval = TimeSpan.FromMilliseconds(16),
+            };
+            var svCaptured = sv;
+            var horizCaptured = horizontal;
+            timer.Tick += (_, _) =>
+            {
+                var t = horizCaptured ? _hScrollTarget : _vScrollTarget;
+                var cur = horizCaptured ? svCaptured.HorizontalOffset : svCaptured.VerticalOffset;
+                var next = cur + (t - cur) * 0.3; // 指数缓出：越近越慢，观感为"滚过去"而非跳格
+                if (Math.Abs(t - next) < 0.5 || Math.Abs(t - cur) < 0.5)
+                {
+                    if (horizCaptured) svCaptured.ScrollToHorizontalOffset(t);
+                    else svCaptured.ScrollToVerticalOffset(t);
+                    timer.Stop();
+                    return;
+                }
+                if (horizCaptured) svCaptured.ScrollToHorizontalOffset(next);
+                else svCaptured.ScrollToVerticalOffset(next);
+            };
+            if (horizontal) _hScrollTimer = timer;
+            else _vScrollTimer = timer;
+        }
+
+        if (horizontal) _hScrollTarget = target;
+        else _vScrollTarget = target;
+        timer.Start();
     }
 
     /// <summary>MASTER 滚轮 1% 微调。</summary>
