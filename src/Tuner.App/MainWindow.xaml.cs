@@ -59,7 +59,7 @@ public partial class MainWindow : Window
         catch { /* 图标失败不影响功能 */ }
 
         DeviceText.Text = App.Monitor.DeviceName;
-        OutputTitle.Text = Lang.Get("S.Volume.OutputTitle", App.Monitor.DeviceName);
+        OutputTitle.Text = Lang.Get("S.Mixer.Title");   // 文案简化：仅改标题为「调音台」，结构不动
         Title = Lang.Get("S.Win.Title");
         StatusList.ItemsSource = _statusRows;
         VolumeList.ItemsSource = _volumeRows;
@@ -130,7 +130,7 @@ public partial class MainWindow : Window
         Lang.LanguageChanged += () => Dispatcher.BeginInvoke(() =>
         {
             Title = Lang.Get("S.Win.Title");
-            OutputTitle.Text = Lang.Get("S.Volume.OutputTitle", App.Monitor.DeviceName);
+            OutputTitle.Text = Lang.Get("S.Mixer.Title");
             foreach (var row in _volumeRows)
                 row.UpdateMuteText();
             RefreshGroupTab();
