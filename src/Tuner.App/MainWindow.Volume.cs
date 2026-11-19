@@ -367,12 +367,14 @@ public partial class MainWindow
     private void OnRootMouseWheel(object sender, MouseWheelEventArgs e)
     {
         var dep = e.OriginalSource as DependencyObject;
+        App.Log($"[wheelprobe] delta={e.Delta} src={e.OriginalSource?.GetType().Name}");
         while (dep is not null)
         {
             if (dep is System.Windows.Controls.Slider)
                 return;
             if (dep is ScrollViewer sv)
             {
+                App.Log($"[wheelprobe] hit SV scrollH={sv.ScrollableHeight:F0} scrollW={sv.ScrollableWidth:F0} name={sv.Name}");
                 bool shift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
                 if (shift)
                 {
