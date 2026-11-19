@@ -338,13 +338,21 @@ public partial class MainWindow
         slider.BeginAnimation(Slider.ValueProperty, anim);
     }
 
-    /// <summary>调音台区滚轮：Shift 按下 → 横向滚动（上=左移，下=右移）；否则放行给页面纵向滚动。</summary>
+    /// <summary>调音台区滚轮：Shift 按下 → 横向滚动（上=左移，下=右移）；否则转交给页面纵向滚动。
+    /// 内层 ScrollViewer 的 OnMouseWheel 无论能否纵向滚动都会把事件标为 Handled，必须手动代滚页面。</summary>
     private void OnChannelsMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if ((Keyboard.Modifiers & ModifierKeys.Shift) == 0 || ChannelsScroller.ScrollableWidth <= 0)
-            return; // 普通滚轮不拦截，让外层 ScrollViewer 正常上下滚动
-        ChannelsScroller.ScrollToHorizontalOffset(ChannelsScroller.HorizontalOffset - e.Delta);
-        e.Handled = true;
+        if ((Keyboard.Modifiers & ModifierKeys.Shift) != 0 && ChannelsScroller.ScrollableWidth > 0)
+        {
+            ChannelsScroller.ScrollToHorizontalOffset(ChannelsScroller.HorizontalOffset - e.Delta);
+            e.Handled = true;
+            return;
+        }
+        if (VolumePageScroller.ScrollableHeight > 0)
+        {
+            VolumePageScroller.ScrollToVerticalOffset(VolumePageScroller.VerticalOffset - e.Delta);
+            e.Handled = true;
+        }
     }
 
     /// <summary>MASTER 滚轮 1% 微调。</summary>

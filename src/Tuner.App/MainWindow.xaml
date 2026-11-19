@@ -187,7 +187,7 @@
                             <TextBlock Text="{DynamicResource S.Tab.Volume}" Margin="9,0,0,0" />
                         </StackPanel>
                     </TabItem.Header>
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer x:Name="VolumePageScroller" VerticalScrollBarVisibility="Auto">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
