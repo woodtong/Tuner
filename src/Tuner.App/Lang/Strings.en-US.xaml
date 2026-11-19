@@ -196,6 +196,7 @@
     <sys:String x:Key="S.Status.DuckBadge">Ducking → {0}%</sys:String>
     <sys:String x:Key="S.Status.TakeoverBadge">Manual takeover</sys:String>
     <sys:String x:Key="S.Volume.OutputTitle">Output: {0}</sys:String>
+    <sys:String x:Key="S.Volume.PageTitle">Volume Console</sys:String>
     <sys:String x:Key="S.Group.Count">{0} processes</sys:String>
     <sys:String x:Key="S.Group.DefaultCount">Catches unmatched apps</sys:String>
     <sys:String x:Key="S.Group.NeedName">Enter a group name first</sys:String>

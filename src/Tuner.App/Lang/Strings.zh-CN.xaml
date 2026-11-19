@@ -196,6 +196,7 @@
     <sys:String x:Key="S.Status.DuckBadge">闪避中 → {0}%</sys:String>
     <sys:String x:Key="S.Status.TakeoverBadge">手动接管（本轮不压低）</sys:String>
     <sys:String x:Key="S.Volume.OutputTitle">输出：{0}</sys:String>
+    <sys:String x:Key="S.Volume.PageTitle">音量控制台</sys:String>
     <sys:String x:Key="S.Group.Count">{0} 个进程</sys:String>
     <sys:String x:Key="S.Group.DefaultCount">承接未匹配应用</sys:String>
     <sys:String x:Key="S.Group.NeedName">请先填写分组名</sys:String>
