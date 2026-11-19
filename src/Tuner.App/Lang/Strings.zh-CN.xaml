@@ -43,7 +43,20 @@
     <sys:String x:Key="S.Curve.Hint.Linear">线性：百分比＝音量，最直观</sys:String>
     <sys:String x:Key="S.Curve.Hint.Square">平方：小音量段更细腻</sys:String>
     <sys:String x:Key="S.Curve.Hint.Log">对数：等格等响（全程 40dB）</sys:String>
-    <sys:String x:Key="S.Curve.Hint.Custom">自定义：拖动控制点调映射</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Custom">自定义：拖动控制点调映射，当前拟合＝{0}</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Preset">预设「{0}」：{1}</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Linear">折线直连</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Monotone">单调平滑（不过冲）</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Catmull">样条平滑（最圆润）</sys:String>
+    <sys:String x:Key="S.Curve.PresetSave">保存</sys:String>
+    <sys:String x:Key="S.Curve.PresetSaveTip">把当前自定义曲线存为命名预设（长久保存，重开或更新都不丢；同名即覆盖）</sys:String>
+    <sys:String x:Key="S.Curve.PresetDelete">删除</sys:String>
+    <sys:String x:Key="S.Curve.PresetDeleteTip">删除当前选中的已保存预设（图表点集不受影响）</sys:String>
+    <sys:String x:Key="S.Curve.PresetPrompt">给这条曲线起个名字（同名则覆盖）。</sys:String>
+    <sys:String x:Key="S.Curve.PresetNameEmpty">名字不能为空。</sys:String>
+    <sys:String x:Key="S.Curve.PresetEmpty">曲线还没有控制点，先在图里双击加点。</sys:String>
+    <sys:String x:Key="S.Curve.PresetOverwrite">已存在同名预设「{0}」，覆盖它吗？</sys:String>
+    <sys:String x:Key="S.Curve.PresetDeleteConfirm">删除预设「{0}」？图表上的当前点集不会被改动。</sys:String>
 
     <!-- 分组页 -->
     <sys:String x:Key="S.Group.New">＋ 新建分组</sys:String>
@@ -152,6 +165,9 @@
     <sys:String x:Key="S.Set.Hotkeys">全局快捷键</sys:String>
     <sys:String x:Key="S.Set.HotkeysTip">系统级热键，后台驻留时同样有效；组合键被占用时注册失败（事件日志留痕）</sys:String>
     <sys:String x:Key="S.Set.HotkeysHint">Ctrl+Alt+P 暂停 · Ctrl+Alt+M 显示</sys:String>
+    <sys:String x:Key="S.Set.CurveFit">曲线拟合方式</sys:String>
+    <sys:String x:Key="S.Set.CurveFitTip">只影响「自定义」曲线：控制点之间的连接方式；内置曲线不受影响</sys:String>
+    <sys:String x:Key="S.Set.CurveFitHint">折线直连＝在控制点之间直接连直线；单调平滑＝过点平滑但绝不冲出控制点范围（推荐）；样条平滑＝最圆润，允许轻微过冲</sys:String>
     <sys:String x:Key="S.Set.Detect">出声判定</sys:String>
     <sys:String x:Key="S.Set.Smtc">优先用系统播放状态判定（推荐）</sys:String>
     <sys:String x:Key="S.Set.SmtcHint">歌间静音不误判、停止即恢复；未接入的应用自动回退峰值判定</sys:String>

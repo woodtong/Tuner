@@ -369,21 +369,27 @@
                                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                             </StackPanel>
-                            <!-- 选项行：曲线选择 + 说明 -->
+                            <!-- 选项行：曲线选择 + 预设保存/删除 + 说明 -->
                             <Grid Margin="2,16,2,0">
                                 <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
                                 </Grid.ColumnDefinitions>
                                 <ComboBox x:Name="VolumeCurveCombo" Style="{DynamicResource Combo}"
                                           Width="150" VerticalAlignment="Center"
-                                          SelectionChanged="OnVolumeCurveChanged">
-                                    <ComboBoxItem Content="{DynamicResource S.Curve.Linear}" />
-                                    <ComboBoxItem Content="{DynamicResource S.Curve.Square}" />
-                                    <ComboBoxItem Content="{DynamicResource S.Curve.Log}" />
-                                    <ComboBoxItem Content="{DynamicResource S.Curve.Custom}" />
-                                </ComboBox>
-                                <TextBlock x:Name="VolumeCurveHint" Grid.Column="1" Style="{DynamicResource Hint}"
+                                          SelectionChanged="OnVolumeCurveChanged" />
+                                <!-- 保存为预设 / 删除预设：仅自定义态可用 -->
+                                <Button x:Name="CurveSaveButton" Grid.Column="1" Content="{DynamicResource S.Curve.PresetSave}"
+                                        Style="{DynamicResource Btn}" Padding="10,3" Margin="8,0,0,0"
+                                        VerticalAlignment="Center" Click="OnCurveSavePreset"
+                                        ToolTip="{DynamicResource S.Curve.PresetSaveTip}" />
+                                <Button x:Name="CurveDeleteButton" Grid.Column="2" Content="{DynamicResource S.Curve.PresetDelete}"
+                                        Style="{DynamicResource Btn}" Padding="10,3" Margin="6,0,0,0"
+                                        VerticalAlignment="Center" Click="OnCurveDeletePreset"
+                                        ToolTip="{DynamicResource S.Curve.PresetDeleteTip}" />
+                                <TextBlock x:Name="VolumeCurveHint" Grid.Column="3" Style="{DynamicResource Hint}"
                                            Margin="14,0,0,0" VerticalAlignment="Center"
                                            TextWrapping="Wrap" MaxWidth="330" />
                             </Grid>
@@ -1048,6 +1054,20 @@
                                                    Style="{DynamicResource Hint}" VerticalAlignment="Center" Margin="12,0,0,0" />
                                     </StackPanel>
                                 </Grid>
+
+                                <Grid Margin="{DynamicResource M.Section}">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="230" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Text="{DynamicResource S.Set.CurveFit}" Style="{DynamicResource Label}" VerticalAlignment="Center"
+                                               ToolTip="{DynamicResource S.Set.CurveFitTip}" />
+                                    <ComboBox Grid.Column="1" x:Name="SetCurveFit" Style="{DynamicResource Combo}"
+                                              Width="230" HorizontalAlignment="Left"
+                                              SelectionChanged="OnCurveFitChanged" />
+                                </Grid>
+                                <TextBlock x:Name="SetCurveFitHint" Text="{DynamicResource S.Set.CurveFitHint}"
+                                           Style="{DynamicResource Hint}" Margin="0,8,0,0" TextWrapping="Wrap" />
 
                                 <Rectangle Height="1" Fill="{DynamicResource CardBorder}" Margin="{DynamicResource M.Section}" />
 

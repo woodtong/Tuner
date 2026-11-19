@@ -32,6 +32,10 @@ public sealed class CurveChart : FrameworkElement
         nameof(IsEditable), typeof(bool), typeof(CurveChart),
         new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender));
 
+    public static readonly DependencyProperty FitProperty = DependencyProperty.Register(
+        nameof(Fit), typeof(string), typeof(CurveChart),
+        new FrameworkPropertyMetadata("linear", FrameworkPropertyMetadataOptions.AffectsRender));
+
     /// <summary>当前绘制的曲线标识：linear / square / log / custom。</summary>
     public string CurveId
     {
@@ -51,6 +55,13 @@ public sealed class CurveChart : FrameworkElement
     {
         get => (bool)GetValue(IsEditableProperty);
         set => SetValue(IsEditableProperty, value);
+    }
+
+    /// <summary>custom 控制点之间的拟合方式：linear / monotone / catmull（与引擎换算保持一致）。</summary>
+    public string Fit
+    {
+        get => (string)GetValue(FitProperty);
+        set => SetValue(FitProperty, value);
     }
 
     /// <summary>控制点被编辑（拖动/新增/删除）后触发。</summary>
@@ -123,7 +134,7 @@ public sealed class CurveChart : FrameworkElement
         }
         var pts = Points;
         if (CurveId == "custom" && pts is { Count: >= 2 })
-            DrawPolyline(dc, pts, curvePen);
+            DrawCustom(dc, pts, curvePen);
         else
             DrawPreset(dc, CurveId, curvePen);
         dc.Pop();
@@ -173,14 +184,20 @@ public sealed class CurveChart : FrameworkElement
         dc.DrawGeometry(null, pen, geo);
     }
 
-    private void DrawPolyline(DrawingContext dc, IReadOnlyList<CurvePoint> pts, Pen pen)
+    private void DrawCustom(DrawingContext dc, IReadOnlyList<CurvePoint> pts, Pen pen)
     {
+        // 按当前拟合方式采样绘制：图上的线就是引擎真正用的映射（折线时采样点与控制点重合，视觉一致）
+        var spec = new CurveSpec { Id = "custom", Custom = pts, Fit = Fit };
         var geo = new StreamGeometry();
         using (var ctx = geo.Open())
         {
-            ctx.BeginFigure(ToScreen(pts[0].X, pts[0].Y), false, false);
-            for (int i = 1; i < pts.Count; i++)
-                ctx.LineTo(ToScreen(pts[i].X, pts[i].Y), true, false);
+            const int samples = 96;
+            ctx.BeginFigure(ToScreen(0, VolumeCurve.ToVolume(spec, 0)), false, false);
+            for (int i = 1; i <= samples; i++)
+            {
+                var t = i / (double)samples;
+                ctx.LineTo(ToScreen(t, VolumeCurve.ToVolume(spec, t)), true, false);
+            }
         }
         geo.Freeze();
         dc.DrawGeometry(null, pen, geo);

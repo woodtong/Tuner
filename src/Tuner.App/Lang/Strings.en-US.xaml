@@ -43,7 +43,20 @@
     <sys:String x:Key="S.Curve.Hint.Linear">Linear: percent = volume, most direct</sys:String>
     <sys:String x:Key="S.Curve.Hint.Square">Square: finer control at low volume</sys:String>
     <sys:String x:Key="S.Curve.Hint.Log">Log: equal steps, equal loudness (40 dB)</sys:String>
-    <sys:String x:Key="S.Curve.Hint.Custom">Custom: drag control points</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Custom">Custom: drag control points; fit = {0}</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Preset">Preset "{0}": {1}</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Linear">Straight lines</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Monotone">Monotone smooth (no overshoot)</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Catmull">Spline smooth (roundest)</sys:String>
+    <sys:String x:Key="S.Curve.PresetSave">Save</sys:String>
+    <sys:String x:Key="S.Curve.PresetSaveTip">Save the current custom curve as a named preset (persisted across restarts and updates; same name overwrites)</sys:String>
+    <sys:String x:Key="S.Curve.PresetDelete">Delete</sys:String>
+    <sys:String x:Key="S.Curve.PresetDeleteTip">Delete the selected saved preset (the points on the chart stay unchanged)</sys:String>
+    <sys:String x:Key="S.Curve.PresetPrompt">Name this curve (an existing name gets overwritten).</sys:String>
+    <sys:String x:Key="S.Curve.PresetNameEmpty">Name cannot be empty.</sys:String>
+    <sys:String x:Key="S.Curve.PresetEmpty">The curve has no control points yet — double-click the chart to add one.</sys:String>
+    <sys:String x:Key="S.Curve.PresetOverwrite">A preset named "{0}" already exists. Overwrite it?</sys:String>
+    <sys:String x:Key="S.Curve.PresetDeleteConfirm">Delete preset "{0}"? The current points on the chart are kept.</sys:String>
 
     <!-- Groups page -->
     <sys:String x:Key="S.Group.New">＋ New group</sys:String>
@@ -152,6 +165,9 @@
     <sys:String x:Key="S.Set.Hotkeys">Global hotkeys</sys:String>
     <sys:String x:Key="S.Set.HotkeysTip">System-wide keys, work while in tray; registration failure is logged (key combo taken)</sys:String>
     <sys:String x:Key="S.Set.HotkeysHint">Ctrl+Alt+P pause · Ctrl+Alt+M show</sys:String>
+    <sys:String x:Key="S.Set.CurveFit">Curve fitting</sys:String>
+    <sys:String x:Key="S.Set.CurveFitTip">Only affects the Custom curve: how control points are joined; built-in curves are unaffected</sys:String>
+    <sys:String x:Key="S.Set.CurveFitHint">Straight lines = connect points directly; monotone smooth = passes through the points without ever leaving their range (recommended); spline smooth = roundest, slight overshoot allowed</sys:String>
     <sys:String x:Key="S.Set.Detect">Activity detection</sys:String>
     <sys:String x:Key="S.Set.Smtc">Prefer system playback state (recommended)</sys:String>
     <sys:String x:Key="S.Set.SmtcHint">No false triggers between tracks, instant restore; apps without media sessions fall back to peak detection</sys:String>

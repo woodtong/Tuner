@@ -116,10 +116,11 @@ public partial class MainWindow
     private CurveSpec _uiCurve = CurveSpec.Linear;
     private TunerConfig? _uiCurveFor;
     private string _uiCurveId = "";
+    private string _uiCurveFit = "";
     private List<CurvePoint>? _uiCurvePoints;
 
     /// <summary>
-    /// UI 侧全局曲线（MASTER 与全部应用）。缓存：换曲线/换控制点列表才重建，
+    /// UI 侧全局曲线（MASTER 与全部应用）。缓存：换曲线/换控制点列表/换拟合方式才重建，
     /// 每次换算（刷新 4Hz × 每会话多次 + 输入事件）不再分配 CurveSpec。
     /// </summary>
     private CurveSpec UiCurve
@@ -129,11 +130,13 @@ public partial class MainWindow
             var cfg = App.Config;
             var s = cfg.Settings;
             if (!ReferenceEquals(_uiCurveFor, cfg) || _uiCurveId != s.VolumeCurve ||
+                _uiCurveFit != s.CurveFit ||
                 !ReferenceEquals(_uiCurvePoints, s.CustomCurve))
             {
                 _uiCurve = VolumeCurve.ResolveGlobal(cfg);
                 _uiCurveFor = cfg;
                 _uiCurveId = s.VolumeCurve;
+                _uiCurveFit = s.CurveFit;
                 _uiCurvePoints = s.CustomCurve;
             }
             return _uiCurve;
@@ -344,6 +347,11 @@ public partial class MainWindow
     private System.Windows.Threading.DispatcherTimer? _hScrollTimer;
     private double _hScrollTarget;
 
+    /// <summary>滚轮诊断日志开关：设环境变量 TUNER_WHEELPROBE=1 启动时才打印 [wheelprobe]（平时静默）。</summary>
+    private static readonly bool WheelProbe =
+        Environment.GetEnvironmentVariable("TUNER_WHEELPROBE") == "1";
+
+
     /// <summary>调音台区滚轮：Shift 按下 → 横向滚动（上=左移，下=右移）；否则转交给页面纵向滚动。
     /// 内层 ScrollViewer 的 OnMouseWheel 无论能否纵向滚动都会把事件标为 Handled，必须手动代滚页面。</summary>
     private void OnChannelsMouseWheel(object sender, MouseWheelEventArgs e)
@@ -367,14 +375,16 @@ public partial class MainWindow
     private void OnRootMouseWheel(object sender, MouseWheelEventArgs e)
     {
         var dep = e.OriginalSource as DependencyObject;
-        App.Log($"[wheelprobe] delta={e.Delta} src={e.OriginalSource?.GetType().Name}");
+        if (WheelProbe)
+            App.Log($"[wheelprobe] delta={e.Delta} src={e.OriginalSource?.GetType().Name}");
         while (dep is not null)
         {
             if (dep is System.Windows.Controls.Slider)
                 return;
             if (dep is ScrollViewer sv)
             {
-                App.Log($"[wheelprobe] hit SV scrollH={sv.ScrollableHeight:F0} scrollW={sv.ScrollableWidth:F0} name={sv.Name}");
+                if (WheelProbe)
+                    App.Log($"[wheelprobe] hit SV scrollH={sv.ScrollableHeight:F0} scrollW={sv.ScrollableWidth:F0} name={sv.Name}");
                 bool shift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
                 if (shift)
                 {
@@ -622,38 +632,108 @@ public partial class MainWindow
 
     // ----- 曲线编辑器（音量页下方图表） -----
 
-    /// <summary>按全局曲线配置加载曲线下拉、图表与提示（曲线切换/配置变化后调用）。</summary>
+    /// <summary>
+    /// 按全局曲线配置加载曲线下拉、图表与提示（曲线切换/配置变化后调用）。
+    /// 下拉项＝4 个内置曲线 + 用户保存的命名预设（Tag 记来源，见 OnVolumeCurveChanged）。
+    /// </summary>
     private void LoadCurveEditor()
     {
         bool outer = _loadingUi;
         _loadingUi = true;
 
         var s = App.Config.Settings;
-        VolumeCurveCombo.SelectedIndex = s.VolumeCurve switch { "square" => 1, "log" => 2, "custom" => 3, _ => 0 };
+        RebuildCurveCombo(s);
+
         _editPoints = s.CustomCurve.Select(p => new CurvePoint(p.X, p.Y)).ToList();
         CurveChartBox.Points = _editPoints;
         CurveChartBox.CurveId = s.VolumeCurve;
+        CurveChartBox.Fit = VolumeCurve.NormalizeFit(s.CurveFit);
         CurveChartBox.IsEditable = s.VolumeCurve == "custom";
         UpdateVolumeCurveHint();
         _loadingUi = outer;
     }
 
-    /// <summary>曲线下拉变更：写全局配置后重载编辑器（切到自定义时若还没有控制点，以切换前曲线为底稿播种）。</summary>
+    /// <summary>重建曲线下拉：内置四项 + 已保存预设（Tag："curve:xxx" / "preset:名称"）。</summary>
+    private void RebuildCurveCombo(EngineSettings s)
+    {
+        VolumeCurveCombo.Items.Clear();
+        void Add(string tag, string text) =>
+            VolumeCurveCombo.Items.Add(new ComboBoxItem { Tag = tag, Content = text });
+
+        Add("curve:linear", Lang.Get("S.Curve.Linear"));
+        Add("curve:square", Lang.Get("S.Curve.Square"));
+        Add("curve:log", Lang.Get("S.Curve.Log"));
+        Add("curve:custom", Lang.Get("S.Curve.Custom"));
+        foreach (var preset in s.SavedCurves)
+            Add("preset:" + preset.Name, preset.Name);
+
+        // 选中态：预设名有效且当前就是自定义时，落到该预设项；否则按曲线标识定位
+        int index;
+        if (s.VolumeCurve == "custom" && !string.IsNullOrEmpty(s.ActiveCurvePreset))
+            index = IndexOfTag("preset:" + s.ActiveCurvePreset);
+        else
+            index = -1;
+        if (index < 0)
+        {
+            index = s.VolumeCurve switch
+            {
+                "square" => 1,
+                "log" => 2,
+                "custom" => 3,
+                _ => 0,
+            };
+        }
+        if (index >= 0 && index < VolumeCurveCombo.Items.Count)
+            VolumeCurveCombo.SelectedIndex = index;
+        UpdatePresetButtons(s);
+    }
+
+    private int IndexOfTag(string tag)
+    {
+        for (int i = 0; i < VolumeCurveCombo.Items.Count; i++)
+            if (VolumeCurveCombo.Items[i] is ComboBoxItem { Tag: string t } && t == tag)
+                return i;
+        return -1;
+    }
+
+    /// <summary>保存按钮只在自定义态可用；删除按钮只在选中已保存预设时可用。</summary>
+    private void UpdatePresetButtons(EngineSettings s)
+    {
+        if (CurveSaveButton is null || CurveDeleteButton is null)
+            return;
+        CurveSaveButton.IsEnabled = s.VolumeCurve == "custom";
+        CurveDeleteButton.IsEnabled = s.VolumeCurve == "custom" && !string.IsNullOrEmpty(s.ActiveCurvePreset);
+    }
+
+    /// <summary>
+    /// 曲线下拉变更：内置曲线直接切；选中预设＝把该预设点集装入自定义曲线并切到 custom。
+    /// （切到自定义时若还没有控制点，以切换前曲线为底稿播种。）
+    /// </summary>
     private void OnVolumeCurveChanged(object sender, SelectionChangedEventArgs e)
     {
         if (_loadingUi)
             return;
-        var id = VolumeCurveCombo.SelectedIndex switch
-        {
-            1 => "square",
-            2 => "log",
-            3 => "custom",
-            _ => "linear",
-        };
         var s = App.Config.Settings;
-        if (id == "custom" && s.CustomCurve.Count < 2)
-            s.CustomCurve = SeedPoints(s.VolumeCurve); // 首次切入：图上立即可拖，不至空白
-        s.VolumeCurve = id;
+        var tag = (VolumeCurveCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "curve:linear";
+
+        if (tag.StartsWith("preset:", StringComparison.Ordinal))
+        {
+            var name = tag["preset:".Length..];
+            var preset = s.SavedCurves.FirstOrDefault(p => p.Name == name);
+            if (preset is null)
+                return;
+            s.CustomCurve = preset.Points.Select(p => new CurvePoint(p.X, p.Y)).ToList();
+            s.ActiveCurvePreset = preset.Name;
+            s.VolumeCurve = "custom";
+        }
+        else
+        {
+            var id = tag.StartsWith("curve:", StringComparison.Ordinal) ? tag["curve:".Length..] : "linear";
+            if (id == "custom" && s.CustomCurve.Count < 2)
+                s.CustomCurve = SeedPoints(s.VolumeCurve); // 首次切入：图上立即可拖，不至空白
+            s.VolumeCurve = VolumeCurve.Normalize(id);
+            s.ActiveCurvePreset = "";
+        }
         LoadCurveEditor();
         MarkDirty();
     }
@@ -670,21 +750,110 @@ public partial class MainWindow
         return pts;
     }
 
-    /// <summary>图表控制点被编辑（拖动/加点/删点）：把点集写回全局配置。</summary>
+    /// <summary>图表控制点被编辑（拖动/加点/删点）：把点集写回全局配置；已存预设被改动即脱离预设态。</summary>
     private void OnCurveChartEdited()
     {
         if (_loadingUi)
             return;
-        App.Config.Settings.CustomCurve = _editPoints;
+        var s = App.Config.Settings;
+        var wasPreset = !string.IsNullOrEmpty(s.ActiveCurvePreset);
+        s.CustomCurve = _editPoints;
+        s.ActiveCurvePreset = ""; // 改过点＝未保存的自定义，下拉回到「自定义」
+        if (wasPreset)
+        {
+            _loadingUi = true;
+            var idx = IndexOfTag("curve:custom");
+            if (idx >= 0)
+                VolumeCurveCombo.SelectedIndex = idx;
+            UpdatePresetButtons(s);
+            _loadingUi = false;
+        }
         MarkDirty();
     }
 
-    private void UpdateVolumeCurveHint() =>
-        VolumeCurveHint.Text = VolumeCurveCombo.SelectedIndex switch
+    // ----- 自定义曲线的命名预设（长久保存于配置文件） -----
+
+    /// <summary>保存当前自定义曲线为命名预设（同名即覆盖）。</summary>
+    private void OnCurveSavePreset(object sender, RoutedEventArgs e)
+    {
+        var s = App.Config.Settings;
+        if (s.VolumeCurve != "custom")
+            return;
+        if (_editPoints.Count < 2)
         {
-            1 => Lang.Get("S.Curve.Hint.Square"),
-            2 => Lang.Get("S.Curve.Hint.Log"),
-            3 => Lang.Get("S.Curve.Hint.Custom"),
+            MsgBox.Show(this, Lang.Get("S.Curve.PresetEmpty"));
+            return;
+        }
+        var initial = string.IsNullOrEmpty(s.ActiveCurvePreset) ? "" : s.ActiveCurvePreset;
+        var name = MsgBox.Prompt(this, Lang.Get("S.Curve.PresetPrompt"), initial);
+        if (name is null)
+            return;
+        name = name.Trim();
+        if (name.Length == 0)
+        {
+            MsgBox.Show(this, Lang.Get("S.Curve.PresetNameEmpty"));
+            return;
+        }
+
+        var existing = s.SavedCurves.FirstOrDefault(p =>
+            string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        if (existing is not null && !MsgBox.Confirm(this, Lang.Get("S.Curve.PresetOverwrite", name)))
+            return;
+
+        var points = VolumeCurve.NormalizePoints(_editPoints.Select(p => new CurvePoint(p.X, p.Y)));
+        if (existing is not null)
+        {
+            existing.Name = name;
+            existing.Points = points;
+        }
+        else
+        {
+            s.SavedCurves.Add(new CurvePreset { Name = name, Points = points });
+        }
+        s.ActiveCurvePreset = name;
+        LoadCurveEditor();
+        MarkDirty();
+        App.Log("已保存自定义曲线预设：" + name);
+    }
+
+    /// <summary>删除当前选中的命名预设（不影响当前图表上的控制点）。</summary>
+    private void OnCurveDeletePreset(object sender, RoutedEventArgs e)
+    {
+        var s = App.Config.Settings;
+        if (string.IsNullOrEmpty(s.ActiveCurvePreset))
+            return;
+        var name = s.ActiveCurvePreset;
+        if (!MsgBox.Confirm(this, Lang.Get("S.Curve.PresetDeleteConfirm", name)))
+            return;
+        s.SavedCurves.RemoveAll(p => p.Name == name);
+        s.ActiveCurvePreset = "";
+        LoadCurveEditor();
+        MarkDirty();
+        App.Log("已删除自定义曲线预设：" + name);
+    }
+
+    private void UpdateVolumeCurveHint() => VolumeCurveHint.Text = HintText();
+
+    /// <summary>提示文案：内置曲线按件取；自定义时附上当前拟合方式说明；预设显示预设名与拟合方式。</summary>
+    private string HintText()
+    {
+        var tag = (VolumeCurveCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "curve:linear";
+        if (tag.StartsWith("preset:", StringComparison.Ordinal))
+            return Lang.Get("S.Curve.Hint.Preset", tag["preset:".Length..], FitName());
+        return tag switch
+        {
+            "curve:square" => Lang.Get("S.Curve.Hint.Square"),
+            "curve:log" => Lang.Get("S.Curve.Hint.Log"),
+            "curve:custom" => Lang.Get("S.Curve.Hint.Custom", FitName()),
             _ => Lang.Get("S.Curve.Hint.Linear"),
         };
+    }
+
+    /// <summary>当前拟合方式的可读名称。</summary>
+    private string FitName() => VolumeCurve.NormalizeFit(App.Config.Settings.CurveFit) switch
+    {
+        "monotone" => Lang.Get("S.Curve.Fit.Monotone"),
+        "catmull" => Lang.Get("S.Curve.Fit.Catmull"),
+        _ => Lang.Get("S.Curve.Fit.Linear"),
+    };
 }

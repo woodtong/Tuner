@@ -94,6 +94,30 @@ public sealed class EngineSettings
 
     /// <summary>VolumeCurve=="custom" 时的自定义控制点（0..1 归一化，响度↔音量百分比映射）。</summary>
     public List<CurvePoint> CustomCurve { get; set; } = new();
+
+    /// <summary>
+    /// 自定义控制点的拟合方式："linear"=折线直连（默认）；"monotone"=单调三次（保单调不过冲）；
+    /// "catmull"=Catmull-Rom 样条（最圆润）。设置页可改，随配置持久化。
+    /// </summary>
+    public string CurveFit { get; set; } = "linear";
+
+    /// <summary>
+    /// 用户保存的自定义曲线预设（命名 + 控制点）。随配置文件持久化：重开应用、更新程序都不丢
+    /// （配置默认在 %APPDATA%\Tuner\config.json，便携模式在程序目录）。
+    /// </summary>
+    public List<CurvePreset> SavedCurves { get; set; } = new();
+
+    /// <summary>当前选中的已保存预设名（""=未选中，即"自定义"编辑态）。</summary>
+    public string ActiveCurvePreset { get; set; } = "";
+}
+
+/// <summary>一套命名的自定义音量曲线预设。</summary>
+public sealed class CurvePreset
+{
+    public string Name { get; set; } = "";
+
+    /// <summary>控制点（0..1 归一化，按 X 升序；保存时规整）。</summary>
+    public List<CurvePoint> Points { get; set; } = new();
 }
 
 public sealed class AppGroupConfig
