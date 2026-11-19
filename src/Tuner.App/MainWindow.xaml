@@ -319,7 +319,7 @@
                     </Border>
 
                     <!-- 音量曲线卡（独立卡片）：百分比＝推子位置，实际振幅按曲线映射（对数为等响度，可自定义） -->
-                    <Border Grid.Row="2" Style="{DynamicResource Card}" Padding="14,12" VerticalAlignment="Top">
+                    <Border Grid.Row="2" Style="{DynamicResource Card}" Padding="14,12" VerticalAlignment="Top" Margin="0,14,0,0">
                         <StackPanel>
                             <Grid Margin="2,0,2,0">
                                 <Grid.ColumnDefinitions>
