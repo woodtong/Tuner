@@ -490,7 +490,7 @@
                                 <ControlTemplate TargetType="ToggleButton">
                                     <Grid>
                                         <Border x:Name="Bd" Background="{DynamicResource ItemBg}" BorderBrush="{DynamicResource FieldBorder}"
-                                                BorderThickness="1" CornerRadius="{DynamicResource Rad.Control}" Padding="0,6">
+                                                BorderThickness="1" CornerRadius="{DynamicResource Rad.Control}" Padding="0,9">
                                             <Path Data="M0,0 L4,4 8,0" Stroke="{DynamicResource TextSecondary}"
                                                   StrokeThickness="1.5" HorizontalAlignment="Right"
                                                   VerticalAlignment="Center" Margin="0,0,10,0" />
@@ -567,7 +567,7 @@
                         <Setter.Value>
                             <ControlTemplate TargetType="ComboBoxItem">
                                 <!-- 与导航同款分层：底板透明 + 选中层 + 悬停层（悬停叠于选中之上），各自透明度渐变 -->
-                                <Border x:Name="Bd" CornerRadius="{DynamicResource Rad.Control}" Padding="9,6" Margin="0,1" Background="Transparent">
+                                <Border x:Name="Bd" CornerRadius="{DynamicResource Rad.Control}" Padding="9,10" Margin="0,1" Background="Transparent">
                                     <Grid>
                                         <Border x:Name="SelOv" CornerRadius="{DynamicResource Rad.Control}" Opacity="0" IsHitTestVisible="False">
                                             <Border.Background>
@@ -717,7 +717,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="TabItem">
-                    <Border x:Name="Bd" CornerRadius="{DynamicResource Rad.Control}" Background="Transparent" Padding="12,13" Margin="0,0,0,2">
+                    <Border x:Name="Bd" CornerRadius="{DynamicResource Rad.Control}" Background="Transparent" Padding="12,9" Margin="0,0,0,2">
                         <ContentPresenter x:Name="Header" ContentSource="Header"
                                           TextElement.FontSize="{DynamicResource Fz.Title}"
                                           TextElement.Foreground="{TemplateBinding Foreground}" />
