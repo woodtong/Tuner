@@ -29,8 +29,9 @@
 
     <!-- Volume page -->
     <sys:String x:Key="S.Mixer.Title">Mixer</sys:String>
-    <sys:String x:Key="S.Mixer.Hint">MASTER = default output device; ducked apps are managed by rules — adjusting them updates their restore target. Wheel scrolls the page; Shift+Wheel scrolls channels horizontally</sys:String>
+    <sys:String x:Key="S.Mixer.Hint">MASTER = default output device; ducked apps are managed by rules — adjusting them updates their restore target</sys:String>
     <sys:String x:Key="S.Mixer.MasterDevice">(device)</sys:String>
+    <sys:String x:Key="S.Mixer.WheelHint">Wheel: scroll the page; Shift+Wheel: scroll channels horizontally (up = left, down = right)</sys:String>
     <sys:String x:Key="S.Mixer.Mute">Mute</sys:String>
     <sys:String x:Key="S.Mixer.Unmute">Unmute</sys:String>
     <sys:String x:Key="S.Curve.Title">Volume curve</sys:String>

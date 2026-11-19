@@ -29,8 +29,9 @@
 
     <!-- 音量页 -->
     <sys:String x:Key="S.Mixer.Title">调音台</sys:String>
-    <sys:String x:Key="S.Mixer.Hint">MASTER＝默认输出设备；被闪避的应用由规则接管，此时调整将更新其恢复目标。滚轮上下滑动页面，Shift＋滚轮横向滑动通道</sys:String>
+    <sys:String x:Key="S.Mixer.Hint">MASTER＝默认输出设备；被闪避的应用由规则接管，此时调整将更新其恢复目标</sys:String>
     <sys:String x:Key="S.Mixer.MasterDevice">（设备）</sys:String>
+    <sys:String x:Key="S.Mixer.WheelHint">滚轮：上下滑动页面；Shift＋滚轮：横向滑动通道（上＝左移，下＝右移）</sys:String>
     <sys:String x:Key="S.Mixer.Mute">静音</sys:String>
     <sys:String x:Key="S.Mixer.Unmute">取消静音</sys:String>
     <sys:String x:Key="S.Curve.Title">音量曲线</sys:String>

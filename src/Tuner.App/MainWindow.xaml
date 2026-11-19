@@ -223,9 +223,32 @@
                                                HorizontalAlignment="Center" VerticalAlignment="Center" />
                                 </Border>
                             </StackPanel>
-                            <ScrollViewer x:Name="ChannelsScroller"
-                                          HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled"
-                                          PreviewMouseWheel="OnChannelsMouseWheel">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <!-- 滑轨左侧独立 ？ 圆圈：指引滚轮判定（普通滚轮翻页 / Shift＋滚轮横滚） -->
+                                <Border Width="17" Height="17" CornerRadius="{DynamicResource Rad.Card}" Margin="2,0,4,3"
+                                        BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                                        Background="Transparent" VerticalAlignment="Bottom" Cursor="Hand"
+                                        ToolTip="{DynamicResource S.Mixer.WheelHint}"
+                                        ToolTipService.InitialShowDelay="100">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource FieldBorderHover}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="?" FontSize="{DynamicResource Fz.Micro}" Foreground="{DynamicResource TextFaint}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <ScrollViewer Grid.Column="1" x:Name="ChannelsScroller"
+                                              HorizontalScrollBarVisibility="Visible" VerticalScrollBarVisibility="Disabled"
+                                              PreviewMouseWheel="OnChannelsMouseWheel">
                                 <StackPanel Orientation="Horizontal">
                                     <!-- MASTER 通道（调音台主输出）：井内凹陷 + 琥珀描边点出主输出身份 -->
                                     <Border Width="112" Background="{DynamicResource PageBg}"
@@ -314,7 +337,8 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </StackPanel>
-                            </ScrollViewer>
+                                </ScrollViewer>
+                            </Grid>
                         </StackPanel>
                     </Border>
 
