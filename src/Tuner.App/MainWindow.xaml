@@ -346,51 +346,29 @@
                     <!-- 音量曲线卡（独立卡片）：百分比＝推子位置，实际振幅按曲线映射（对数为等响度，可自定义） -->
                     <Border Grid.Row="2" Style="{DynamicResource Card}" Padding="14,12" VerticalAlignment="Top" Margin="0,14,0,0">
                         <StackPanel>
-                            <!-- 标题行：标题 + ？ 说明，右侧为预设保存/删除与拟合按钮 -->
-                            <Grid Margin="2,0,2,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{DynamicResource S.Curve.Title}" FontSize="{DynamicResource Fz.Title}" FontWeight="SemiBold"
-                                               Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
-                                    <!-- 说明 ？ 圆圈：快速悬停提示 -->
-                                    <Border Width="17" Height="17" CornerRadius="{DynamicResource Rad.Card}" Margin="8,1,0,0"
-                                            BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
-                                            Background="Transparent" VerticalAlignment="Center" Cursor="Hand"
-                                            ToolTip="{DynamicResource S.Curve.Tooltip}"
-                                            ToolTipService.InitialShowDelay="100">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Style.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource FieldBorderHover}" />
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <TextBlock Text="?" FontSize="{DynamicResource Fz.Micro}" Foreground="{DynamicResource TextFaint}"
-                                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
-                                    </Border>
-                                </StackPanel>
-                                <!-- 保存为预设 / 删除预设 / 拟合：仅自定义态可用 -->
-                                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                                    <Button x:Name="CurveSaveButton" Content="{DynamicResource S.Curve.PresetSave}"
-                                            Style="{DynamicResource Btn}" Padding="10,3"
-                                            Click="OnCurveSavePreset"
-                                            ToolTip="{DynamicResource S.Curve.PresetSaveTip}" />
-                                    <Button x:Name="CurveDeleteButton" Content="{DynamicResource S.Curve.PresetDelete}"
-                                            Style="{DynamicResource Btn}" Padding="10,3" Margin="6,0,0,0"
-                                            Click="OnCurveDeletePreset"
-                                            ToolTip="{DynamicResource S.Curve.PresetDeleteTip}" />
-                                    <Button x:Name="CurveFitButton" Content="{DynamicResource S.Curve.FitButton}"
-                                            Style="{DynamicResource Btn}" Padding="10,3" Margin="6,0,0,0"
-                                            Click="OnCurveFitClick"
-                                            ToolTip="{DynamicResource S.Curve.FitButtonTip}" />
-                                </StackPanel>
-                            </Grid>
+                            <!-- 标题行：标题 + ？ 说明 -->
+                            <StackPanel Orientation="Horizontal" Margin="2,0,2,0">
+                                <TextBlock Text="{DynamicResource S.Curve.Title}" FontSize="{DynamicResource Fz.Title}" FontWeight="SemiBold"
+                                           Foreground="{DynamicResource TextPrimary}" VerticalAlignment="Center" />
+                                <!-- 说明 ？ 圆圈：快速悬停提示 -->
+                                <Border Width="17" Height="17" CornerRadius="{DynamicResource Rad.Card}" Margin="8,1,0,0"
+                                        BorderBrush="{DynamicResource FieldBorder}" BorderThickness="1"
+                                        Background="Transparent" VerticalAlignment="Center" Cursor="Hand"
+                                        ToolTip="{DynamicResource S.Curve.Tooltip}"
+                                        ToolTipService.InitialShowDelay="100">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Style.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="BorderBrush" Value="{DynamicResource FieldBorderHover}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="?" FontSize="{DynamicResource Fz.Micro}" Foreground="{DynamicResource TextFaint}"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                            </StackPanel>
                             <!-- 选项行：曲线选择 + 说明 -->
                             <Grid Margin="2,16,2,0">
                                 <Grid.ColumnDefinitions>
@@ -403,7 +381,22 @@
                                 <TextBlock x:Name="VolumeCurveHint" Grid.Column="1" Style="{DynamicResource Hint}"
                                            Margin="14,0,0,0" VerticalAlignment="Center" TextWrapping="Wrap" />
                             </Grid>
-                            <controls:CurveChart x:Name="CurveChartBox" Height="136" Margin="36,10,6,2"
+                            <!-- 图表右上角工具条：保存为预设 / 删除预设 / 拟合，仅自定义态可用 -->
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="2,10,6,0">
+                                <Button x:Name="CurveSaveButton" Content="{DynamicResource S.Curve.PresetSave}"
+                                        Style="{DynamicResource Btn}" Padding="10,3"
+                                        Click="OnCurveSavePreset"
+                                        ToolTip="{DynamicResource S.Curve.PresetSaveTip}" />
+                                <Button x:Name="CurveDeleteButton" Content="{DynamicResource S.Curve.PresetDelete}"
+                                        Style="{DynamicResource Btn}" Padding="10,3" Margin="6,0,0,0"
+                                        Click="OnCurveDeletePreset"
+                                        ToolTip="{DynamicResource S.Curve.PresetDeleteTip}" />
+                                <Button x:Name="CurveFitButton" Content="{DynamicResource S.Curve.FitButton}"
+                                        Style="{DynamicResource Btn}" Padding="10,3" Margin="6,0,0,0"
+                                        Click="OnCurveFitClick"
+                                        ToolTip="{DynamicResource S.Curve.FitButtonTip}" />
+                            </StackPanel>
+                            <controls:CurveChart x:Name="CurveChartBox" Height="136" Margin="36,8,6,2"
                                                  HorizontalAlignment="Stretch"
                                                  CurveEdited="OnCurveChartEdited" />
                         </StackPanel>

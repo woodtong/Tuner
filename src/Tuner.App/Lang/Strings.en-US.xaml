@@ -43,10 +43,10 @@
     <sys:String x:Key="S.Curve.Hint.Linear">Linear: percent = volume, most direct</sys:String>
     <sys:String x:Key="S.Curve.Hint.Square">Square: finer control at low volume</sys:String>
     <sys:String x:Key="S.Curve.Hint.Log">Log: equal steps, equal loudness (40 dB)</sys:String>
-    <sys:String x:Key="S.Curve.Hint.Custom">Custom: drag control points; straight lines by default, press Fit to smooth with the configured method</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Custom">Custom: drag control points, double-click empty space to add one, right-click a point to remove it; straight lines by default, press Fit to smooth with the configured method</sys:String>
     <sys:String x:Key="S.Curve.Hint.Preset">Preset "{0}": currently {1}</sys:String>
     <sys:String x:Key="S.Curve.Fit.Catmull">Catmull-Rom spline (roundest)</sys:String>
-    <sys:String x:Key="S.Curve.Hint.CustomFitted">Custom: fitted ({0}) — press Unfit for straight lines</sys:String>
+    <sys:String x:Key="S.Curve.Hint.CustomFitted">Custom: drag control points, double-click empty space to add one, right-click a point to remove it; fitted ({0}) — press Unfit for straight lines</sys:String>
     <sys:String x:Key="S.Curve.Fit.None">Straight lines</sys:String>
     <sys:String x:Key="S.Curve.Fit.Pchip">Monotone PCHIP (no overshoot)</sys:String>
     <sys:String x:Key="S.Curve.Fit.Akima">Akima spline (overshoot-resistant)</sys:String>

@@ -43,10 +43,10 @@
     <sys:String x:Key="S.Curve.Hint.Linear">线性：百分比＝音量，最直观</sys:String>
     <sys:String x:Key="S.Curve.Hint.Square">平方：小音量段更细腻</sys:String>
     <sys:String x:Key="S.Curve.Hint.Log">对数：等格等响（全程 40dB）</sys:String>
-    <sys:String x:Key="S.Curve.Hint.Custom">自定义：拖动控制点调映射；默认折线，点「拟合」按设置的算法平滑</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Custom">自定义：拖动控制点调映射，双击空白处加点、右键点删点；默认折线，点「拟合」按设置的算法平滑</sys:String>
     <sys:String x:Key="S.Curve.Hint.Preset">预设「{0}」：当前为 {1}</sys:String>
     <sys:String x:Key="S.Curve.Fit.Catmull">Catmull-Rom 样条（最圆润）</sys:String>
-    <sys:String x:Key="S.Curve.Hint.CustomFitted">自定义：已拟合（{0}），点「还原折线」回到直连</sys:String>
+    <sys:String x:Key="S.Curve.Hint.CustomFitted">自定义：拖动控制点调映射，双击空白处加点、右键点删点；已拟合（{0}），点「还原折线」回到直连</sys:String>
     <sys:String x:Key="S.Curve.Fit.None">折线直连</sys:String>
     <sys:String x:Key="S.Curve.Fit.Pchip">单调保形 PCHIP（不过冲）</sys:String>
     <sys:String x:Key="S.Curve.Fit.Akima">Akima 样条（抗过冲）</sys:String>
