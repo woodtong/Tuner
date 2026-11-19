@@ -43,11 +43,20 @@
     <sys:String x:Key="S.Curve.Hint.Linear">Linear: percent = volume, most direct</sys:String>
     <sys:String x:Key="S.Curve.Hint.Square">Square: finer control at low volume</sys:String>
     <sys:String x:Key="S.Curve.Hint.Log">Log: equal steps, equal loudness (40 dB)</sys:String>
-    <sys:String x:Key="S.Curve.Hint.Custom">Custom: drag control points; fit = {0}</sys:String>
-    <sys:String x:Key="S.Curve.Hint.Preset">Preset "{0}": {1}</sys:String>
-    <sys:String x:Key="S.Curve.Fit.Linear">Straight lines</sys:String>
-    <sys:String x:Key="S.Curve.Fit.Monotone">Monotone smooth (no overshoot)</sys:String>
-    <sys:String x:Key="S.Curve.Fit.Catmull">Spline smooth (roundest)</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Custom">Custom: drag control points; straight lines by default, press Fit to smooth with the configured method</sys:String>
+    <sys:String x:Key="S.Curve.Hint.Preset">Preset "{0}": currently {1}</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Catmull">Catmull-Rom spline (roundest)</sys:String>
+    <sys:String x:Key="S.Curve.Hint.CustomFitted">Custom: fitted ({0}) — press Unfit for straight lines</sys:String>
+    <sys:String x:Key="S.Curve.Fit.None">Straight lines</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Pchip">Monotone PCHIP (no overshoot)</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Akima">Akima spline (overshoot-resistant)</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Natural">Natural cubic spline (smoothest)</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Poly3">Cubic polynomial fit (overall trend)</sys:String>
+    <sys:String x:Key="S.Curve.Fit.Poly2">Quadratic polynomial fit (overall trend)</sys:String>
+    <sys:String x:Key="S.Curve.FitButton">Fit</sys:String>
+    <sys:String x:Key="S.Curve.FitButtonTip">Fit the current control points with "{0}" from settings (points unchanged, always reversible)</sys:String>
+    <sys:String x:Key="S.Curve.UnfitButton">Unfit</sys:String>
+    <sys:String x:Key="S.Curve.UnfitButtonTip">Drop the fit and go back to straight lines between control points</sys:String>
     <sys:String x:Key="S.Curve.PresetSave">Save</sys:String>
     <sys:String x:Key="S.Curve.PresetSaveTip">Save the current custom curve as a named preset (persisted across restarts and updates; same name overwrites)</sys:String>
     <sys:String x:Key="S.Curve.PresetDelete">Delete</sys:String>
@@ -165,9 +174,9 @@
     <sys:String x:Key="S.Set.Hotkeys">Global hotkeys</sys:String>
     <sys:String x:Key="S.Set.HotkeysTip">System-wide keys, work while in tray; registration failure is logged (key combo taken)</sys:String>
     <sys:String x:Key="S.Set.HotkeysHint">Ctrl+Alt+P pause · Ctrl+Alt+M show</sys:String>
-    <sys:String x:Key="S.Set.CurveFit">Curve fitting</sys:String>
-    <sys:String x:Key="S.Set.CurveFitTip">Only affects the Custom curve: how control points are joined; built-in curves are unaffected</sys:String>
-    <sys:String x:Key="S.Set.CurveFitHint">Straight lines = connect points directly; monotone smooth = passes through the points without ever leaving their range (recommended); spline smooth = roundest, slight overshoot allowed</sys:String>
+    <sys:String x:Key="S.Set.CurveFit">Fitting method</sys:String>
+    <sys:String x:Key="S.Set.CurveFitTip">Used by the Fit button on the volume page only: it fits the custom control points with this method; without pressing it the curve stays straight lines</sys:String>
+    <sys:String x:Key="S.Set.CurveFitHint">The curve stays straight lines by default; press Fit on the volume page to apply the method chosen here, press Unfit to go back. PCHIP = shape-preserving, never overshoots (recommended); Akima = overshoot-resistant, softer corners; natural cubic spline = globally smoothest but may overshoot; Catmull-Rom = roundest; polynomial = least-squares trend that does not pass through the points</sys:String>
     <sys:String x:Key="S.Set.Detect">Activity detection</sys:String>
     <sys:String x:Key="S.Set.Smtc">Prefer system playback state (recommended)</sys:String>
     <sys:String x:Key="S.Set.SmtcHint">No false triggers between tracks, instant restore; apps without media sessions fall back to peak detection</sys:String>

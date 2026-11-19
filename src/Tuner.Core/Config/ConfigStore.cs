@@ -155,7 +155,8 @@ public static class ConfigStore
         // 音量曲线：非法值回退线性；自定义点规整（custom 但点数不足同样回退线性）
         s.VolumeCurve = VolumeCurve.Normalize(s.VolumeCurve);
         s.CustomCurve = VolumeCurve.NormalizePoints(s.CustomCurve);
-        s.CurveFit = VolumeCurve.NormalizeFit(s.CurveFit);
+        s.CurveFit = VolumeCurve.NormalizeFitMethod(s.CurveFit);          // 设置页选的拟合算法
+        s.CustomCurveFit = VolumeCurve.NormalizeFit(s.CustomCurveFit);    // 已应用的拟合（""/"linear"＝折线）
         if (s.VolumeCurve == "custom" && s.CustomCurve.Count < 2)
             s.VolumeCurve = "linear";
 

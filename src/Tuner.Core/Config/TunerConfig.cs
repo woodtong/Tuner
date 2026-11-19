@@ -96,10 +96,16 @@ public sealed class EngineSettings
     public List<CurvePoint> CustomCurve { get; set; } = new();
 
     /// <summary>
-    /// 自定义控制点的拟合方式："linear"=折线直连（默认）；"monotone"=单调三次（保单调不过冲）；
-    /// "catmull"=Catmull-Rom 样条（最圆润）。设置页可改，随配置持久化。
+    /// 设置页选择的「拟合算法」（点击音量页「拟合」按钮时使用）："monotone"=PCHIP（默认，保形不过冲）、
+    /// "akima"、 "natural"、 "catmull"、 "poly3"、 "poly2"。本身不影响曲线，只有点击拟合才生效。
     /// </summary>
-    public string CurveFit { get; set; } = "linear";
+    public string CurveFit { get; set; } = "monotone";
+
+    /// <summary>
+    /// 已应用到自定义曲线上的拟合方式：""/"linear"=折线直连（默认，未拟合）；
+    /// 其余取值同 CurveFit。点击「拟合」写入，点击「还原折线」清空。
+    /// </summary>
+    public string CustomCurveFit { get; set; } = "";
 
     /// <summary>
     /// 用户保存的自定义曲线预设（命名 + 控制点）。随配置文件持久化：重开应用、更新程序都不丢

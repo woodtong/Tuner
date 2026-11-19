@@ -647,8 +647,10 @@ public partial class MainWindow
         _editPoints = s.CustomCurve.Select(p => new CurvePoint(p.X, p.Y)).ToList();
         CurveChartBox.Points = _editPoints;
         CurveChartBox.CurveId = s.VolumeCurve;
-        CurveChartBox.Fit = VolumeCurve.NormalizeFit(s.CurveFit);
+        CurveChartBox.Fit = VolumeCurve.NormalizeFit(s.CustomCurveFit);
         CurveChartBox.IsEditable = s.VolumeCurve == "custom";
+        UpdatePresetButtons(s);
+        UpdateFitButton(s);
         UpdateVolumeCurveHint();
         _loadingUi = outer;
     }
@@ -703,6 +705,42 @@ public partial class MainWindow
             return;
         CurveSaveButton.IsEnabled = s.VolumeCurve == "custom";
         CurveDeleteButton.IsEnabled = s.VolumeCurve == "custom" && !string.IsNullOrEmpty(s.ActiveCurvePreset);
+    }
+
+    /// <summary>拟合按钮：未拟合时显示「拟合」（点≥3 才可用，按设置里的算法拟合当前点集）；
+    /// 已拟合时显示「还原折线」（点一下回到折线直连）。</summary>
+    private void UpdateFitButton(EngineSettings s)
+    {
+        if (CurveFitButton is null)
+            return;
+        var fitted = VolumeCurve.IsFitted(s.CustomCurveFit);
+        CurveFitButton.Content = Lang.Get(fitted ? "S.Curve.UnfitButton" : "S.Curve.FitButton");
+        CurveFitButton.ToolTip = Lang.Get(
+            fitted ? "S.Curve.UnfitButtonTip" : "S.Curve.FitButtonTip", FitMethodName(s.CurveFit));
+        CurveFitButton.IsEnabled = s.VolumeCurve == "custom" && (fitted || s.CustomCurve.Count >= 3);
+    }
+
+    /// <summary>点击「拟合」：把设置页选定的算法应用到当前控制点；再点一次（还原折线）清空拟合。</summary>
+    private void OnCurveFitClick(object sender, RoutedEventArgs e)
+    {
+        var s = App.Config.Settings;
+        if (s.VolumeCurve != "custom")
+            return;
+        if (VolumeCurve.IsFitted(s.CustomCurveFit))
+        {
+            s.CustomCurveFit = "";
+            App.Log("自定义曲线：还原折线直连");
+        }
+        else
+        {
+            if (s.CustomCurve.Count < 3)
+                return;
+            var method = VolumeCurve.NormalizeFitMethod(s.CurveFit);
+            s.CustomCurveFit = method;
+            App.Log("自定义曲线：按 " + method + " 拟合");
+        }
+        LoadCurveEditor();
+        MarkDirty();
     }
 
     /// <summary>
@@ -834,26 +872,35 @@ public partial class MainWindow
 
     private void UpdateVolumeCurveHint() => VolumeCurveHint.Text = HintText();
 
-    /// <summary>提示文案：内置曲线按件取；自定义时附上当前拟合方式说明；预设显示预设名与拟合方式。</summary>
+    /// <summary>提示文案：内置曲线按件取；自定义时说明是折线还是已拟合（附算法名）；预设显示预设名与拟合状态。</summary>
     private string HintText()
     {
+        var s = App.Config.Settings;
         var tag = (VolumeCurveCombo.SelectedItem as ComboBoxItem)?.Tag as string ?? "curve:linear";
+        var fitted = VolumeCurve.IsFitted(s.CustomCurveFit);
         if (tag.StartsWith("preset:", StringComparison.Ordinal))
-            return Lang.Get("S.Curve.Hint.Preset", tag["preset:".Length..], FitName());
+            return Lang.Get("S.Curve.Hint.Preset", tag["preset:".Length..],
+                fitted ? FitMethodName(s.CustomCurveFit) : Lang.Get("S.Curve.Fit.None"));
         return tag switch
         {
             "curve:square" => Lang.Get("S.Curve.Hint.Square"),
             "curve:log" => Lang.Get("S.Curve.Hint.Log"),
-            "curve:custom" => Lang.Get("S.Curve.Hint.Custom", FitName()),
+            "curve:custom" => fitted
+                ? Lang.Get("S.Curve.Hint.CustomFitted", FitMethodName(s.CustomCurveFit))
+                : Lang.Get("S.Curve.Hint.Custom"),
             _ => Lang.Get("S.Curve.Hint.Linear"),
         };
     }
 
-    /// <summary>当前拟合方式的可读名称。</summary>
-    private string FitName() => VolumeCurve.NormalizeFit(App.Config.Settings.CurveFit) switch
+    /// <summary>拟合算法的可读名称（linear＝折线直连）。</summary>
+    private static string FitMethodName(string? method) => VolumeCurve.NormalizeFit(method) switch
     {
-        "monotone" => Lang.Get("S.Curve.Fit.Monotone"),
+        "monotone" => Lang.Get("S.Curve.Fit.Pchip"),
+        "akima" => Lang.Get("S.Curve.Fit.Akima"),
+        "natural" => Lang.Get("S.Curve.Fit.Natural"),
         "catmull" => Lang.Get("S.Curve.Fit.Catmull"),
-        _ => Lang.Get("S.Curve.Fit.Linear"),
+        "poly3" => Lang.Get("S.Curve.Fit.Poly3"),
+        "poly2" => Lang.Get("S.Curve.Fit.Poly2"),
+        _ => Lang.Get("S.Curve.Fit.None"),
     };
 }
