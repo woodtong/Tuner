@@ -338,11 +338,11 @@ public partial class MainWindow
         slider.BeginAnimation(Slider.ValueProperty, anim);
     }
 
-    /// <summary>调音台区滚轮 → 横向滚动（多应用时显示全部通道）。</summary>
+    /// <summary>调音台区滚轮：Shift 按下 → 横向滚动（上=左移，下=右移）；否则放行给页面纵向滚动。</summary>
     private void OnChannelsMouseWheel(object sender, MouseWheelEventArgs e)
     {
-        if (ChannelsScroller.ScrollableWidth <= 0)
-            return;
+        if ((Keyboard.Modifiers & ModifierKeys.Shift) == 0 || ChannelsScroller.ScrollableWidth <= 0)
+            return; // 普通滚轮不拦截，让外层 ScrollViewer 正常上下滚动
         ChannelsScroller.ScrollToHorizontalOffset(ChannelsScroller.HorizontalOffset - e.Delta);
         e.Handled = true;
     }
