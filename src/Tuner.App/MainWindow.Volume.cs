@@ -361,6 +361,39 @@ public partial class MainWindow
         }
     }
 
+    /// <summary>全局滚轮入口（窗口 Preview，隧道阶段最先触发）：把平滑滚动拓展到所有 ScrollViewer。
+    /// 命中 Slider 直接放行（推子 1% 微调有自己的滚轮判定）；命中的 ScrollViewer 纵向滚不动时
+    /// （如调音台横滚区）不标记，交由 OnChannelsMouseWheel 在更内层代滚页面。</summary>
+    private void OnRootMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        var dep = e.OriginalSource as DependencyObject;
+        while (dep is not null)
+        {
+            if (dep is System.Windows.Controls.Slider)
+                return;
+            if (dep is ScrollViewer sv)
+            {
+                bool shift = (Keyboard.Modifiers & ModifierKeys.Shift) != 0;
+                if (shift)
+                {
+                    if (sv.ScrollableWidth > 0)
+                    {
+                        SmoothScroll(sv, sv.HorizontalOffset - e.Delta, horizontal: true);
+                        e.Handled = true;
+                    }
+                    return;
+                }
+                if (sv.ScrollableHeight > 0)
+                {
+                    SmoothScroll(sv, sv.VerticalOffset - e.Delta, horizontal: false);
+                    e.Handled = true;
+                }
+                return;
+            }
+            dep = System.Windows.Media.VisualTreeHelper.GetParent(dep) ?? System.Windows.LogicalTreeHelper.GetParent(dep);
+        }
+    }
+
     /// <summary>滚轮平滑滚动：每帧向目标偏移按比例逼近（指数缓出），滚轮只改目标、打断即重定向。</summary>
     private void SmoothScroll(ScrollViewer sv, double target, bool horizontal)
     {

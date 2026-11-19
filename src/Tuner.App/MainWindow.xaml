@@ -7,7 +7,8 @@
         MinWidth="800" MinHeight="580" WindowStartupLocation="CenterScreen"
         Background="{DynamicResource PageBg}"
         FontFamily="Microsoft YaHei UI, Segoe UI"
-        UseLayoutRounding="True">
+        UseLayoutRounding="True"
+        PreviewMouseWheel="OnRootMouseWheel">
     <Window.Resources>
         <ContextMenu x:Key="DeviceMenu" Placement="Bottom" />
     </Window.Resources>
