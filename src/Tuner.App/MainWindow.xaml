@@ -370,7 +370,7 @@
                                 </Border>
                             </StackPanel>
                             <!-- 选项行：曲线选择 + 说明 -->
-                            <Grid Margin="2,8,2,0">
+                            <Grid Margin="2,16,2,0">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
